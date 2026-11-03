@@ -3,12 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="theme-color" content="#101a2b">
-  <title>Rota de contingência - FastFlow</title>
+  <title>Página 1 - FastFlow</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="css/style.css">
-  <link rel="stylesheet" href="css/contingencia.css">
 </head>
 <body>
   <div class="layout">
@@ -20,159 +18,29 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a class="active" href="pagina1.html" aria-current="page">Contingência</a>
+        <a class="active" href="pagina1.html" aria-current="page">Página 1</a>
         <a href="pagina2.html">Página 2</a>
-        <a href="pagina3.html">Página 3</a>
+        <a href="pagina3.html">Contingência</a>
       </nav>
     </header>
 
     <aside class="sidebar">
-      <div class="sidebar-heading">
-        <span class="eyebrow">DIRECIONAMENTO</span>
-        <h2>Planejar rota</h2>
-        <p>Defina o trajeto e escolha uma alternativa operacional.</p>
-      </div>
-
-      <form class="route-form" id="route-form">
-        <label for="scenario-select">Cenário de simulação</label>
-        <div class="input-wrap select-wrap">
-          <select id="scenario-select" name="scenario">
-            <option value="cajamar-centro">Centro de Cajamar → Jordanésia</option>
-            <option value="polvilho-distrito">Polvilho → Distrito Industrial</option>
-            <option value="ponunduva-cajamar">Ponunduva → Centro de Cajamar</option>
-            <option value="jordanesia-polvilho">Jordanésia → Polvilho</option>
-            <option value="centro-parque">Centro de Cajamar → Parque Maria Aparecida</option>
-            <option value="jordanesia-empresarial">Jordanésia → Parque Empresarial</option>
-            <option value="polvilho-centro">Polvilho → Centro de Cajamar</option>
-            <option value="ponunduva-jordanesia">Ponunduva → Jordanésia</option>
-          </select>
-        </div>
-
-        <label for="origin">Ponto de partida</label>
-        <div class="input-wrap">
-          <span class="input-marker origin-marker" aria-hidden="true"></span>
-          <input id="origin" name="origin" type="text" value="Centro de Cajamar" required>
-        </div>
-
-        <div class="route-connector" aria-hidden="true"></div>
-
-        <label for="destination">Destino</label>
-        <div class="input-wrap">
-          <span class="input-marker destination-marker" aria-hidden="true"></span>
-          <input id="destination" name="destination" type="text" value="Jordanésia" required>
-        </div>
-
-        <button class="button button-primary update-route" type="submit">
-          Atualizar cenário
-        </button>
-        <p class="form-feedback" id="form-feedback" aria-live="polite"></p>
-      </form>
-
-      <section class="incident-card" aria-labelledby="incident-title">
-        <div class="incident-heading">
-          <span class="incident-icon" aria-hidden="true">!</span>
-          <span class="eyebrow">OCORRÊNCIA SIMULADA</span>
-        </div>
-        <h3 id="incident-title">Bloqueio viário</h3>
-        <p>Av. Dr. Antônio João Abdalla · Cajamar</p>
-        <div class="incident-meta">
-          <span class="incident-pulse"></span>
-          <span>Desvio recomendado</span>
-          <span class="incident-time">Agora</span>
-        </div>
-      </section>
-
-      <div class="sidebar-note">
-        <span aria-hidden="true">i</span>
-        Este cenário usa dados ilustrativos. Não representa trânsito em tempo real.
-      </div>
+      <h2>Menu</h2>
+      <ul>
+        <li><a href="#">Item 1</a></li>
+        <li><a href="#">Item 2</a></li>
+        <li><a href="#">Item 3</a></li>
+      </ul>
     </aside>
 
     <main class="main">
-      <div class="dashboard">
-        <section class="page-heading">
-          <div>
-            <div class="breadcrumb">Operações <span>/</span> Direcionamento</div>
-            <h1>Rota de contingência</h1>
-            <p>Redirecione equipes diante de interrupções no trajeto principal.</p>
-          </div>
-          <span class="demo-badge"><span></span> Cenário demonstrativo</span>
-        </section>
-
-        <section class="map-card" aria-label="Mapa e alternativas de rota">
-          <div class="map-toolbar">
-            <div>
-              <span class="eyebrow">VISÃO DO TRAJETO</span>
-              <h2 id="map-route-title">Centro de Cajamar <span aria-hidden="true">→</span> Jordanésia</h2>
-            </div>
-            <button class="map-control" id="fit-map" type="button" aria-label="Enquadrar rotas no mapa" title="Enquadrar rotas">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M8 8h8v8H8z"/>
-              </svg>
-            </button>
-          </div>
-          <div id="mapa" class="map-view" role="img" aria-label="Mapa demonstrativo com três rotas na região de Cajamar"></div>
-          <div class="map-legend" aria-label="Legenda do mapa">
-            <span><i class="legend-line legend-primary"></i> Rota principal</span>
-            <span><i class="legend-line legend-alternative"></i> Desvio sugerido</span>
-            <span><i class="legend-line legend-third"></i> Alternativa 2</span>
-            <span><i class="legend-block"></i> Bloqueio simulado</span>
-          </div>
-        </section>
-
-        <section class="route-section" aria-labelledby="routes-title">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">OPÇÕES DE DESLOCAMENTO</span>
-              <h2 id="routes-title">Rotas disponíveis</h2>
-            </div>
-            <span class="route-count">3 opções</span>
-          </div>
-
-          <div class="route-options">
-            <button class="route-option" type="button" data-route="primary" aria-pressed="false">
-              <span class="route-option-top">
-                <span class="route-name"><i class="route-swatch swatch-primary"></i> <span data-route-name>Rota principal</span></span>
-                <span class="route-tag tag-neutral" data-route-tag>Interrompida</span>
-              </span>
-              <span class="route-metrics"><strong data-route-time>24 min</strong><span>·</span><span data-route-distance>8,4 km</span><span class="delay" data-route-delay></span></span>
-              <span class="route-description" data-route-description>Passa pelo trecho com bloqueio simulado.</span>
-            </button>
-
-            <button class="route-option selected" type="button" data-route="alternative" aria-pressed="true">
-              <span class="route-option-top">
-                <span class="route-name"><i class="route-swatch swatch-alternative"></i> <span data-route-name>Desvio sugerido</span></span>
-                <span class="route-tag tag-recommended" data-route-tag>Recomendada</span>
-              </span>
-              <span class="route-metrics"><strong data-route-time>32 min</strong><span>·</span><span data-route-distance>10,2 km</span><span class="delay" data-route-delay>+8 min</span></span>
-              <span class="route-description" data-route-description>Via Av. Brigadeiro Luís Antônio · evita o bloqueio.</span>
-            </button>
-
-            <button class="route-option" type="button" data-route="alternative-two" aria-pressed="false">
-              <span class="route-option-top">
-                <span class="route-name"><i class="route-swatch swatch-third"></i> <span data-route-name>Alternativa 2</span></span>
-                <span class="route-tag tag-neutral" data-route-tag>Mais distante</span>
-              </span>
-              <span class="route-metrics"><strong data-route-time>36 min</strong><span>·</span><span data-route-distance>11,6 km</span><span class="delay" data-route-delay>+12 min</span></span>
-              <span class="route-description" data-route-description>Via Rua Vergueiro · desvio ampliado para contingência.</span>
-            </button>
-          </div>
-
-          <div class="dispatch-bar">
-            <div class="dispatch-copy">
-              <span class="dispatch-icon" aria-hidden="true">↗</span>
-              <span><strong id="dispatch-title">Desvio selecionado</strong><small id="dispatch-description">A equipe seguirá pela rota de contingência.</small></span>
-            </div>
-            <button class="button button-dispatch" id="dispatch-button" type="button">Ativar direcionamento</button>
-          </div>
-          <p class="dispatch-feedback" id="dispatch-feedback" role="status" aria-live="polite"></p>
-        </section>
-      </div>
+      <div id="mapa" class="componente"></div>
     </main>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/contingencia.js"></script>
+  <script src="js/main.js"></script>
+  <script src="js/mapa.js"></script>
 </body>
 </html>

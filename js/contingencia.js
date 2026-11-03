@@ -271,8 +271,11 @@
     scrollWheelZoom: false
   });
 
+  // Tiles do OpenStreetMap. A política de uso exige um Referer válido; forçar a
+  // política aqui evita que extensões/configurações de privacidade o removam.
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
+    referrerPolicy: "strict-origin-when-cross-origin",
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(mapa);
