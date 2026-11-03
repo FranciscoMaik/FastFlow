@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Página 2 - FastFlow</title>
+  <title>Bloqueio Viário - FastFlow</title>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="css/style.css">
@@ -19,28 +19,106 @@
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
         <a href="pagina1.html">Página 1</a>
-        <a class="active" href="pagina2.html" aria-current="page">Página 2</a>
+        <a class="active" href="pagina2.html" aria-current="page">Bloqueio Viário</a>
         <a href="pagina3.html">Contingência</a>
       </nav>
     </header>
 
-    <aside class="sidebar">
-      <h2>Menu</h2>
-      <ul>
-        <li><a href="#">Item 1</a></li>
-        <li><a href="#">Item 2</a></li>
-        <li><a href="#">Item 3</a></li>
-      </ul>
+    <aside class="sidebar" aria-label="Painel de bloqueio viário">
+      <section class="painel-secao">
+        <h2>Seleção de via</h2>
+        <label class="campo">
+          <span>Logradouro</span>
+          <select id="selLogradouro">
+            <option value="">Selecione um logradouro…</option>
+          </select>
+        </label>
+        <label class="campo">
+          <span>Trecho</span>
+          <select id="selTrecho" disabled>
+            <option value="">Escolha um logradouro</option>
+          </select>
+        </label>
+        <p class="dica">Ou clique diretamente em um trecho no mapa.</p>
+        <div id="infoTrecho" class="info-trecho" hidden></div>
+      </section>
+
+      <section class="painel-secao">
+        <h2>Ações</h2>
+        <div class="acoes">
+          <button id="btnBloquear" type="button" class="botao botao-bloquear" disabled>Bloquear</button>
+          <button id="btnDesbloquear" type="button" class="botao botao-secundario" disabled>Desbloquear</button>
+        </div>
+        <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="painel-secao">
+        <h2>Vias bloqueadas <span id="contadorBloqueios" class="contador">0</span></h2>
+        <ul id="listaBloqueios" class="lista-bloqueios"></ul>
+        <p id="semBloqueios" class="vazio">Nenhuma via bloqueada nesta sessão.</p>
+        <button id="btnRemoverTodos" type="button" class="botao botao-secundario remover-todos" hidden>Remover todos</button>
+      </section>
+
+      <section class="painel-secao">
+        <h2>Impacto na simulação</h2>
+        <dl class="estatisticas">
+          <div><dt>Veículos ativos</dt><dd id="estAtivos">—</dd></div>
+          <div><dt>Desviados</dt><dd id="estDesviados">—</dd></div>
+          <div><dt>Retidos</dt><dd id="estRetidos">—</dd></div>
+          <div><dt>Rotas recalculadas</dt><dd id="estRecalculos">—</dd></div>
+          <div><dt>Viagens concluídas</dt><dd id="estViagens">—</dd></div>
+          <div><dt>Tempo médio de viagem</dt><dd id="estTempoMedio">—</dd></div>
+        </dl>
+      </section>
     </aside>
 
     <main class="main">
-      <div id="mapa" class="componente"></div>
+      <div id="mapa" class="componente mapa-simulacao" data-malha="data/malha.geojson"></div>
+
+      <div class="barra-simulacao" role="group" aria-label="Controles da simulação">
+        <button id="btnPausar" type="button" class="botao botao-secundario" aria-pressed="false">Pausar</button>
+        <label class="campo">
+          <span>Veículos</span>
+          <select id="selQuantidade">
+            <option value="30">30</option>
+            <option value="60" selected>60</option>
+            <option value="100">100</option>
+            <option value="150">150</option>
+          </select>
+        </label>
+        <label class="campo">
+          <span>Velocidade</span>
+          <select id="selVelocidade">
+            <option value="1">1×</option>
+            <option value="4" selected>4×</option>
+            <option value="8">8×</option>
+          </select>
+        </label>
+      </div>
+
+      <ul class="legenda" aria-label="Legenda">
+        <li><span class="amostra"></span> Via livre</li>
+        <li><span class="amostra selecionada"></span> Via selecionada</li>
+        <li><span class="amostra bloqueada"></span> Via bloqueada</li>
+        <li><span class="amostra ponto"></span> Veículo</li>
+        <li><span class="amostra ponto desviado"></span> Veículo desviado</li>
+        <li><span class="amostra ponto retido"></span> Veículo retido</li>
+      </ul>
+
+      <div id="carregando" class="carregando">Carregando malha viária de Cajamar…</div>
     </main>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/main.js"></script>
-  <script src="js/mapa.js"></script>
+  <script type="module" src="js/ui/telaBloqueio.js"></script>
+  <script>
+    // Módulos ES e fetch não funcionam com duplo clique no arquivo (file://).
+    if (location.protocol === "file:") {
+      document.getElementById("carregando").textContent =
+        "Esta tela precisa de um servidor local. Na pasta do projeto, rode: python3 -m http.server 8000 e abra http://localhost:8000/pagina2.html";
+    }
+  </script>
 </body>
 </html>

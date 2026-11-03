@@ -1,3 +1,38 @@
+/* ---------- Tokens de design ---------- */
+:root {
+  /* Base (valores originais do projeto) */
+  --cor-fundo: #f1f3f6;
+  --cor-superficie: #fff;
+  --cor-texto: #1f2937;
+  --cor-texto-forte: #334155;
+  --cor-texto-suave: #64748b;
+  --cor-borda: #e2e8f0;
+  --cor-topbar: #1e293b;
+  --cor-topbar-hover: #334155;
+  --cor-topbar-texto: #cbd5e1;
+  --cor-primaria: #3b82f6;
+  --cor-primaria-suave: #dbeafe;
+  --cor-primaria-forte: #1d4ed8;
+  --cor-branco: #fff;
+
+  /* Simulação viária */
+  --cor-bloqueio: #ff1a1a;
+  --cor-bloqueio-forte: #c40000;
+  --cor-bloqueio-suave: #ffe1e1;
+  --cor-via: #64748b;
+  --cor-via-selecionada: var(--cor-primaria);
+  --cor-veiculo: #16a34a;
+  --cor-veiculo-desviado: #f59e0b;
+  --cor-veiculo-retido: var(--cor-bloqueio-forte);
+  --cor-sucesso-suave: #dcfce7;
+  --cor-sucesso-forte: #166534;
+
+  --fonte: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --raio: 6px;
+  --transicao: 0.15s;
+  --sombra: 0 4px 16px rgba(15, 23, 42, 0.12);
+}
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -10,9 +45,9 @@ body {
 }
 
 body {
-  font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
-  background: #f1f3f6;
-  color: #1f2937;
+  font-family: var(--fonte);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
 }
 
 .layout {
@@ -30,9 +65,10 @@ body {
   grid-area: header;
   display: flex;
   align-items: center;
+  gap: 8px;
   padding: 0 30px;
-  background: #101a2b;
-  color: #fff;
+  background: var(--cor-topbar);
+  color: var(--cor-branco);
 }
 
 .topbar .brand {
@@ -90,22 +126,22 @@ body {
 }
 
 .topbar nav a {
-  color: #cbd5e1;
+  color: var(--cor-topbar-texto);
   text-decoration: none;
-  padding: 9px 12px;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border-radius: var(--raio);
   font-size: 0.8rem;
-  transition: background 0.15s, color 0.15s;
+  transition: background var(--transicao), color var(--transicao);
 }
 
 .topbar nav a:hover {
-  background: #334155;
-  color: #fff;
+  background: var(--cor-topbar-hover);
+  color: var(--cor-branco);
 }
 
 .topbar nav a.active {
-  background: #3b82f6;
-  color: #fff;
+  background: var(--cor-primaria);
+  color: var(--cor-branco);
 }
 
 @media (max-width: 980px) {
@@ -162,8 +198,8 @@ body {
 /* ---------- Menu lateral ---------- */
 .sidebar {
   grid-area: sidebar;
-  background: #fff;
-  border-right: 1px solid #e2e8f0;
+  background: var(--cor-superficie);
+  border-right: 1px solid var(--cor-borda);
   padding: 16px 12px;
   overflow-y: auto;
 }
@@ -171,7 +207,7 @@ body {
 .sidebar h2 {
   font-size: 0.75rem;
   text-transform: uppercase;
-  color: #64748b;
+  color: var(--cor-texto-suave);
   letter-spacing: 0.08em;
   margin: 8px 8px 12px;
 }
@@ -187,19 +223,19 @@ body {
 .sidebar a {
   display: block;
   padding: 10px 12px;
-  border-radius: 6px;
-  color: #334155;
+  border-radius: var(--raio);
+  color: var(--cor-texto-forte);
   text-decoration: none;
-  transition: background 0.15s;
+  transition: background var(--transicao);
 }
 
 .sidebar a:hover {
-  background: #e2e8f0;
+  background: var(--cor-borda);
 }
 
 .sidebar a.active {
-  background: #dbeafe;
-  color: #1d4ed8;
+  background: var(--cor-primaria-suave);
+  color: var(--cor-primaria-forte);
   font-weight: 600;
 }
 
@@ -208,9 +244,505 @@ body {
   grid-area: main;
   min-width: 0;
   min-height: 0;
+  position: relative;
 }
 
 .componente {
   width: 100%;
   height: 100%;
+}
+
+/* =====================================================================
+   Tela de simulação de bloqueio viário
+   ===================================================================== */
+
+/* ---------- Painel lateral ---------- */
+.painel-secao {
+  padding-bottom: 16px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.painel-secao:last-child {
+  border-bottom: 0;
+}
+
+.sidebar .painel-secao h2 {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.contador {
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--cor-borda);
+  color: var(--cor-texto-forte);
+  font-size: 0.75rem;
+  text-align: center;
+  letter-spacing: 0;
+}
+
+.contador.ativo {
+  background: var(--cor-bloqueio);
+  color: var(--cor-branco);
+}
+
+.campo {
+  display: block;
+  margin: 0 8px 10px;
+}
+
+.campo span {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--cor-texto-forte);
+  margin-bottom: 4px;
+}
+
+.campo select {
+  width: 100%;
+  padding: 8px 10px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.campo select:focus-visible,
+.botao:focus-visible {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 1px;
+}
+
+.campo select:disabled {
+  background: var(--cor-fundo);
+  color: var(--cor-texto-suave);
+}
+
+.dica {
+  margin: 0 8px;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.info-trecho {
+  margin: 12px 8px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--cor-borda);
+  border-left: 4px solid var(--cor-via-selecionada);
+  border-radius: var(--raio);
+  font-size: 0.85rem;
+}
+
+.info-trecho.bloqueado {
+  border-left-color: var(--cor-bloqueio);
+  background: var(--cor-bloqueio-suave);
+}
+
+.info-trecho strong {
+  display: block;
+  color: var(--cor-texto);
+}
+
+.info-trecho .referencia {
+  color: var(--cor-texto-suave);
+  margin-bottom: 8px;
+}
+
+.info-trecho dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 10px;
+}
+
+.info-trecho dt {
+  color: var(--cor-texto-suave);
+}
+
+.status-via {
+  font-weight: 600;
+}
+
+.status-via.bloqueado {
+  color: var(--cor-bloqueio-forte);
+}
+
+/* ---------- Botões ---------- */
+.acoes {
+  display: flex;
+  gap: 8px;
+  margin: 0 8px;
+}
+
+.botao {
+  flex: 1;
+  padding: 9px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--raio);
+  font: inherit;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transicao), opacity var(--transicao);
+}
+
+.botao:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.botao-bloquear {
+  background: var(--cor-bloqueio);
+  color: var(--cor-branco);
+}
+
+.botao-bloquear:not(:disabled):hover {
+  background: var(--cor-bloqueio-forte);
+}
+
+.botao-secundario {
+  background: var(--cor-superficie);
+  border-color: var(--cor-borda);
+  color: var(--cor-texto-forte);
+}
+
+.botao-secundario:not(:disabled):hover {
+  background: var(--cor-borda);
+}
+
+.botao-pequeno {
+  flex: 0 0 auto;
+  padding: 4px 8px;
+  font-size: 0.75rem;
+}
+
+.mensagem {
+  margin: 10px 8px 0;
+  padding: 8px 10px;
+  border-radius: var(--raio);
+  font-size: 0.8rem;
+}
+
+.mensagem:empty {
+  display: none;
+}
+
+.mensagem.erro {
+  background: var(--cor-bloqueio-suave);
+  color: var(--cor-bloqueio-forte);
+}
+
+.mensagem.sucesso {
+  background: var(--cor-sucesso-suave);
+  color: var(--cor-sucesso-forte);
+}
+
+/* ---------- Lista de bloqueios ---------- */
+.sidebar .lista-bloqueios li {
+  padding: 8px 10px;
+  margin: 0 0 6px;
+  border-radius: var(--raio);
+  background: var(--cor-bloqueio-suave);
+  border-left: 4px solid var(--cor-bloqueio);
+  font-size: 0.8rem;
+}
+
+.lista-bloqueios strong {
+  display: block;
+  color: var(--cor-texto);
+}
+
+.lista-bloqueios .detalhe {
+  color: var(--cor-texto-forte);
+  margin: 2px 0 6px;
+}
+
+.lista-bloqueios .acoes {
+  margin: 0;
+  gap: 6px;
+}
+
+.vazio {
+  margin: 0 8px;
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+}
+
+.remover-todos {
+  margin: 8px 8px 0;
+  width: calc(100% - 16px);
+}
+
+/* ---------- Estatísticas ---------- */
+.estatisticas {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin: 0 8px;
+}
+
+.estatisticas div {
+  padding: 8px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+}
+
+.estatisticas dt {
+  font-size: 0.7rem;
+  color: var(--cor-texto-suave);
+}
+
+.estatisticas dd {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ---------- Barra sobre o mapa ---------- */
+.barra-simulacao {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  z-index: 1000;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 12px;
+  background: var(--cor-superficie);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  font-size: 0.8rem;
+}
+
+.barra-simulacao .campo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+}
+
+.barra-simulacao .campo span {
+  margin: 0;
+}
+
+.barra-simulacao .campo select {
+  width: auto;
+  padding: 4px 6px;
+}
+
+.barra-simulacao .botao {
+  flex: 0 0 auto;
+  padding: 5px 12px;
+}
+
+.legenda {
+  position: absolute;
+  bottom: 24px;
+  left: 12px;
+  z-index: 1000;
+  padding: 8px 12px;
+  background: var(--cor-superficie);
+  border-radius: var(--raio);
+  box-shadow: var(--sombra);
+  font-size: 0.75rem;
+  list-style: none;
+}
+
+.legenda li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legenda li + li {
+  margin-top: 4px;
+}
+
+.legenda .amostra {
+  width: 22px;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--cor-via);
+}
+
+.legenda .amostra.selecionada {
+  background: var(--cor-via-selecionada);
+}
+
+.legenda .amostra.bloqueada {
+  height: 5px;
+  background: repeating-linear-gradient(90deg, var(--cor-bloqueio) 0 7px, transparent 7px 10px);
+}
+
+.legenda .amostra.ponto {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--cor-veiculo);
+}
+
+.legenda .amostra.ponto.desviado {
+  background: var(--cor-veiculo-desviado);
+}
+
+.legenda .amostra.ponto.retido {
+  background: var(--cor-veiculo-retido);
+}
+
+.carregando {
+  position: absolute;
+  inset: 0;
+  z-index: 1100;
+  display: grid;
+  place-items: center;
+  background: var(--cor-fundo);
+  color: var(--cor-texto-suave);
+}
+
+.carregando[hidden] {
+  display: none;
+}
+
+/* ---------- Elementos no mapa (Leaflet SVG) ---------- */
+.mapa-simulacao .leaflet-tile-pane {
+  filter: saturate(0.35) brightness(1.05);
+}
+
+/* As classes vencem os atributos de cor que o Leaflet escreve no SVG. */
+path.via {
+  stroke: var(--cor-via);
+  stroke-opacity: 0.55;
+  cursor: pointer;
+  transition: stroke-opacity var(--transicao);
+}
+
+path.via:hover,
+path.via.hover {
+  stroke: var(--cor-primaria);
+  stroke-opacity: 0.85;
+}
+
+path.via.selecionada {
+  stroke: var(--cor-via-selecionada);
+  stroke-opacity: 1;
+  stroke-width: 9px;
+}
+
+path.via.bloqueada {
+  stroke: var(--cor-bloqueio);
+  stroke-opacity: 1;
+  stroke-width: 9px;
+  stroke-dasharray: 12 7;
+  animation: marcha-bloqueio 0.8s linear infinite;
+}
+
+path.via.bloqueada.selecionada {
+  stroke-width: 12px;
+}
+
+path.via-contorno {
+  stroke: var(--cor-bloqueio-forte);
+  stroke-opacity: 0.35;
+  stroke-width: 18px;
+  pointer-events: none;
+}
+
+@keyframes marcha-bloqueio {
+  to {
+    stroke-dashoffset: -19;
+  }
+}
+
+.icone-bloqueio {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 2px solid var(--cor-branco);
+  border-radius: 50%;
+  background: var(--cor-bloqueio);
+  box-shadow: 0 0 0 3px var(--cor-bloqueio-forte), var(--sombra);
+  cursor: pointer;
+}
+
+.icone-bloqueio::after {
+  content: "";
+  width: 13px;
+  height: 4px;
+  border-radius: 1px;
+  background: var(--cor-branco);
+}
+
+path.veiculo {
+  fill: var(--cor-veiculo);
+  fill-opacity: 1;
+  stroke: var(--cor-branco);
+  stroke-width: 1.5px;
+  pointer-events: none;
+}
+
+path.veiculo.desviado {
+  fill: var(--cor-veiculo-desviado);
+}
+
+path.veiculo.retido {
+  fill: var(--cor-veiculo-retido);
+}
+
+/* ---------- Telas estreitas: mapa em cima, painel embaixo ---------- */
+@media (max-width: 760px) {
+  .layout {
+    grid-template-areas:
+      "header"
+      "main"
+      "sidebar";
+    grid-template-columns: 1fr;
+    grid-template-rows: 56px 65vh auto;
+    height: auto;
+    min-height: 100vh;
+  }
+
+  .topbar {
+    padding: 0 12px;
+  }
+
+  .topbar .brand {
+    margin-right: 8px;
+  }
+
+  .topbar nav {
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .topbar nav a {
+    padding: 8px 10px;
+  }
+
+  .sidebar {
+    border-right: 0;
+    border-top: 1px solid var(--cor-borda);
+  }
+
+  .barra-simulacao {
+    left: 12px;
+    right: 12px;
+    top: auto;
+    bottom: 12px;
+  }
+
+  .legenda {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  path.via.bloqueada {
+    animation: none;
+  }
 }

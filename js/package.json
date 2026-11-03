@@ -1,0 +1,4 @@
+{
+  "//": "Faz o Node tratar os arquivos de js/ como ES Modules nos testes (node --test). Não afeta o navegador nem a Vercel.",
+  "type": "module"
+}
