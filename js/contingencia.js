@@ -266,6 +266,15 @@
     }
   };
 
+  // Traçados que seguem as ruas, gerados por scripts/gerar-rotas-contingencia.mjs.
+  // Se o arquivo não carregar, a página usa as linhas retas de `cenarios`.
+  let tracados = {};
+
+  function pontosDaRota(id, tipo) {
+    const tracado = tracados[id] && tracados[id].rotas[tipo];
+    return tracado ? tracado.pontos : cenarios[id].rotas[tipo].pontos;
+  }
+
   const mapa = L.map("mapa", {
     zoomControl: false,
     scrollWheelZoom: false
@@ -387,7 +396,7 @@
 
     Object.keys(linhas).forEach(function (chave) {
       const rota = cenario.rotas[chave];
-      linhas[chave].setLatLngs(rota.pontos);
+      linhas[chave].setLatLngs(pontosDaRota(id, chave));
 
       const cartao = document.querySelector('.route-option[data-route="' + chave + '"]');
       cartao.querySelector("[data-route-time]").textContent = rota.tempo;
@@ -396,15 +405,15 @@
       cartao.querySelector("[data-route-description]").textContent = rota.descricao;
     });
 
-    marcadorBloqueio.setLatLng(cenario.bloqueio);
+    marcadorBloqueio.setLatLng(tracados[id] ? tracados[id].bloqueio : cenario.bloqueio);
     marcadorBloqueio.setPopupContent(
       "<strong>" + cenario.ocorrencia + "</strong><br>" + cenario.localOcorrencia
     );
-    marcadorOrigem.setLatLng(cenario.rotas.primary.pontos[0])
+    const pontosPrincipal = pontosDaRota(id, "primary");
+    marcadorOrigem.setLatLng(pontosPrincipal[0])
       .bindPopup("Ponto de partida: " + cenario.origem);
-    marcadorDestino.setLatLng(cenario.rotas.primary.pontos[
-      cenario.rotas.primary.pontos.length - 1
-    ]).bindPopup("Destino: " + cenario.destino);
+    marcadorDestino.setLatLng(pontosPrincipal[pontosPrincipal.length - 1])
+      .bindPopup("Destino: " + cenario.destino);
 
     selecionarRota("alternative");
     enquadrarRotas();
@@ -420,11 +429,25 @@
     });
   });
 
-  atualizarCenario(seletorCenario.value);
-  window.setTimeout(function () {
-    mapa.invalidateSize();
-    enquadrarRotas();
-  }, 0);
+  function iniciar() {
+    atualizarCenario(seletorCenario.value);
+    window.setTimeout(function () {
+      mapa.invalidateSize();
+      enquadrarRotas();
+    }, 0);
+  }
+
+  fetch("data/rotas-contingencia.json")
+    .then(function (resposta) {
+      return resposta.ok ? resposta.json() : {};
+    })
+    .catch(function () {
+      return {};
+    })
+    .then(function (dados) {
+      tracados = dados;
+      iniciar();
+    });
 
   document.getElementById("fit-map").addEventListener("click", enquadrarRotas);
 
