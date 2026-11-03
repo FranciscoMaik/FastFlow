@@ -25,7 +25,7 @@ A região simulada é o **centro de Cajamar (SP)**, com as ruas reais tiradas do
 | Um navegador atualizado (Chrome, Edge ou Firefox) | Abrir o aplicativo |
 | Conexão com a internet | Carregar o mapa de fundo |
 | Tela de computador (recomendado) | O aplicativo funciona no celular, mas o painel fica abaixo do mapa e exige rolagem |
-| Permissão de localização (opcional) | Só nas Páginas 1, 2 e 3, para o mapa centralizar onde você está |
+| Permissão de localização (opcional) | Só na Página 1, para o mapa centralizar onde você está |
 
 ---
 
@@ -35,7 +35,7 @@ Todas as telas têm a mesma organização:
 
 ```
 ┌───────────────────────────────────────────────────────────────┐
-│ FastFlow          Página 1 | Página 2 | Página 3 | Bloqueio Viário │  ← Menu superior
+│ FastFlow           Página 1 | Bloqueio Viário | Contingência │  ← Menu superior
 ├──────────────┬────────────────────────────────────────────────┤
 │              │                                                │
 │  Painel      │                    Mapa                        │
@@ -50,11 +50,11 @@ Todas as telas têm a mesma organização:
 
 ---
 
-## 4. Páginas 1, 2 e 3: mapa com sua localização
+## 4. Página 1: mapa com sua localização
 
-Estas três telas são iguais e servem para ver o mapa e a sua posição.
+Esta tela serve para ver o mapa e a sua posição.
 
-**Como funcionam:**
+**Como funciona:**
 
 1. O mapa abre mostrando o Brasil inteiro.
 2. O navegador pergunta se o site pode usar sua localização.
@@ -70,7 +70,7 @@ Estas três telas são iguais e servem para ver o mapa e a sua posição.
 | Mover o mapa | Clicar e arrastar |
 | Ver a margem de erro | Clicar no marcador "Você está aqui" |
 
-> Os itens "Item 1", "Item 2" e "Item 3" do menu lateral dessas páginas ainda não têm função. São espaços reservados para recursos futuros.
+> Os itens "Item 1", "Item 2" e "Item 3" do menu lateral dessa página ainda não têm função. São espaços reservados para recursos futuros.
 
 ---
 
@@ -291,9 +291,9 @@ Esta seção é só para quem vai rodar ou manter o aplicativo.
 python -m http.server 8000
 ```
 
-Depois abra `http://localhost:8000/bloqueio.html`.
+Depois abra `http://localhost:8000/pagina2.html`.
 
-**Publicação:** o projeto está configurado para a Vercel. A tela fica disponível em `/bloqueio`.
+**Publicação:** o projeto está configurado para a Vercel. A tela fica disponível em `/pagina2`.
 
 **Testes automáticos do motor de simulação** (precisa do Node.js 22 ou mais recente):
 
