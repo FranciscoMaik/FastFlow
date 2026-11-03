@@ -11,11 +11,16 @@
 <body>
   <div class="layout">
     <header class="topbar">
-      <div class="brand">FastFlow</div>
-      <nav>
-        <a href="pagina1.html">Página 1</a>
+      <a class="brand" href="pagina1.html" aria-label="FastFlow, início">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span>FastFlow</span>
+      </a>
+      <span class="topbar-context">Central de operações</span>
+      <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
+      <nav aria-label="Navegação principal">
+        <a class="active" href="pagina1.html" aria-current="page">Página 1</a>
         <a href="pagina2.html">Página 2</a>
-        <a href="pagina3.html">Página 3</a>
+        <a href="pagina3.html">Contingência</a>
       </nav>
     </header>
 
