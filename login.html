@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#1e293b">
+  <title>Entrar - FastFlow</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/auth.config.js"></script>
+  <script src="js/auth.js"></script>
+</head>
+<body class="login-page">
+  <main class="login-shell">
+    <section class="login-card" aria-labelledby="login-title">
+      <a class="brand login-brand" href="login.html" aria-label="FastFlow">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span>FastFlow</span>
+      </a>
+      <div class="login-heading">
+        <p class="login-eyebrow">CENTRAL DE OPERAÇÕES</p>
+        <h1 id="login-title">Acesse sua conta</h1>
+        <p>Entre para continuar para o painel FastFlow.</p>
+      </div>
+
+      <form id="login-form" class="login-form" novalidate>
+        <label for="email">E-mail</label>
+        <input id="email" name="email" type="email" autocomplete="username" placeholder="voce@exemplo.com" required>
+
+        <label for="password">Senha</label>
+        <input id="password" name="password" type="password" autocomplete="current-password" placeholder="Digite sua senha" required>
+
+        <p id="login-feedback" class="login-feedback" aria-live="assertive" hidden></p>
+        <button id="login-submit" class="login-submit" type="submit">Entrar</button>
+      </form>
+
+      <p class="login-note">Ambiente demonstrativo FastFlow</p>
+    </section>
+  </main>
+</body>
+</html>

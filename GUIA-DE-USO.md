@@ -27,6 +27,15 @@ A região simulada é o **centro de Cajamar (SP)**, com as ruas reais tiradas do
 | Tela de computador (recomendado) | O aplicativo funciona no celular, mas o painel fica abaixo do mapa e exige rolagem |
 | Permissão de localização (opcional) | Só na Página 1, para o mapa centralizar onde você está |
 
+## 2.1. Acesso demonstrativo
+
+Ao abrir o FastFlow, entre com as credenciais de demonstração:
+
+- **E-mail:** `demo@fastflow.com`
+- **Senha:** `FastFlow2026!`
+
+A sessão fica salva neste navegador até você selecionar **Sair**. As credenciais são configuradas em `js/auth.config.js`; altere esse arquivo para outro ambiente demonstrativo. Esta autenticação é apenas um mock no navegador e não deve ser usada para proteger dados ou sistemas em produção.
+
 ---
 
 ## 3. Estrutura das telas
