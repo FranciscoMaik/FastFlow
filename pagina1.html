@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Página 1 - FastFlow</title>
+  <script src="js/auth.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="css/style.css">
@@ -22,6 +23,8 @@
         <a href="pagina2.html">Bloqueio Viário</a>
         <a href="pagina3.html">Contingência</a>
       </nav>
+      <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
+      <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
     <aside class="sidebar">

@@ -144,6 +144,39 @@ body {
   color: var(--cor-branco);
 }
 
+.botao-sair {
+  flex: 0 0 auto;
+  margin-left: 12px;
+  padding: 7px 12px;
+  border: 1px solid #536176;
+  border-radius: var(--raio);
+  background: transparent;
+  color: var(--cor-topbar-texto);
+  font: inherit;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: background var(--transicao), color var(--transicao);
+}
+
+.session-feedback {
+  color: #fecaca;
+  font-size: 0.72rem;
+}
+
+.session-feedback:empty {
+  display: none;
+}
+
+.botao-sair:hover {
+  background: var(--cor-topbar-hover);
+  color: var(--cor-branco);
+}
+
+.botao-sair:focus-visible {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
 @media (max-width: 980px) {
   .topbar {
     padding: 0 18px;
@@ -183,6 +216,12 @@ body {
 @media (max-width: 440px) {
   .topbar .brand {
     font-size: 0.92rem;
+  }
+
+  .botao-sair {
+    margin-left: 6px;
+    padding: 6px 8px;
+    font-size: 0.72rem;
   }
 
   .brand-mark {
@@ -744,5 +783,164 @@ path.veiculo.retido {
 @media (prefers-reduced-motion: reduce) {
   path.via.bloqueada {
     animation: none;
+  }
+}
+
+/* ---------- Tela de autenticação demonstrativa ---------- */
+.login-page {
+  min-height: 100%;
+  background:
+    radial-gradient(ellipse at 15% 15%, rgba(59, 130, 246, 0.12), transparent 42%),
+    var(--cor-fundo);
+}
+
+.login-shell {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 24px;
+}
+
+.login-card {
+  width: min(100%, 440px);
+  padding: 38px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 12px;
+  background: var(--cor-superficie);
+  box-shadow: var(--sombra);
+}
+
+.login-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--cor-topbar);
+  font-size: 1.05rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-decoration: none;
+}
+
+.login-heading {
+  margin: 34px 0 24px;
+}
+
+.login-eyebrow {
+  margin-bottom: 8px;
+  color: var(--cor-primaria-forte);
+  font-size: 0.7rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+}
+
+.login-heading h1 {
+  margin-bottom: 8px;
+  color: var(--cor-texto);
+  font-size: 1.65rem;
+  letter-spacing: -0.02em;
+}
+
+.login-heading > p:last-child {
+  color: var(--cor-texto-suave);
+  font-size: 0.9rem;
+}
+
+.login-form {
+  display: grid;
+  gap: 8px;
+}
+
+.login-form label {
+  margin-top: 8px;
+  color: var(--cor-texto-forte);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.login-form input {
+  width: 100%;
+  min-height: 44px;
+  padding: 10px 12px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 0.9rem;
+  transition: border-color var(--transicao), box-shadow var(--transicao);
+}
+
+.login-form input::placeholder {
+  color: #94a3b8;
+}
+
+.login-form input:focus-visible {
+  border-color: var(--cor-primaria);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.login-form input[aria-invalid="true"] {
+  border-color: var(--cor-bloqueio);
+}
+
+.login-feedback {
+  margin-top: 8px;
+  padding: 10px 12px;
+  border-radius: var(--raio);
+  background: var(--cor-bloqueio-suave);
+  color: var(--cor-bloqueio-forte);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.login-feedback[hidden] {
+  display: none;
+}
+
+.login-submit {
+  min-height: 44px;
+  margin-top: 12px;
+  border: 0;
+  border-radius: var(--raio);
+  background: var(--cor-primaria);
+  color: var(--cor-branco);
+  font: inherit;
+  font-size: 0.9rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transicao), opacity var(--transicao);
+}
+
+.login-submit:hover:not(:disabled) {
+  background: var(--cor-primaria-forte);
+}
+
+.login-submit:focus-visible {
+  outline: 2px solid var(--cor-primaria-forte);
+  outline-offset: 3px;
+}
+
+.login-submit:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.login-note {
+  margin-top: 26px;
+  padding-top: 16px;
+  border-top: 1px solid var(--cor-borda);
+  color: var(--cor-texto-suave);
+  font-size: 0.75rem;
+  text-align: center;
+}
+
+@media (max-width: 480px) {
+  .login-shell {
+    padding: 16px;
+  }
+
+  .login-card {
+    padding: 28px 22px;
   }
 }
