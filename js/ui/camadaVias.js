@@ -28,14 +28,16 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
   return {
     limites: () => grupo.getBounds(),
 
-    atualizar({ selecionados = [], bloqueados = [] }) {
+    atualizar({ selecionados = [], bloqueados = [], alterados = [] }) {
       const sel = new Set(selecionados);
       const bloq = new Map(bloqueados.map((t) => [t.id, t]));
+      const alt = new Set(alterados);
 
       for (const [id, linha] of linhas) {
         classe(id, "selecionada", sel.has(id));
         classe(id, "bloqueada", bloq.has(id));
-        if (sel.has(id) || bloq.has(id)) linha.bringToFront();
+        classe(id, "sentido-alterado", alt.has(id));
+        if (sel.has(id) || bloq.has(id) || alt.has(id)) linha.bringToFront();
       }
 
       // Remove sinalizações de trechos liberados.

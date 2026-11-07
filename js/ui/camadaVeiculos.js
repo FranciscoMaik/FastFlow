@@ -25,6 +25,7 @@ export function criarCamadaVeiculos(mapa) {
           const el = marcador.getElement();
           el?.classList.toggle("desviado", v.status === "desviado");
           el?.classList.toggle("retido", v.status === "retido");
+          el?.classList.toggle("evacuando", v.status === "evacuando");
           marcador.status = v.status;
         }
       }

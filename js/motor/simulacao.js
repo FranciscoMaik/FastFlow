@@ -8,19 +8,24 @@ const VIAGENS_NA_MEDIA = 50;
 const TENTATIVAS_DE_SORTEIO = 12;
 
 export class Simulacao extends Emissor {
-  constructor(grafo, { aleatorio = Math.random, fatorTempo = 4 } = {}) {
+  constructor(grafo, { aleatorio = Math.random, fatorTempo = 4, politicaSentido = "complete" } = {}) {
     super();
     this.grafo = grafo;
     this.aleatorio = aleatorio;
     this.fatorTempo = fatorTempo;
+    this.politicaSentido = politicaSentido; // "complete" | "uturn"
     this.tempo = 0;
     this.veiculos = [];
     this.rotasRecalculadas = 0;
     this.viagensConcluidas = 0;
+    this.inversoes = 0;
+    this.evacuados = 0;
+    this.retornos = 0;
     this.duracoes = [];
     this.proximoId = 1;
     this.#atualizarMalhaPrincipal();
     grafo.on("bloqueioAlterado", (evento) => this.#aoAlterarBloqueio(evento));
+    grafo.on("sentidoAlterado", (evento) => this.#aoAlterarSentido(evento));
   }
 
   definirQuantidade(quantidade) {
@@ -58,8 +63,12 @@ export class Simulacao extends Emissor {
       ativos: this.veiculos.length,
       retidos: this.veiculos.filter((v) => v.status === "retido").length,
       desviados: this.veiculos.filter((v) => v.status === "desviado").length,
+      evacuando: this.veiculos.filter((v) => v.evacuando).length,
       rotasRecalculadas: this.rotasRecalculadas,
       viagensConcluidas: this.viagensConcluidas,
+      inversoes: this.inversoes,
+      evacuados: this.evacuados,
+      retornos: this.retornos,
       tempoMedioViagem: media,
       tempoSimulado: this.tempo,
     };
@@ -78,13 +87,20 @@ export class Simulacao extends Emissor {
       restante -= falta / aresta.velocidade;
       veiculo.progresso = aresta.comprimento;
 
+      // Terminou a aresta atual (inclusive ao evacuar após inversão).
+      if (veiculo.evacuando) {
+        veiculo.evacuando = false;
+        if (!this.#novaViagem(veiculo, aresta.para)) return;
+        continue;
+      }
+
       if (veiculo.indice === veiculo.rota.length - 1) {
         this.#registrarChegada(veiculo);
         if (!this.#novaViagem(veiculo, aresta.para)) return;
         continue;
       }
 
-      // Segurança: se a próxima aresta foi bloqueada, recalcula antes de entrar.
+      // Segurança: se a próxima aresta foi bloqueada/invertida, recalcula antes de entrar.
       if (!this.grafo.estaAcessivel(veiculo.rota[veiculo.indice + 1])) {
         if (!this.#recalcular(veiculo)) return;
       }
@@ -169,6 +185,73 @@ export class Simulacao extends Emissor {
     this.emitir("rotasRecalculadas", { trechoId, bloqueado, quantidade: recalculadas });
   }
 
+  #aoAlterarSentido({ trechoId, sentido, anterior }) {
+    this.#atualizarMalhaPrincipal();
+    this.inversoes += 1;
+    let recalculadas = 0;
+    let evacuando = 0;
+    let retornos = 0;
+
+    for (const veiculo of this.veiculos) {
+      const arestaAtualId = veiculo.rota[veiculo.indice];
+      const arestaAtual = this.grafo.arestas.get(arestaAtualId);
+      const noTrecho = arestaAtual.trechoId === trechoId;
+      const sentidoFechouAresta = noTrecho && !this.grafo.estaAcessivel(arestaAtualId);
+
+      if (sentidoFechouAresta) {
+        if (this.politicaSentido === "uturn") {
+          if (this.#fazerUturn(veiculo, trechoId)) {
+            retornos += 1;
+            recalculadas += 1;
+            continue;
+          }
+        }
+        // complete (ou uturn sem aresta oposta): conclui a travessia atual.
+        veiculo.evacuando = true;
+        veiculo.rota = [arestaAtualId];
+        veiculo.indice = 0;
+        veiculo.status = "desviado";
+        evacuando += 1;
+        continue;
+      }
+
+      const futuras = veiculo.rota.slice(veiculo.indice + 1);
+      const precisa = futuras.some((id) => !this.grafo.estaAcessivel(id));
+      if (!precisa) continue;
+      this.#recalcular(veiculo);
+      if (veiculo.status !== "retido") veiculo.status = "desviado";
+      recalculadas += 1;
+    }
+
+    this.evacuados += evacuando;
+    this.retornos += retornos;
+    this.rotasRecalculadas += recalculadas;
+    this.emitir("sentidoReagido", {
+      trechoId,
+      sentido,
+      anterior,
+      evacuando,
+      retornos,
+      recalculadas,
+    });
+  }
+
+  #fazerUturn(veiculo, trechoId) {
+    const atualId = veiculo.rota[veiculo.indice];
+    const atual = this.grafo.arestas.get(atualId);
+    const opostaId = atualId.endsWith(">") ? `${trechoId}<` : `${trechoId}>`;
+    const oposta = this.grafo.arestas.get(opostaId);
+    if (!oposta || !this.grafo.estaAcessivel(opostaId)) return false;
+
+    veiculo.evacuando = false;
+    veiculo.progresso = Math.max(0, atual.comprimento - veiculo.progresso);
+    veiculo.rota = [opostaId];
+    veiculo.indice = 0;
+    veiculo.status = "desviado";
+    // Escolhe novo destino a partir do fim da aresta oposta.
+    return this.#novaViagem(veiculo, oposta.para);
+  }
+
   #atualizarMalhaPrincipal() {
     const principal = maiorComponenteForte(this.grafo);
     this.malhaPrincipal = [...principal];
@@ -193,6 +276,7 @@ export class Simulacao extends Emissor {
       progresso: this.aleatorio() * inicial.comprimento,
       inicio: this.tempo,
       status: "circulando",
+      evacuando: false,
     };
     return this.#novaViagem(veiculo, inicial.para) ? veiculo : null;
   }

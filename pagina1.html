@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Página 1 - FastFlow</title>
+  <title>Inversão de Sentido - FastFlow</title>
   <script src="js/auth.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
@@ -19,7 +19,7 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a class="active" href="pagina1.html" aria-current="page">Página 1</a>
+        <a class="active" href="pagina1.html" aria-current="page">Inversão de Sentido</a>
         <a href="pagina2.html">Bloqueio Viário</a>
         <a href="pagina3.html">Contingência</a>
       </nav>
@@ -27,23 +27,104 @@
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
-    <aside class="sidebar">
-      <h2>Menu</h2>
-      <ul>
-        <li><a href="#">Item 1</a></li>
-        <li><a href="#">Item 2</a></li>
-        <li><a href="#">Item 3</a></li>
-      </ul>
+    <aside class="sidebar sidebar-sentido" aria-label="Painel de inversão de sentido">
+      <section class="painel-secao">
+        <h2>Seleção de via</h2>
+        <label class="campo">
+          <span>Logradouro</span>
+          <select id="selLogradouro">
+            <option value="">Selecione um logradouro…</option>
+          </select>
+        </label>
+        <label class="campo">
+          <span>Trecho</span>
+          <select id="selTrecho" disabled>
+            <option value="">Escolha um logradouro</option>
+          </select>
+        </label>
+        <p class="dica">Ou clique diretamente em um trecho no mapa.</p>
+      </section>
+
+      <section class="painel-secao" aria-labelledby="h-sel">
+        <h2 id="h-sel">Via selecionada</h2>
+        <p class="empty" id="sel-empty">Nenhuma via selecionada. Clique em um trecho do mapa.</p>
+        <div id="sel-info" hidden>
+          <dl class="estatisticas info-via">
+            <div><dt>Via</dt><dd id="sel-name">—</dd></div>
+            <div><dt>Trecho</dt><dd id="sel-id">—</dd></div>
+            <div><dt>Sentido atual</dt><dd id="sel-dir">—</dd></div>
+            <div><dt>Veículos na via</dt><dd id="sel-count">0</dd></div>
+          </dl>
+          <div class="acoes">
+            <button class="botao botao-bloquear" id="btn-reverse" type="button" disabled>⇄ Inverter sentido (R)</button>
+            <button class="botao botao-secundario" id="btn-clear" type="button">Limpar seleção</button>
+          </div>
+        </div>
+        <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
+      </section>
+
+      <section class="painel-secao" aria-labelledby="h-sim">
+        <h2 id="h-sim">Simulação</h2>
+        <div class="acoes">
+          <button class="botao botao-secundario" id="btn-play" type="button" aria-pressed="false">Pausar</button>
+        </div>
+        <label class="campo campo-range" for="speed">
+          <span>Velocidade <output id="speed-out">1×</output></span>
+          <input id="speed" type="range" min="1" max="8" step="1" value="1">
+        </label>
+        <label class="campo campo-range" for="cars">
+          <span>Veículos <output id="cars-out">50</output></span>
+          <input id="cars" type="range" min="10" max="150" step="10" value="50">
+        </label>
+        <label class="campo" for="policy">
+          <span>Veículos já na via ao inverter</span>
+          <select id="policy">
+            <option value="complete">Concluem a travessia com segurança</option>
+            <option value="uturn">Retornam pelo novo sentido</option>
+          </select>
+        </label>
+        <ul class="legenda-sentido" aria-label="Legenda">
+          <li><span class="amostra selecionada"></span> Via selecionada</li>
+          <li><span class="amostra evacuando"></span> Concluindo travessia</li>
+          <li><span class="amostra seta-mantido"></span> Sentido mantido</li>
+          <li><span class="amostra seta-alterado"></span> Sentido alterado</li>
+        </ul>
+      </section>
+
+      <section class="painel-secao" aria-labelledby="h-st">
+        <h2 id="h-st">Indicadores</h2>
+        <div class="stats-sentido">
+          <div class="stat"><b id="st-cars">0</b><span>veículos</span></div>
+          <div class="stat"><b id="st-rev">0</b><span>inversões</span></div>
+          <div class="stat"><b id="st-rer">0</b><span>rotas recalculadas</span></div>
+          <div class="stat"><b id="st-evac">0</b><span>reagiram à inversão</span></div>
+          <div class="stat"><b id="st-desp">0</b><span>retidos</span></div>
+        </div>
+        <span id="st-conn" class="badge-conn" data-ok="1">Malha conectada</span>
+      </section>
+
+      <section class="painel-secao" aria-labelledby="h-log">
+        <h2 id="h-log">Registro</h2>
+        <ul id="log" class="log-sentido" aria-live="polite"></ul>
+      </section>
     </aside>
 
     <main class="main">
-      <div id="mapa" class="componente"></div>
+      <div id="mapa" class="componente mapa-simulacao" data-malha="data/malha.geojson"></div>
+      <div class="hint-sentido">Clique numa via · R inverte · Espaço pausa · aproxime o zoom para ver setas em todas as vias</div>
+      <div id="carregando" class="carregando">Carregando malha viária de Cajamar…</div>
     </main>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/main.js"></script>
-  <script src="js/mapa.js"></script>
+  <script type="module" src="js/ui/telaSentido.js"></script>
+  <script>
+    if (location.protocol === "file:") {
+      document.getElementById("carregando").textContent =
+        "Esta tela precisa de um servidor local. Na pasta do projeto, rode: python3 -m http.server 8000 e abra http://localhost:8000/pagina1.html";
+    }
+  </script>
 </body>
 </html>

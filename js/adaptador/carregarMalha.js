@@ -96,6 +96,8 @@ export function construirGrafo(geojson) {
       grafo.adicionarTrecho({
         id: trechoId,
         arestas,
+        sentido: sentidoUnico === 0 ? 0 : sentidoUnico === -1 ? -1 : 1,
+        permiteDuplo: sentidoUnico === 0,
         nome: nome ?? null,
         tipo,
         sentidoUnico: sentidoUnico !== 0,

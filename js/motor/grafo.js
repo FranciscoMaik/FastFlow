@@ -32,8 +32,20 @@ export class Grafo extends Emissor {
     return aresta;
   }
 
-  adicionarTrecho({ id, arestas, ...meta }) {
-    const trecho = { id, arestas, bloqueado: false, meta };
+  adicionarTrecho({ id, arestas, sentido, permiteDuplo, ...meta }) {
+    const temIda = arestas.some((a) => a.endsWith(">"));
+    const temVolta = arestas.some((a) => a.endsWith("<"));
+    const sentidoInicial =
+      sentido ?? (temIda && temVolta ? 0 : temIda ? 1 : -1);
+    const trecho = {
+      id,
+      arestas,
+      bloqueado: false,
+      sentido: sentidoInicial,
+      sentidoInicial,
+      permiteDuplo: permiteDuplo ?? (temIda && temVolta),
+      meta,
+    };
     this.trechos.set(id, trecho);
     return trecho;
   }
@@ -59,16 +71,105 @@ export class Grafo extends Emissor {
     const trecho = this.#trecho(trechoId);
     if (!trecho.bloqueado) return false;
     trecho.bloqueado = false;
-    for (const id of trecho.arestas) {
-      const aresta = this.arestas.get(id);
-      aresta.peso = aresta.pesoOriginal;
-    }
+    // Restaura só as arestas permitidas pelo sentido atual.
+    this.#aplicarSentido(trecho, trecho.sentido);
     this.emitir("bloqueioAlterado", { trechoId, bloqueado: false });
     return true;
   }
 
   trechosBloqueados() {
     return [...this.trechos.values()].filter((t) => t.bloqueado).map((t) => t.id);
+  }
+
+  // Sentido operacional do trecho: 0 = mão dupla, 1 = só no sentido da geometria (>),
+  // -1 = só no sentido contrário (<). Inverter cicla 0→1→-1→0 quando a via permite
+  // mão dupla; em vias que já nasceram de mão única, só alterna 1↔-1.
+  sentidoDoTrecho(trechoId) {
+    return this.#trecho(trechoId).sentido;
+  }
+
+  inverterSentido(trechoId) {
+    const trecho = this.#trecho(trechoId);
+    if (trecho.bloqueado) return false;
+    this.#garantirParDeArestas(trecho);
+    const anterior = trecho.sentido;
+    const proximo = trecho.permiteDuplo
+      ? anterior === 0
+        ? 1
+        : anterior === 1
+          ? -1
+          : 0
+      : anterior === 1
+        ? -1
+        : 1;
+    this.#aplicarSentido(trecho, proximo);
+    this.emitir("sentidoAlterado", { trechoId, sentido: proximo, anterior });
+    return true;
+  }
+
+  definirSentido(trechoId, sentido) {
+    const trecho = this.#trecho(trechoId);
+    if (![0, 1, -1].includes(sentido)) throw new Error(`Sentido inválido: ${sentido}`);
+    if (sentido === 0 && !trecho.permiteDuplo) {
+      throw new Error(`Trecho ${trechoId} não permite mão dupla`);
+    }
+    if (trecho.bloqueado) return false;
+    this.#garantirParDeArestas(trecho);
+    const anterior = trecho.sentido;
+    if (anterior === sentido) return false;
+    this.#aplicarSentido(trecho, sentido);
+    this.emitir("sentidoAlterado", { trechoId, sentido, anterior });
+    return true;
+  }
+
+  #aplicarSentido(trecho, sentido) {
+    trecho.sentido = sentido;
+    for (const id of trecho.arestas) {
+      const ida = id.endsWith(">");
+      const ativo = sentido === 0 || (sentido === 1 && ida) || (sentido === -1 && !ida);
+      this.#definirAcessivel(id, ativo);
+    }
+  }
+
+  #definirAcessivel(arestaId, ativo) {
+    const aresta = this.arestas.get(arestaId);
+    const trecho = this.trechos.get(aresta.trechoId);
+    aresta.peso = trecho.bloqueado || !ativo ? Infinity : aresta.pesoOriginal;
+  }
+
+  // Garante arestas ">" e "<" (cria a oposta sob demanda ao inverter uma mão única).
+  #garantirParDeArestas(trecho) {
+    const temIda = trecho.arestas.some((id) => id.endsWith(">"));
+    const temVolta = trecho.arestas.some((id) => id.endsWith("<"));
+    if (temIda && temVolta) return;
+    const baseId = trecho.arestas[0];
+    const base = this.arestas.get(baseId);
+    const criarIda = !temIda;
+    const novoId = `${trecho.id}${criarIda ? ">" : "<"}`;
+    const pontos = [...base.geometria.pontos].reverse();
+    const acumulado = [0];
+    for (let i = 1; i < pontos.length; i++) {
+      const [lat1, lon1] = pontos[i - 1];
+      const [lat2, lon2] = pontos[i];
+      const dLat = ((lat2 - lat1) * Math.PI) / 180;
+      const dLon = ((lon2 - lon1) * Math.PI) / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos((lat1 * Math.PI) / 180) * Math.cos((lat2 * Math.PI) / 180) * Math.sin(dLon / 2) ** 2;
+      acumulado.push(acumulado[i - 1] + 2 * 6371000 * Math.asin(Math.sqrt(a)));
+    }
+    const geometria = { pontos, acumulado, comprimento: base.comprimento };
+    this.adicionarAresta({
+      id: novoId,
+      de: base.para,
+      para: base.de,
+      peso: base.pesoOriginal,
+      trechoId: trecho.id,
+      comprimento: base.comprimento,
+      velocidade: base.velocidade,
+      geometria,
+    });
+    trecho.arestas.push(novoId);
   }
 
   #trecho(trechoId) {
