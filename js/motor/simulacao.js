@@ -6,15 +6,30 @@ import { maiorComponenteForte, menorCaminho } from "./roteamento.js";
 
 const VIAGENS_NA_MEDIA = 50;
 const TENTATIVAS_DE_SORTEIO = 12;
+const DISTANCIA_SEGURA_METROS = 5;
 
 export class Simulacao extends Emissor {
-  constructor(grafo, { aleatorio = Math.random, fatorTempo = 4, politicaSentido = "complete" } = {}) {
+  constructor(
+    grafo,
+    {
+      aleatorio = Math.random,
+      fatorTempo = 4,
+      politicaSentido = "complete",
+      intervaloSpawn = 0.2,
+    } = {}
+  ) {
     super();
+    if (!Number.isFinite(intervaloSpawn) || intervaloSpawn <= 0) {
+      throw new RangeError("O intervalo de spawn deve ser um número positivo.");
+    }
     this.grafo = grafo;
     this.aleatorio = aleatorio;
     this.fatorTempo = fatorTempo;
     this.politicaSentido = politicaSentido; // "complete" | "uturn"
+    this.intervaloSpawn = intervaloSpawn;
     this.tempo = 0;
+    this.tempoSpawn = 0;
+    this.quantidadeDesejada = 0;
     this.veiculos = [];
     this.rotasRecalculadas = 0;
     this.viagensConcluidas = 0;
@@ -29,6 +44,7 @@ export class Simulacao extends Emissor {
   }
 
   definirQuantidade(quantidade) {
+    this.quantidadeDesejada = quantidade;
     while (this.veiculos.length > quantidade) this.veiculos.pop();
     while (this.veiculos.length < quantidade) {
       const veiculo = this.#criarVeiculo();
@@ -41,8 +57,37 @@ export class Simulacao extends Emissor {
   avancar(dtReal) {
     const dt = dtReal * this.fatorTempo;
     this.tempo += dt;
+    if (this.veiculos.length >= this.quantidadeDesejada) {
+      this.tempoSpawn = 0;
+    } else {
+      this.tempoSpawn += dt;
+      while (this.tempoSpawn >= this.intervaloSpawn) {
+        this.tempoSpawn -= this.intervaloSpawn;
+        const veiculo = this.#criarVeiculo({ naEntrada: true });
+        if (!veiculo) {
+          this.tempoSpawn = 0;
+          break;
+        }
+        this.veiculos.push(veiculo);
+      }
+    }
+    const ocupacaoPorAresta = new Map();
     for (const veiculo of this.veiculos) {
-      if (veiculo.status !== "retido") this.#mover(veiculo, dt);
+      const arestaId = veiculo.rota[veiculo.indice];
+      if (!ocupacaoPorAresta.has(arestaId)) ocupacaoPorAresta.set(arestaId, []);
+      ocupacaoPorAresta.get(arestaId).push({ id: veiculo.id, progresso: veiculo.progresso });
+    }
+    for (const ocupacao of ocupacaoPorAresta.values()) {
+      ocupacao.sort((a, b) => b.progresso - a.progresso || a.id - b.id);
+    }
+    const paraRemover = new Set();
+    for (const veiculo of this.veiculos) {
+      if (veiculo.status !== "retido" && this.#mover(veiculo, dt, ocupacaoPorAresta)) {
+        paraRemover.add(veiculo);
+      }
+    }
+    if (paraRemover.size) {
+      this.veiculos = this.veiculos.filter((veiculo) => !paraRemover.has(veiculo));
     }
     this.emitir("tick", { tempo: this.tempo });
   }
@@ -74,18 +119,32 @@ export class Simulacao extends Emissor {
     };
   }
 
-  #mover(veiculo, dt) {
+  #mover(veiculo, dt, ocupacaoPorAresta) {
     let restante = dt;
     while (restante > 0) {
-      const aresta = this.grafo.arestas.get(veiculo.rota[veiculo.indice]);
-      const falta = aresta.comprimento - veiculo.progresso;
+      const arestaId = veiculo.rota[veiculo.indice];
+      const aresta = this.grafo.arestas.get(arestaId);
+      const ocupacao = ocupacaoPorAresta.get(arestaId) ?? [];
+      const lider = ocupacao.find(
+        (outro) =>
+          outro.id !== veiculo.id &&
+          (outro.progresso > veiculo.progresso ||
+            (outro.progresso === veiculo.progresso && outro.id < veiculo.id))
+      );
+      const limite = Math.min(
+        aresta.comprimento,
+        lider ? lider.progresso - DISTANCIA_SEGURA_METROS : aresta.comprimento
+      );
+      const falta = limite - veiculo.progresso;
+      if (falta <= 1e-6 && limite < aresta.comprimento - 1e-6) return;
       const percorrivel = aresta.velocidade * restante;
       if (percorrivel < falta) {
         veiculo.progresso += percorrivel;
         return;
       }
       restante -= falta / aresta.velocidade;
-      veiculo.progresso = aresta.comprimento;
+      veiculo.progresso = limite;
+      if (limite < aresta.comprimento - 1e-6) return;
 
       // Terminou a aresta atual (inclusive ao evacuar após inversão).
       if (veiculo.evacuando) {
@@ -96,8 +155,7 @@ export class Simulacao extends Emissor {
 
       if (veiculo.indice === veiculo.rota.length - 1) {
         this.#registrarChegada(veiculo);
-        if (!this.#novaViagem(veiculo, aresta.para)) return;
-        continue;
+        return true;
       }
 
       // Segurança: se a próxima aresta foi bloqueada/invertida, recalcula antes de entrar.
@@ -107,6 +165,7 @@ export class Simulacao extends Emissor {
       veiculo.indice += 1;
       veiculo.progresso = 0;
     }
+    return false;
   }
 
   #registrarChegada(veiculo) {
@@ -264,20 +323,34 @@ export class Simulacao extends Emissor {
     return this.malhaPrincipal[Math.floor(this.aleatorio() * this.malhaPrincipal.length)];
   }
 
-  #criarVeiculo() {
+  #criarVeiculo({ naEntrada = false } = {}) {
     if (this.arestasPrincipais.length === 0) return null;
-    const inicial =
-      this.arestasPrincipais[Math.floor(this.aleatorio() * this.arestasPrincipais.length)];
-    const veiculo = {
-      id: this.proximoId++,
-      destino: null,
-      rota: [inicial.id],
-      indice: 0,
-      progresso: this.aleatorio() * inicial.comprimento,
-      inicio: this.tempo,
-      status: "circulando",
-      evacuando: false,
-    };
-    return this.#novaViagem(veiculo, inicial.para) ? veiculo : null;
+    for (let tentativa = 0; tentativa < TENTATIVAS_DE_SORTEIO; tentativa++) {
+      const inicial =
+        this.arestasPrincipais[Math.floor(this.aleatorio() * this.arestasPrincipais.length)];
+      const progresso = naEntrada ? 0 : this.aleatorio() * inicial.comprimento;
+      if (
+        naEntrada &&
+        this.veiculos.some(
+          (veiculo) =>
+            veiculo.rota[veiculo.indice] === inicial.id &&
+            veiculo.progresso < DISTANCIA_SEGURA_METROS
+        )
+      ) {
+        continue;
+      }
+      const veiculo = {
+        id: this.proximoId++,
+        destino: null,
+        rota: [inicial.id],
+        indice: 0,
+        progresso,
+        inicio: this.tempo,
+        status: "circulando",
+        evacuando: false,
+      };
+      if (this.#novaViagem(veiculo, inicial.para)) return veiculo;
+    }
+    return null;
   }
 }

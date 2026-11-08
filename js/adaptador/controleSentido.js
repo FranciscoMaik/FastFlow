@@ -22,10 +22,24 @@ export class ControleSentido extends Emissor {
   #registro = [];
   selecionado = null;
 
-  constructor(geojson, { quantidadeVeiculos = 50, fatorTempo = 1, aleatorio, politicaSentido = "complete" } = {}) {
+  constructor(
+    geojson,
+    {
+      quantidadeVeiculos = 50,
+      fatorTempo = 1,
+      aleatorio,
+      politicaSentido = "complete",
+      intervaloSpawn = 0.2,
+    } = {}
+  ) {
     super();
     this.#grafo = construirGrafo(geojson);
-    this.#simulacao = new Simulacao(this.#grafo, { fatorTempo, aleatorio, politicaSentido });
+    this.#simulacao = new Simulacao(this.#grafo, {
+      fatorTempo,
+      aleatorio,
+      politicaSentido,
+      intervaloSpawn,
+    });
     this.#simulacao.definirQuantidade(quantidadeVeiculos);
 
     this.#simulacao.on("sentidoReagido", (e) => {
@@ -93,6 +107,7 @@ export class ControleSentido extends Emissor {
       const [lat, lon] = pontoNaGeometria(aresta.geometria, v.progresso);
       return {
         id: v.id,
+        arestaId: aresta.id,
         lat,
         lon,
         status: v.evacuando ? "evacuando" : v.status,
