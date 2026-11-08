@@ -2,27 +2,33 @@
 // de interface ao ControleBloqueio (adaptador); não acessa o motor diretamente.
 /* global L */
 import { carregarControle } from "../adaptador/controleBloqueio.js";
+import { ligarSeletorRegiao } from "../regioes.js";
 import { criarCamadaVias } from "./camadaVias.js";
 import { criarCamadaVeiculos } from "./camadaVeiculos.js";
 import { criarSeletorVias } from "./seletorVias.js";
 import { renderizarBloqueios, renderizarEstatisticas, renderizarInfoTrecho } from "./painelBloqueios.js";
 import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
 
-const CENTRO_CAJAMAR = [-23.355, -46.878];
-// Mesma área usada na consulta de scripts/gerar-malha.mjs (algumas vias seguem além dela).
-const AREA_SIMULADA = [[-23.365, -46.89], [-23.345, -46.866]];
 const $ = (id) => document.getElementById(id);
 
 async function iniciar() {
-  const mapa = L.map("mapa", { zoomControl: true }).setView(CENTRO_CAJAMAR, 15);
+  const regiao = ligarSeletorRegiao($("selRegiao"), {
+    aoTrocar() {
+      location.reload();
+    },
+  });
+
+  const mapa = L.map("mapa", { zoomControl: true }).setView(regiao.centro, 15);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
 
+  $("carregando").textContent = `Carregando malha viária de ${regiao.nome}…`;
+
   let controle;
   try {
-    controle = await carregarControle($("mapa").dataset.malha, {
+    controle = await carregarControle(regiao.malha, {
       quantidadeVeiculos: Number($("selQuantidade").value),
       fatorTempo: Number($("selVelocidade").value),
     });
@@ -38,7 +44,7 @@ async function iniciar() {
   const camadaVias = criarCamadaVias(mapa, controle.trechos(), {
     aoClicar: (id) => controle.selecionar(id),
   });
-  mapa.fitBounds(AREA_SIMULADA);
+  mapa.fitBounds(regiao.area);
 
   const camadaVeiculos = criarCamadaVeiculos(mapa);
 

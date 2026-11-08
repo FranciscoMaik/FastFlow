@@ -12,7 +12,7 @@ O FastFlow é um aplicativo web de **simulação de tráfego**. Ele mostra um ma
 - se algum veículo fica sem saída;
 - quanto o tempo médio das viagens aumenta.
 
-A região simulada é o **centro de Cajamar (SP)**, com as ruas reais tiradas do OpenStreetMap.
+As regiões simuláveis são **Centro de Cajamar**, **Jordanésia** e **Polvilho** (SP), com as ruas reais tiradas do OpenStreetMap. O seletor **Região** no painel troca a área; a escolha vale para as três telas.
 
 > **Importante:** tudo é uma simulação. Bloquear uma via no FastFlow não afeta o trânsito real nem nenhum outro sistema.
 
@@ -87,7 +87,7 @@ Esta tela serve para ver o mapa e a sua posição.
 
 É a tela principal de simulação. Clique em **Bloqueio Viário** no menu superior para abri-la.
 
-Ao abrir, aparece por alguns instantes a mensagem *"Carregando malha viária de Cajamar…"*. Em seguida o mapa mostra as ruas da região, e os veículos começam a se mover sozinhos.
+Ao abrir, aparece por alguns instantes a mensagem *"Carregando malha viária…"* com o nome da região escolhida. Em seguida o mapa mostra as ruas da área, e os veículos começam a se mover sozinhos. Use o seletor **Região** no painel para alternar entre Centro de Cajamar, Jordanésia e Polvilho.
 
 ### 5.1 Partes da tela
 
@@ -283,7 +283,7 @@ Não. O bloqueio é feito trecho a trecho. Para interditar uma rua inteira, bloq
 São vias que não têm nome cadastrado no OpenStreetMap. Elas podem ser selecionadas e bloqueadas pelo mapa, mas não aparecem na lista de logradouros.
 
 **Posso simular outra cidade?**
-Hoje a tela usa apenas o centro de Cajamar. Trocar a região exige gerar um novo arquivo de vias; o procedimento está na seção 12.
+Nas três telas você já escolhe entre Centro de Cajamar, Jordanésia e Polvilho. Incluir outra área exige gerar um novo arquivo de vias; o procedimento está na seção 12.
 
 **A tela fica "Carregando malha viária…" e não sai disso.**
 Atualize a página. Se estiver rodando o aplicativo no seu computador, confira se ele foi aberto por um servidor local (seção 12), e não com duplo clique no arquivo.
@@ -310,13 +310,23 @@ Depois abra `http://localhost:8000/pagina2.html`.
 node --test
 ```
 
-**Trocar a região simulada:**
-1. Baixe as vias da nova área pela Overpass API. A consulta modelo está no início de `scripts/gerar-malha.mjs`; troque as coordenadas.
+**Regiões disponíveis e malhas:**
+
+| Região | Arquivo | Configuração |
+|---|---|---|
+| Centro de Cajamar | `data/malha.geojson` | `js/regioes.js` → `centro` |
+| Jordanésia | `data/malha-jordanesia.geojson` | `js/regioes.js` → `jordanesia` |
+| Polvilho | `data/malha-polvilho.geojson` | `js/regioes.js` → `polvilho` |
+
+A escolha do usuário fica em `localStorage` (`fastflow.regiao`) e é compartilhada entre as três páginas.
+
+**Incluir ou atualizar uma região:**
+1. Baixe as vias da área pela Overpass API. Os bboxes modelo estão no início de `scripts/gerar-malha.mjs`.
 2. Converta para o formato do aplicativo:
    ```bash
-   node scripts/gerar-malha.mjs resposta-overpass.json > data/malha.geojson
+   node scripts/gerar-malha.mjs resposta-overpass.json > data/malha-NOME.geojson
    ```
-3. Atualize as constantes `CENTRO_CAJAMAR` e `AREA_SIMULADA` em `js/ui/telaBloqueio.js`.
+3. Cadastre (ou atualize) a entrada em `js/regioes.js` (`id`, `nome`, `centro`, `area`, `malha`).
 
 **Organização do código:**
 
@@ -325,7 +335,8 @@ node --test
 | `js/motor/` | Lógica da simulação: grafo viário, cálculo de rotas, veículos e regra de bloqueio. Não depende da tela. |
 | `js/adaptador/` | Ponte entre a tela e o motor; também carrega o arquivo de vias |
 | `js/ui/` | Tudo o que é visual: mapa, listas, painel |
-| `data/malha.geojson` | Vias da região simulada |
+| `js/regioes.js` | Catálogo das regiões e persistência do seletor |
+| `data/malha*.geojson` | Vias de cada região simulada |
 | `css/style.css` | Estilos e tokens de cor do projeto (por exemplo `--cor-bloqueio`) |
 
 ---

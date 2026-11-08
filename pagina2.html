@@ -29,6 +29,14 @@
 
     <aside class="sidebar" aria-label="Painel de bloqueio viário">
       <section class="painel-secao">
+        <h2>Região</h2>
+        <label class="campo">
+          <span>Área simulada</span>
+          <select id="selRegiao"></select>
+        </label>
+      </section>
+
+      <section class="painel-secao">
         <h2>Seleção de via</h2>
         <label class="campo">
           <span>Logradouro</span>
@@ -76,7 +84,7 @@
     </aside>
 
     <main class="main">
-      <div id="mapa" class="componente mapa-simulacao" data-malha="data/malha.geojson"></div>
+      <div id="mapa" class="componente mapa-simulacao"></div>
 
       <div class="barra-simulacao" role="group" aria-label="Controles da simulação">
         <button id="btnPausar" type="button" class="botao botao-secundario" aria-pressed="false">Pausar</button>
@@ -108,7 +116,7 @@
         <li><span class="amostra ponto retido"></span> Veículo retido</li>
       </ul>
 
-      <div id="carregando" class="carregando">Carregando malha viária de Cajamar…</div>
+      <div id="carregando" class="carregando">Carregando malha viária…</div>
     </main>
   </div>
 

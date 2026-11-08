@@ -1,29 +1,33 @@
 // Tela Página 1: simulação de inversão de sentido sobre o mapa Leaflet de Cajamar.
 /* global L */
 import { carregarControleSentido } from "../adaptador/controleSentido.js";
+import { ligarSeletorRegiao } from "../regioes.js";
 import { criarCamadaVias } from "./camadaVias.js";
 import { criarCamadaVeiculos } from "./camadaVeiculos.js";
 import { criarCamadaSetas } from "./camadaSetas.js";
 import { criarSeletorVias } from "./seletorVias.js";
 import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
 
-const CENTRO_CAJAMAR = [-23.355, -46.878];
-const AREA_SIMULADA = [
-  [-23.365, -46.89],
-  [-23.345, -46.866],
-];
 const $ = (id) => document.getElementById(id);
 
 async function iniciar() {
-  const mapa = L.map("mapa", { zoomControl: true }).setView(CENTRO_CAJAMAR, 15);
+  const regiao = ligarSeletorRegiao($("selRegiao"), {
+    aoTrocar() {
+      location.reload();
+    },
+  });
+
+  const mapa = L.map("mapa", { zoomControl: true }).setView(regiao.centro, 15);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
 
+  $("carregando").textContent = `Carregando malha viária de ${regiao.nome}…`;
+
   let controle;
   try {
-    controle = await carregarControleSentido($("mapa").dataset.malha, {
+    controle = await carregarControleSentido(regiao.malha, {
       quantidadeVeiculos: Number($("cars").value),
       fatorTempo: Number($("speed").value),
       politicaSentido: $("policy").value,
@@ -40,7 +44,7 @@ async function iniciar() {
   });
   const camadaSetas = criarCamadaSetas(mapa);
   const camadaVeiculos = criarCamadaVeiculos(mapa);
-  mapa.fitBounds(AREA_SIMULADA);
+  mapa.fitBounds(regiao.area);
 
   const seletor = criarSeletorVias(
     { selectLogradouro: $("selLogradouro"), selectTrecho: $("selTrecho") },
