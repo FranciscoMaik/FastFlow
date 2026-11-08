@@ -27,7 +27,7 @@
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
-    <aside class="sidebar" aria-label="Painel de bloqueio viário">
+    <aside class="sidebar" aria-label="Painel de controle viário e tráfego">
       <section class="painel-secao">
         <h2>Seleção de via</h2>
         <label class="campo">
@@ -47,7 +47,7 @@
       </section>
 
       <section class="painel-secao">
-        <h2>Ações</h2>
+        <h2>Ações de via</h2>
         <div class="acoes">
           <button id="btnBloquear" type="button" class="botao botao-bloquear" disabled>Bloquear</button>
           <button id="btnDesbloquear" type="button" class="botao botao-secundario" disabled>Desbloquear</button>
@@ -60,6 +60,17 @@
         <ul id="listaBloqueios" class="lista-bloqueios"></ul>
         <p id="semBloqueios" class="vazio">Nenhuma via bloqueada nesta sessão.</p>
         <button id="btnRemoverTodos" type="button" class="botao botao-secundario remover-todos" hidden>Remover todos</button>
+      </section>
+
+      <section class="painel-secao">
+        <h2>Dispositivos de tráfego <span id="contadorDispositivos" class="contador">0</span></h2>
+        <div class="sub-contadores">
+          <span class="tag-contador">Lombadas: <b id="contadorLombadas">0</b></span>
+          <span class="tag-contador">Semáforos: <b id="contadorSemaforos">0</b></span>
+        </div>
+        <ul id="listaDispositivos" class="lista-bloqueios lista-dispositivos"></ul>
+        <p id="semDispositivos" class="vazio">Nenhuma lombada ou semáforo adicionado.</p>
+        <button id="btnRemoverTodosDispositivos" type="button" class="botao botao-secundario remover-todos" hidden>Remover todos dispositivos</button>
       </section>
 
       <section class="painel-secao">
@@ -78,7 +89,21 @@
     <main class="main">
       <div id="mapa" class="componente mapa-simulacao" data-malha="data/malha.geojson"></div>
 
-      <div class="barra-simulacao" role="group" aria-label="Controles da simulação">
+      <div class="barra-simulacao" role="group" aria-label="Controles da simulação e ferramentas">
+        <div class="grupo-ferramentas" role="group" aria-label="Ferramentas interativas">
+          <button id="btnModoNavegar" type="button" class="botao botao-ferramenta ativo" aria-pressed="true" title="Selecionar vias e mover mapa">
+            <span class="icone-btn">✋</span> Selecionar
+          </button>
+          <button id="btnModoLombada" type="button" class="botao botao-ferramenta" aria-pressed="false" title="Posicionar lombada na via">
+            <span class="icone-btn">▲</span> + Lombada
+          </button>
+          <button id="btnModoSemaforo" type="button" class="botao botao-ferramenta" aria-pressed="false" title="Posicionar semáforo na via">
+            <span class="icone-btn">🚦</span> + Semáforo
+          </button>
+        </div>
+
+        <div class="divisor-barra" aria-hidden="true"></div>
+
         <button id="btnPausar" type="button" class="botao botao-secundario" aria-pressed="false">Pausar</button>
         <label class="campo">
           <span>Veículos</span>
@@ -99,6 +124,11 @@
         </label>
       </div>
 
+      <div id="bannerFerramenta" class="banner-ferramenta" hidden role="status" aria-live="polite">
+        <span id="textoBannerFerramenta">Clique sobre um trecho de via para posicionar.</span>
+        <button id="btnCancelarFerramenta" type="button" class="botao-fechar-banner" aria-label="Cancelar ferramenta">✕</button>
+      </div>
+
       <ul class="legenda" aria-label="Legenda">
         <li><span class="amostra"></span> Via livre</li>
         <li><span class="amostra selecionada"></span> Via selecionada</li>
@@ -106,6 +136,8 @@
         <li><span class="amostra ponto"></span> Veículo</li>
         <li><span class="amostra ponto desviado"></span> Veículo desviado</li>
         <li><span class="amostra ponto retido"></span> Veículo retido</li>
+        <li><span class="amostra amostra-lombada">▲</span> Lombada</li>
+        <li><span class="amostra amostra-semaforo">●</span> Semáforo</li>
       </ul>
 
       <div id="carregando" class="carregando">Carregando malha viária de Cajamar…</div>
