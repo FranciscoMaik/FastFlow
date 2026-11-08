@@ -1,4 +1,4 @@
-// Painel lateral: dados do trecho selecionado, bloqueios, dispositivos e estatísticas.
+// Painel lateral: trecho selecionado, bloqueios, dispositivos e estatísticas.
 import { rotulo } from "./camadaVias.js";
 
 const formatoHora = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", second: "2-digit" });

@@ -1,11 +1,7 @@
-// Utilitários de projeção geométrica e atrelamento ("snap") de pontos à malha viária.
-// Garante que lombadas e semáforos só possam ser posicionados sobre vias válidas.
+// Projeção geométrica e snap de pontos à malha viária.
 import { distanciaMetros } from "../adaptador/carregarMalha.js";
 
-/**
- * Calcula a projeção ortogonal do ponto P sobre o segmento AB (em coordenadas geográficas locais).
- * Retorna o ponto mais próximo no segmento e o fator t (0 a 1).
- */
+// Projeção ortogonal de P sobre o segmento AB; retorna ponto e fator t ∈ [0, 1].
 export function projetarPontoEmSegmento(ponto, pA, pB) {
   const [latP, lonP] = ponto;
   const [latA, lonA] = pA;
@@ -14,7 +10,6 @@ export function projetarPontoEmSegmento(ponto, pA, pB) {
   const latMedRad = ((latA + latB) / 2) * (Math.PI / 180);
   const cosLat = Math.cos(latMedRad);
 
-  // Conversão para deslocamentos proporcionais a metros
   const dx = (lonB - lonA) * cosLat;
   const dy = latB - latA;
   const comprimentoSq = dx * dx + dy * dy;
@@ -36,15 +31,10 @@ export function projetarPontoEmSegmento(ponto, pA, pB) {
   return { ponto: [latProj, lonProj], t };
 }
 
-/**
- * Projeta um ponto [lat, lon] sobre os trechos do grafo e encontra o ponto mais próximo.
- * Se trechoIdPreferido for informado, avalia primeiro o trecho indicado.
- */
 export function projetarPontoNaMalha(ponto, grafo, raioMaxMetros = 50, trechoIdPreferido = null) {
   let melhor = null;
   let menorDistancia = Infinity;
 
-  // Se tiver um trecho preferido (por exemplo, clicado diretamente na via), testa ele primeiro
   const listaTrechos = trechoIdPreferido && grafo.trechos.has(trechoIdPreferido)
     ? [grafo.trechos.get(trechoIdPreferido), ...grafo.trechos.values()]
     : grafo.trechos.values();
@@ -76,7 +66,7 @@ export function projetarPontoNaMalha(ponto, grafo, raioMaxMetros = 50, trechoIdP
           distanciaMetros: distAoSegmento,
         };
 
-        // Se o clique foi diretamente na via preferida e está a menos de 20m, já temos o match perfeito
+        // Clique direto na via preferida a < 20 m: match suficiente.
         if (trecho.id === trechoIdPreferido && distAoSegmento < 20) {
           return { valido: true, ...melhor };
         }

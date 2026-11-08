@@ -1,15 +1,14 @@
 // Modelagem dos dispositivos físicos e semafóricos de controle de tráfego.
-// Gerencia o ciclo autônomo de semáforos e parâmetros de lombadas.
 import { Emissor } from "./eventos.js";
 
 export const VELOCIDADE_PADRAO_LOMBADA_KMH = 20;
 export const VELOCIDADE_PADRAO_LOMBADA_MS = VELOCIDADE_PADRAO_LOMBADA_KMH / 3.6; // ~5.56 m/s
-export const RAIO_EFEITO_LOMBADA = 25; // metros de aproximação
+export const RAIO_EFEITO_LOMBADA = 25; // metros
 
 export const TEMPOS_PADRAO_SEMAFORO = {
-  verde: 12,    // segundos simulados
-  amarelo: 3,   // segundos simulados
-  vermelho: 10, // segundos simulados
+  verde: 12, // s
+  amarelo: 3, // s
+  vermelho: 10, // s
 };
 
 export class Lombada {
@@ -67,10 +66,7 @@ export class Semaforo {
     this.tempoRestante = this.tempos[this.estado] ?? this.tempos.verde;
   }
 
-  /**
-   * Avança o ciclo semafórico pelo tempo dt (segundos simulados).
-   * Retorna true caso o estado tenha mudado.
-   */
+  // Retorna true se o estado mudou.
   avancar(dt) {
     if (dt <= 0) return false;
     this.tempoRestante -= dt;
@@ -260,9 +256,6 @@ export class GerenciadorDispositivos extends Emissor {
     return { lombadas, semaforos };
   }
 
-  /**
-   * Avança todos os semáforos no tempo e emite notificações assíncronas de mudança.
-   */
   avancar(dt) {
     for (const s of this.#semaforos.values()) {
       const mudou = s.avancar(dt);

@@ -1,5 +1,5 @@
-// Ponto de entrada da tela de simulação de bloqueio viário e dispositivos de tráfego.
-// Liga os componentes de interface ao ControleBloqueio (adaptador); não acessa o motor diretamente.
+// Ponto de entrada da tela de simulação de bloqueio viário. Liga os componentes
+// de interface ao ControleBloqueio (adaptador); não acessa o motor diretamente.
 /* global L */
 import { carregarControle } from "../adaptador/controleBloqueio.js";
 import { criarCamadaVias } from "./camadaVias.js";
@@ -39,9 +39,7 @@ async function iniciar() {
   }
   $("carregando").hidden = true;
 
-  // ---------- Estado de Ferramentas ----------
-  // "navegar" | "lombada" | "semaforo"
-  let modoFerramenta = "navegar";
+  let modoFerramenta = "navegar"; // "navegar" | "lombada" | "semaforo"
 
   function definirModo(modo) {
     modoFerramenta = modo;
@@ -67,14 +65,12 @@ async function iniciar() {
     }
   }
 
-  // ---------- Mensagens ----------
   function mensagem(texto, tipo) {
     const caixa = $("mensagem");
     caixa.textContent = texto;
     caixa.className = `mensagem ${tipo ?? ""}`;
   }
 
-  // ---------- Processamento de Inserção de Dispositivo ----------
   function processarInsercao(latlng, trechoIdSugerido = null) {
     let lat = latlng?.lat;
     let lon = latlng?.lng;
@@ -249,21 +245,18 @@ async function iniciar() {
     redesenhar();
   }
 
-  // ---------- Inserção no Mapa por Clique ----------
   mapa.on("click", (e) => {
     if (modoFerramenta !== "navegar") {
       processarInsercao(e.latlng);
       return;
     }
 
-    // Modo normal de navegação
     controle.selecionar(null);
     destacados = [];
     seletor.sincronizar(null);
     redesenhar();
   });
 
-  // ---------- Controles de Ferramentas ----------
   $("btnModoNavegar").addEventListener("click", () => definirModo("navegar"));
   $("btnModoLombada").addEventListener("click", () => definirModo("lombada"));
   $("btnModoSemaforo").addEventListener("click", () => definirModo("semaforo"));
@@ -279,7 +272,6 @@ async function iniciar() {
     }
   });
 
-  // ---------- Eventos do Motor ----------
   controle.on("selecaoAlterada", (id) => {
     if (id) {
       destacados = [id];
@@ -346,7 +338,6 @@ async function iniciar() {
     if (rodando) {
       controle.avancar(dt);
       camadaVeiculos.atualizar(controle.veiculos());
-      // Atualiza os semáforos no mapa se houver semáforos ativos
       camadaDispositivos.atualizar(controle.dispositivos());
     }
     if (agora - ultimoPainel > INTERVALO_PAINEL_MS) {

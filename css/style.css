@@ -946,10 +946,6 @@ path.veiculo.retido {
 }
 
 
-/* =====================================================================
-   Controles de tráfego: Lombadas, Semáforos e Ferramentas Interativas
-   ===================================================================== */
-
 /* ---------- Grupo de ferramentas na barra ---------- */
 .grupo-ferramentas {
   display: flex;

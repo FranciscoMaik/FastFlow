@@ -1,6 +1,4 @@
-// Camada de renderização e interação para lombadas e semáforos no Leaflet.
-// Permite arrastar os elementos para reposicionamento com snap à malha e abrir
-// popups interativos para configuração de tempos e remoção.
+// Camada Leaflet de lombadas e semáforos (arraste com snap e popups de configuração).
 /* global L */
 
 export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoConfigurarSemaforo, aoAlternarSemaforo, aoNotificar }) {
@@ -16,7 +14,6 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
       html: `
         <div class="icone-lombada" title="Lombada (Redutor de velocidade - 20 km/h)">
           <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
-            <!-- Símbolo de ondulação/lombada -->
             <path d="M 2 15 Q 7 15 9 10 Q 12 6 15 10 Q 17 15 22 15" fill="none" stroke="#1e293b" stroke-width="2.8" stroke-linecap="round"/>
           </svg>
         </div>
@@ -134,7 +131,6 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
             zIndexOffset: d.tipo === "semaforo" ? 850 : 800,
           }).addTo(grupo);
 
-          // Posição de ancoragem antes de iniciar arraste
           let posAnterior = d.coordenadas;
 
           marcador.on("dragstart", () => {
@@ -152,7 +148,6 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
                 aoNotificar(`${d.tipo === "lombada" ? "Lombada" : "Semáforo"} reposicionado(a) na via.`, "sucesso");
               }
             } else {
-              // Retorna para a posição válida anterior
               marcador.setLatLng(posAnterior);
               if (aoNotificar) {
                 aoNotificar(resultado?.motivo ?? "Posição fora da malha viária permitida.", "erro");
@@ -168,16 +163,13 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
           item = { marcador, dados: d, estado: d.estado };
           marcadores.set(d.id, item);
         } else {
-          // Atualiza dados
           item.dados = d;
 
-          // Se a coordenada mudou externamente (ex: reposicionamento via lista)
           const atualPos = item.marcador.getLatLng();
           if (Math.abs(atualPos.lat - d.coordenadas[0]) > 1e-6 || Math.abs(atualPos.lng - d.coordenadas[1]) > 1e-6) {
             item.marcador.setLatLng(d.coordenadas);
           }
 
-          // Se o semáforo mudou de estado, atualiza visual
           if (d.tipo === "semaforo" && item.estado !== d.estado) {
             item.estado = d.estado;
             const el = item.marcador.getElement();
@@ -196,7 +188,6 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
         }
       }
 
-      // Remove os excluídos
       for (const [id, item] of marcadores.entries()) {
         if (!vistos.has(id)) {
           grupo.removeLayer(item.marcador);

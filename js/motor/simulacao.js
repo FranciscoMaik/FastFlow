@@ -1,7 +1,5 @@
 // Simulação de veículos sobre o grafo. Cada veículo segue a rota mais rápida até
-// um destino; ao chegar, sorteia outro. Suporta controle de tráfego por dispositivos
-// físicos (lombadas) e semafóricos (ciclos verde/amarelo/vermelho), com física
-// de aceleração, desaceleração suave e comportamento de fila seguro.
+// um destino; ao chegar, sorteia outro. Respeita lombadas, semáforos e filas.
 import { Emissor } from "./eventos.js";
 import { maiorComponenteForte, menorCaminho } from "./roteamento.js";
 import { GerenciadorDispositivos } from "./dispositivos.js";
@@ -9,12 +7,11 @@ import { GerenciadorDispositivos } from "./dispositivos.js";
 const VIAGENS_NA_MEDIA = 50;
 const TENTATIVAS_DE_SORTEIO = 12;
 
-// Parâmetros cinemáticos de tráfego
 const ACELERACAO_MAX = 2.5; // m/s²
 const DESACELERACAO_CONFORTAVEL = 3.2; // m/s²
 const DESACELERACAO_MAX = 6.0; // m/s²
-const DISTANCIA_SEGURANCA_FILA = 7.0; // metros entre veículos na fila
-const MARGEM_PARADA_SEMAFORO = 2.0; // metros antes do semáforo
+const DISTANCIA_SEGURANCA_FILA = 7.0; // m
+const MARGEM_PARADA_SEMAFORO = 2.0; // m
 
 export class Simulacao extends Emissor {
   constructor(grafo, { aleatorio = Math.random, fatorTempo = 4, dispositivos } = {}) {
@@ -46,13 +43,8 @@ export class Simulacao extends Emissor {
   avancar(dtReal) {
     const dt = dtReal * this.fatorTempo;
     this.tempo += dt;
-
-    // Atualiza os ciclos semafóricos de forma autônoma
     this.dispositivos.avancar(dt);
-
-    // Atualiza a física de movimentação e filas de veículos
     this.#atualizarVeiculos(dt);
-
     this.emitir("tick", { tempo: this.tempo });
   }
 
@@ -82,7 +74,6 @@ export class Simulacao extends Emissor {
   #atualizarVeiculos(dt) {
     if (dt <= 0) return;
 
-    // Agrupa veículos ativos por aresta atual
     const porAresta = new Map();
     for (const v of this.veiculos) {
       if (v.status === "retido") continue;
@@ -91,7 +82,6 @@ export class Simulacao extends Emissor {
       porAresta.get(arestaId).push(v);
     }
 
-    // Processa cada aresta: veículos mais adiantados primeiro
     for (const [arestaId, veiculosNaAresta] of porAresta.entries()) {
       veiculosNaAresta.sort((a, b) => b.progresso - a.progresso);
 
@@ -105,11 +95,9 @@ export class Simulacao extends Emissor {
         const v = veiculosNaAresta[i];
         if (v.velocidade == null) v.velocidade = aresta.velocidade;
 
-        // Ponto de parada máximo permitido na aresta
         let posParada = aresta.comprimento;
         let vDesejada = aresta.velocidade;
 
-        // 1. Restrição de fila: veículo à frente na mesma aresta
         if (i > 0) {
           const vFrente = veiculosNaAresta[i - 1];
           const posFrenteFila = Math.max(0, vFrente.progresso - DISTANCIA_SEGURANCA_FILA);
@@ -118,7 +106,6 @@ export class Simulacao extends Emissor {
           }
         }
 
-        // 2. Restrição por semáforos no trecho
         for (const sem of semaforos) {
           if (sem.sentido !== "ambos") {
             const sentidoCompativel = sentidoInverso ? sem.sentido === "<" : sem.sentido === ">";
@@ -129,7 +116,6 @@ export class Simulacao extends Emissor {
             ? aresta.comprimento - sem.distancia
             : sem.distancia;
 
-          // Semáforo à frente do veículo
           if (posSem > v.progresso) {
             if (sem.estado === "vermelho") {
               const posParadaSem = Math.max(0, posSem - MARGEM_PARADA_SEMAFORO);
@@ -137,23 +123,20 @@ export class Simulacao extends Emissor {
             } else if (sem.estado === "amarelo") {
               const distAteSem = posSem - v.progresso;
               const dFrenagemSegura = (v.velocidade * v.velocidade) / (2 * DESACELERACAO_CONFORTAVEL);
+              // Amarelo: só para se ainda dá para frear com conforto; senão, cruza.
               if (distAteSem > dFrenagemSegura) {
-                // Parar com segurança
                 const posParadaSem = Math.max(0, posSem - MARGEM_PARADA_SEMAFORO);
                 if (posParadaSem < posParada) posParada = posParadaSem;
               }
-              // Caso contrário, veículo cruza o amarelo com segurança
             }
           }
         }
 
-        // 3. Restrição por lombadas no trecho
         for (const lomb of lombadas) {
           const posLomb = sentidoInverso
             ? aresta.comprimento - lomb.distancia
             : lomb.distancia;
 
-          // Aproximação da lombada
           if (posLomb > v.progresso) {
             const distAteLomb = posLomb - v.progresso;
             if (distAteLomb <= lomb.raioEfeito) {
@@ -166,7 +149,6 @@ export class Simulacao extends Emissor {
           }
         }
 
-        // 4. Ajuste da velocidade desejada em relação ao ponto de parada
         if (posParada < aresta.comprimento) {
           const distParada = Math.max(0, posParada - v.progresso);
           const vSegura = Math.sqrt(2 * DESACELERACAO_CONFORTAVEL * distParada);
@@ -174,7 +156,6 @@ export class Simulacao extends Emissor {
           if (distParada <= 0.25) vDesejada = 0;
         }
 
-        // 5. Aplicação contínua da aceleração / desaceleração
         if (v.velocidade < vDesejada) {
           v.velocidade = Math.min(vDesejada, v.velocidade + ACELERACAO_MAX * dt);
         } else if (v.velocidade > vDesejada) {
@@ -185,7 +166,6 @@ export class Simulacao extends Emissor {
           v.velocidade = 0;
         }
 
-        // 6. Deslocamento do veículo
         let passo = v.velocidade * dt;
         if (posParada < aresta.comprimento) {
           passo = Math.min(passo, Math.max(0, posParada - v.progresso));
@@ -194,7 +174,6 @@ export class Simulacao extends Emissor {
         if (v.progresso + passo < aresta.comprimento) {
           v.progresso += passo;
         } else {
-          // Chegou ao fim da aresta
           const falta = aresta.comprimento - v.progresso;
           v.progresso = aresta.comprimento;
 
@@ -204,7 +183,6 @@ export class Simulacao extends Emissor {
             continue;
           }
 
-          // Se a próxima aresta estiver bloqueada, recalcula
           const proximaArestaId = v.rota[v.indice + 1];
           if (!this.grafo.estaAcessivel(proximaArestaId)) {
             if (!this.#recalcular(v)) continue;
@@ -212,7 +190,6 @@ export class Simulacao extends Emissor {
 
           v.indice += 1;
           v.progresso = 0;
-          // Avança tempo residual na nova aresta se houver
           const tempoResidual = v.velocidade > 0 ? Math.max(0, dt - falta / v.velocidade) : 0;
           if (tempoResidual > 0) {
             v.progresso = Math.min(aresta.comprimento * 0.1, v.velocidade * tempoResidual);

@@ -21,7 +21,6 @@ const MIMES = {
 };
 
 const servidor = http.createServer((req, res) => {
-  // CORS & No-Cache para desenvolvimento
   res.setHeader("Access-Control-Allow-Origin", "*");
   res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate");
 

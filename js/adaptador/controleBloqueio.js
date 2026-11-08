@@ -31,7 +31,6 @@ export class ControleBloqueio extends Emissor {
     });
     this.#grafo.on("bloqueioAlterado", (e) => this.emitir("bloqueioAlterado", e));
 
-    // Repassa eventos de controle de tráfego
     this.#simulacao.dispositivos.on("faseAlterada", (s) => this.emitir("faseSemafóricaAlterada", s));
     this.#simulacao.dispositivos.on("dispositivoAdicionado", () => this.emitir("dispositivosAlterados", this.dispositivos()));
     this.#simulacao.dispositivos.on("dispositivoRemovido", () => this.emitir("dispositivosAlterados", this.dispositivos()));
