@@ -1,0 +1,33 @@
+{
+  "padrao": "centro",
+  "locais": [
+    {
+      "id": "centro",
+      "nome": "Centro",
+      "descricao": "Centro de Cajamar · Av. Dr. Antônio João Abdalla",
+      "arquivo": "data/malha.geojson",
+      "limites": [[-23.365, -46.89], [-23.345, -46.866]]
+    },
+    {
+      "id": "jordanesia",
+      "nome": "Jordanésia",
+      "descricao": "Distrito de Jordanésia · malha residencial densa",
+      "arquivo": "data/malha-jordanesia.geojson",
+      "limites": [[-23.343, -46.85], [-23.327, -46.83]]
+    },
+    {
+      "id": "polvilho",
+      "nome": "Polvilho",
+      "descricao": "Distrito de Polvilho · maior malha cadastrada",
+      "arquivo": "data/malha-polvilho.geojson",
+      "limites": [[-23.418, -46.856], [-23.398, -46.832]]
+    },
+    {
+      "id": "ponunduva",
+      "nome": "Ponunduva",
+      "descricao": "Ponunduva · área periférica com poucas ligações",
+      "arquivo": "data/malha-ponunduva.geojson",
+      "limites": [[-23.336, -46.93], [-23.316, -46.906]]
+    }
+  ]
+}

@@ -194,3 +194,22 @@ test("simulação recalcula a rota de quem passaria pelo trecho bloqueado", () =
     }
   }
 });
+
+test("encerrar a simulação remove os veículos, para de gerar novos e desliga os eventos do grafo", () => {
+  const g = criarMalha();
+  const sim = new Simulacao(g);
+  sim.definirQuantidade(20);
+  assert.equal(sim.veiculos.length, 20);
+
+  let recalculos = 0;
+  sim.on("rotasRecalculadas", () => recalculos++);
+  sim.encerrar();
+
+  assert.equal(sim.veiculos.length, 0);
+  for (let i = 0; i < 50; i++) sim.avancar(0.1);
+  assert.equal(sim.veiculos.length, 0, "não pode surgir veículo depois de encerrar");
+
+  g.bloquearTrecho("AB");
+  g.inverterSentido("AB");
+  assert.equal(recalculos, 0, "simulação encerrada não reage mais ao grafo");
+});

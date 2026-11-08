@@ -137,6 +137,18 @@ Uma rua é dividida em **trechos**. Cada trecho é o pedaço da rua **entre dois
 Cada trecho é identificado pelas ruas que o cruzam. Por exemplo:
 *"Rua Pedro Domingues — entre Rua Lázaro Dalcin e Rua Antônio da Silva Esparrinha"*.
 
+### 5.4 Trocar a região simulada
+
+No topo do painel lateral, em **Região simulada**, escolha o local que você quer estudar: **Centro**, **Jordanésia**, **Polvilho** ou **Ponunduva**, todos em Cajamar. O seletor existe nesta tela e na tela **Inversão de Sentido**.
+
+Ao trocar de região:
+
+1. a simulação da região anterior é **encerrada**: os veículos, os bloqueios, as inversões e o registro dela são apagados;
+2. aparece *"Carregando malha viária de …"* sobre o mapa, e o seletor fica travado até terminar;
+3. o mapa se desloca e enquadra a nova região, e os veículos começam a circular nela do zero.
+
+A página não é recarregada. A pausa, a quantidade de veículos e a velocidade escolhidas continuam valendo na nova região.
+
 ---
 
 ## 6. Passo a passo: simular um bloqueio
@@ -310,13 +322,14 @@ Depois abra `http://localhost:8000/pagina2.html`.
 node --test
 ```
 
-**Trocar a região simulada:**
+**Cadastrar uma nova região simulada:**
 1. Baixe as vias da nova área pela Overpass API. A consulta modelo está no início de `scripts/gerar-malha.mjs`; troque as coordenadas.
 2. Converta para o formato do aplicativo:
    ```bash
-   node scripts/gerar-malha.mjs resposta-overpass.json > data/malha.geojson
+   node scripts/gerar-malha.mjs resposta-overpass.json > data/malha-nova-regiao.geojson
    ```
-3. Atualize as constantes `CENTRO_CAJAMAR` e `AREA_SIMULADA` em `js/ui/telaBloqueio.js`.
+3. Acrescente a região em `data/locais.json` com `id`, `nome`, `descricao`, `arquivo` e `limites` (`[[sul, oeste], [norte, leste]]`, a área que o mapa enquadra). O campo `padrao` define a região que abre primeiro.
+4. Rode `node --test`: um dos testes confere se todas as malhas cadastradas seguem o formato padrão. No navegador, uma malha fora do padrão é recusada com uma mensagem, e o operador pode escolher outra região.
 
 **Organização do código:**
 
@@ -325,7 +338,8 @@ node --test
 | `js/motor/` | Lógica da simulação: grafo viário, cálculo de rotas, veículos e regra de bloqueio. Não depende da tela. |
 | `js/adaptador/` | Ponte entre a tela e o motor; também carrega o arquivo de vias |
 | `js/ui/` | Tudo o que é visual: mapa, listas, painel |
-| `data/malha.geojson` | Vias da região simulada |
+| `data/locais.json` | Cadastro das regiões que aparecem no seletor |
+| `data/malha*.geojson` | Vias de cada região simulada (`malha.geojson` é o Centro) |
 | `css/style.css` | Estilos e tokens de cor do projeto (por exemplo `--cor-bloqueio`) |
 
 ---

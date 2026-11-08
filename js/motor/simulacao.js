@@ -39,8 +39,21 @@ export class Simulacao extends Emissor {
     this.duracoes = [];
     this.proximoId = 1;
     this.#atualizarMalhaPrincipal();
-    grafo.on("bloqueioAlterado", (evento) => this.#aoAlterarBloqueio(evento));
-    grafo.on("sentidoAlterado", (evento) => this.#aoAlterarSentido(evento));
+    this.#desligarEventos = [
+      grafo.on("bloqueioAlterado", (evento) => this.#aoAlterarBloqueio(evento)),
+      grafo.on("sentidoAlterado", (evento) => this.#aoAlterarSentido(evento)),
+    ];
+  }
+
+  #desligarEventos;
+
+  // Teardown: remove todos os veículos e rotas, impede novos e solta o grafo.
+  // Usado ao trocar o local simulado, para nada da região anterior continuar vivo.
+  encerrar() {
+    this.#desligarEventos.forEach((desligar) => desligar());
+    this.#desligarEventos = [];
+    this.quantidadeDesejada = 0;
+    this.veiculos = [];
   }
 
   definirQuantidade(quantidade) {

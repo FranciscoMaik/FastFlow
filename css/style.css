@@ -647,6 +647,49 @@ body {
   display: none;
 }
 
+/* Troca de local: o mapa anterior fica visível ao fundo enquanto a nova malha carrega. */
+.carregando.sobre-mapa {
+  background: color-mix(in srgb, var(--cor-fundo) 72%, transparent);
+  color: var(--cor-texto-forte);
+  font-weight: 600;
+  grid-auto-flow: row;
+  align-content: center;
+  gap: 12px;
+}
+
+.carregando.sobre-mapa::before {
+  content: "";
+  justify-self: center;
+  width: 28px;
+  height: 28px;
+  border: 3px solid var(--cor-primaria-suave);
+  border-top-color: var(--cor-primaria);
+  border-radius: 50%;
+  animation: girar-carregando 0.8s linear infinite;
+}
+
+.carregando.erro {
+  color: var(--cor-bloqueio-forte);
+  padding: 0 24px;
+  text-align: center;
+}
+
+.carregando.erro::before {
+  display: none;
+}
+
+@keyframes girar-carregando {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .carregando.sobre-mapa::before {
+    animation: none;
+  }
+}
+
 /* ---------- Elementos no mapa (Leaflet SVG) ---------- */
 .mapa-simulacao .leaflet-tile-pane {
   filter: saturate(0.35) brightness(1.05);

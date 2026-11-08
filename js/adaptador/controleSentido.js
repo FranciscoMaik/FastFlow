@@ -158,6 +158,13 @@ export class ControleSentido extends Emissor {
     this.#simulacao.fatorTempo = fator;
   }
 
+  // Encerra esta simulação (troca de local): some com veículos, rotas e registro.
+  encerrar() {
+    this.#simulacao.encerrar();
+    this.#registro = [];
+    this.selecionado = null;
+  }
+
   #registrar(e) {
     const trecho = this.trecho(e.trechoId);
     const partes = [];

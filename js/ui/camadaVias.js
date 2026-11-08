@@ -71,6 +71,14 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
       for (const id of sel) linhas.get(id)?.bringToFront();
     },
 
+    // Tira do mapa todas as vias e sinalizações desta camada (troca de local).
+    remover() {
+      mapa.removeLayer(grupo);
+      mapa.removeLayer(destaques);
+      linhas.clear();
+      sinalizacoes.clear();
+    },
+
     focar(ids) {
       const camadas = ids.map((id) => linhas.get(id)).filter(Boolean);
       if (camadas.length === 0) return;
