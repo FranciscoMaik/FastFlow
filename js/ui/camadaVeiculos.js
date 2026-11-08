@@ -8,7 +8,9 @@ export function criarCamadaVeiculos(mapa) {
   return {
     atualizar(veiculos) {
       const vistos = new Set();
+      const limites = mapa.getBounds();
       for (const v of veiculos) {
+        if (!limites.contains([v.lat, v.lon])) continue;
         vistos.add(v.id);
         let marcador = marcadores.get(v.id);
         if (!marcador) {

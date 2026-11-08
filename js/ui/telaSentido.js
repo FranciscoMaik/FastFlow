@@ -5,14 +5,13 @@ import { criarCamadaVias } from "./camadaVias.js";
 import { criarCamadaVeiculos } from "./camadaVeiculos.js";
 import { criarCamadaSetas } from "./camadaSetas.js";
 import { criarSeletorVias } from "./seletorVias.js";
+import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
 const AREA_SIMULADA = [
   [-23.365, -46.89],
   [-23.345, -46.866],
 ];
-const INTERVALO_PAINEL_MS = 250;
-
 const $ = (id) => document.getElementById(id);
 
 async function iniciar() {
@@ -175,26 +174,17 @@ async function iniciar() {
   });
   $("policy").addEventListener("change", () => controle.definirPolitica($("policy").value));
 
-  let ultimoQuadro = performance.now();
-  let ultimoPainel = 0;
-  function quadro(agora) {
-    const dt = Math.min((agora - ultimoQuadro) / 1000, 0.1);
-    ultimoQuadro = agora;
-    if (rodando) {
-      controle.avancar(dt);
-      camadaVeiculos.atualizar(controle.veiculos());
-    }
-    if (agora - ultimoPainel > INTERVALO_PAINEL_MS) {
-      ultimoPainel = agora;
-      atualizarStats();
-      atualizarInfo();
-    }
-    requestAnimationFrame(quadro);
-  }
-
   redesenhar();
   atualizarStats();
-  requestAnimationFrame(quadro);
+  criarLoopAnimacaoVeiculos({
+    controle,
+    camadaVeiculos,
+    estaRodando: () => rodando,
+    aoAtualizar() {
+      atualizarStats();
+      atualizarInfo();
+    },
+  });
 }
 
 iniciar();
