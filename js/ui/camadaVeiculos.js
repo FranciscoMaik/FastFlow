@@ -8,7 +8,9 @@ export function criarCamadaVeiculos(mapa) {
   return {
     atualizar(veiculos) {
       const vistos = new Set();
+      const limites = mapa.getBounds();
       for (const v of veiculos) {
+        if (!limites.contains([v.lat, v.lon])) continue;
         vistos.add(v.id);
         let marcador = marcadores.get(v.id);
         if (!marcador) {
@@ -25,6 +27,7 @@ export function criarCamadaVeiculos(mapa) {
           const el = marcador.getElement();
           el?.classList.toggle("desviado", v.status === "desviado");
           el?.classList.toggle("retido", v.status === "retido");
+          el?.classList.toggle("evacuando", v.status === "evacuando");
           marcador.status = v.status;
         }
       }

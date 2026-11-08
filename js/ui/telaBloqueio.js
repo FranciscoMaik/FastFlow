@@ -12,12 +12,11 @@ import {
   renderizarEstatisticas,
   renderizarInfoTrecho,
 } from "./painelBloqueios.js";
+import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
 // Mesma área usada na consulta de scripts/gerar-malha.mjs (algumas vias seguem além dela).
 const AREA_SIMULADA = [[-23.365, -46.89], [-23.345, -46.866]];
-const INTERVALO_PAINEL_MS = 500;
-
 const $ = (id) => document.getElementById(id);
 
 async function iniciar() {
@@ -330,26 +329,17 @@ async function iniciar() {
   });
 
   // ---------- Laço da simulação ----------
-  let ultimoQuadro = performance.now();
-  let ultimoPainel = 0;
-  function quadro(agora) {
-    const dt = Math.min((agora - ultimoQuadro) / 1000, 0.1);
-    ultimoQuadro = agora;
-    if (rodando) {
-      controle.avancar(dt);
-      camadaVeiculos.atualizar(controle.veiculos());
-      camadaDispositivos.atualizar(controle.dispositivos());
-    }
-    if (agora - ultimoPainel > INTERVALO_PAINEL_MS) {
-      ultimoPainel = agora;
+  redesenhar();
+  criarLoopAnimacaoVeiculos({
+    controle,
+    camadaVeiculos,
+    estaRodando: () => rodando,
+    intervaloAtualizacaoMs: 500,
+    aoAtualizar() {
       renderizarEstatisticas(estatisticas, controle.estatisticas());
       atualizarInfo();
-    }
-    requestAnimationFrame(quadro);
-  }
-
-  redesenhar();
-  requestAnimationFrame(quadro);
+    },
+  });
 }
 
 function plural(n, singular, varios) {

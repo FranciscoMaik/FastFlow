@@ -19,10 +19,13 @@ export class ControleBloqueio extends Emissor {
   #ultimoRecalculo = 0;
   selecionado = null;
 
-  constructor(geojson, { quantidadeVeiculos = 60, fatorTempo = 4, aleatorio } = {}) {
+  constructor(
+    geojson,
+    { quantidadeVeiculos = 60, fatorTempo = 4, aleatorio, intervaloSpawn = 0.2 } = {}
+  ) {
     super();
     this.#grafo = construirGrafo(geojson);
-    this.#simulacao = new Simulacao(this.#grafo, { fatorTempo, aleatorio });
+    this.#simulacao = new Simulacao(this.#grafo, { fatorTempo, aleatorio, intervaloSpawn });
     this.#simulacao.definirQuantidade(quantidadeVeiculos);
 
     this.#simulacao.on("rotasRecalculadas", (e) => {
@@ -85,7 +88,7 @@ export class ControleBloqueio extends Emissor {
     return this.#simulacao.veiculos.map((v) => {
       const aresta = this.#grafo.arestas.get(v.rota[v.indice]);
       const [lat, lon] = pontoNaGeometria(aresta.geometria, v.progresso);
-      return { id: v.id, lat, lon, status: v.status, velocidade: v.velocidade };
+      return { id: v.id, arestaId: aresta.id, lat, lon, status: v.status, velocidade: v.velocidade };
     });
   }
 

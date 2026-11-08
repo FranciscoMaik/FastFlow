@@ -672,6 +672,17 @@ path.via.selecionada {
   stroke-width: 9px;
 }
 
+path.via.sentido-alterado {
+  stroke: #fca5a5;
+  stroke-opacity: 0.95;
+  stroke-width: 10px;
+}
+
+path.via.sentido-alterado.selecionada {
+  stroke: #f87171;
+  stroke-width: 11px;
+}
+
 path.via.bloqueada {
   stroke: var(--cor-bloqueio);
   stroke-opacity: 1;
@@ -731,6 +742,10 @@ path.veiculo.desviado {
 
 path.veiculo.retido {
   fill: var(--cor-veiculo-retido);
+}
+
+path.veiculo.evacuando {
+  fill: #ff5d5d;
 }
 
 /* ---------- Telas estreitas: mapa em cima, painel embaixo ---------- */
@@ -1323,4 +1338,213 @@ path.veiculo.retido {
   font-size: 0.75rem;
   line-height: 1;
   color: #10b981;
+}
+
+/* =====================================================================
+   Tela de simulação — inversão de sentido (Página 1)
+   ===================================================================== */
+
+.mapa-sentido {
+  /* Tokens lidos pelo MapRenderer via getComputedStyle */
+  --map-bg: #0f1419;
+  --road: #222b37;
+  --road-edge: #3a4656;
+  --arrow: #e8eef6;
+  --accent: #ffb020;
+  --hover: #6cb6ff;
+  --node: #4a586b;
+  --warn: #ff5d5d;
+  --ok: #4cd08a;
+  --vehicle-hue-s: 70%;
+
+  width: 100%;
+  height: 100%;
+  display: block;
+  touch-action: none;
+  background: var(--map-bg);
+}
+
+.hint-sentido {
+  position: absolute;
+  left: 14px;
+  bottom: 12px;
+  max-width: calc(100% - 28px);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid #243040;
+  background: #0b0f14cc;
+  color: #93a1b3;
+  font-size: 12px;
+  pointer-events: none;
+}
+
+.sidebar-sentido .empty {
+  margin: 0 8px;
+  color: var(--cor-texto-suave);
+  font-size: 0.85rem;
+  line-height: 1.4;
+}
+
+.sidebar-sentido .info-via {
+  margin: 0 8px 12px;
+}
+
+.sidebar-sentido .info-via dd {
+  text-align: right;
+  word-break: break-word;
+}
+
+.campo-range {
+  margin-top: 4px;
+}
+
+.campo-range span {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+}
+
+.campo-range output {
+  color: var(--cor-texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.campo-range input[type="range"] {
+  width: 100%;
+  accent-color: var(--cor-primaria);
+}
+
+.legenda-sentido {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 14px;
+  margin: 10px 8px 0;
+  color: var(--cor-texto-suave);
+  font-size: 0.75rem;
+}
+
+.legenda-sentido .amostra {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  margin-right: 6px;
+  border-radius: 3px;
+  vertical-align: -1px;
+  background: #ffb020;
+}
+
+.legenda-sentido .amostra.evacuando {
+  background: #ff5d5d;
+}
+
+.legenda-sentido .amostra.seta-mantido {
+  clip-path: polygon(40% 0, 70% 0, 70% 45%, 100% 45%, 50% 100%, 0 45%, 30% 45%, 30% 0);
+  background: #2563eb;
+}
+
+.legenda-sentido .amostra.seta-alterado {
+  clip-path: polygon(40% 0, 70% 0, 70% 45%, 100% 45%, 50% 100%, 0 45%, 30% 45%, 30% 0);
+  background: #dc2626;
+}
+
+.seta-sentido {
+  background: transparent !important;
+  border: 0 !important;
+  pointer-events: none;
+}
+
+.seta-sentido .seta-svg {
+  display: block;
+  overflow: visible;
+  filter: drop-shadow(0 0.5px 0.5px rgba(15, 23, 42, 0.35));
+}
+
+.seta-sentido.selecionada .seta-svg {
+  filter: drop-shadow(0 0 1.5px rgba(245, 158, 11, 0.85));
+}
+
+
+.mapa-simulacao + .hint-sentido,
+.main > .hint-sentido {
+  z-index: 500;
+}
+
+.stats-sentido {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 8px;
+  margin: 0 8px;
+}
+
+.stats-sentido .stat {
+  padding: 8px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+}
+
+.stats-sentido .stat b {
+  display: block;
+  font-size: 1.1rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--cor-texto-forte);
+}
+
+.stats-sentido .stat span {
+  color: var(--cor-texto-suave);
+  font-size: 0.7rem;
+}
+
+.badge-conn {
+  display: inline-block;
+  margin: 12px 8px 0;
+  padding: 3px 9px;
+  border-radius: 999px;
+  border: 1px solid var(--cor-borda);
+  font-size: 0.75rem;
+}
+
+.badge-conn[data-ok="1"] {
+  color: var(--cor-sucesso-forte);
+  background: var(--cor-sucesso-suave);
+}
+
+.badge-conn[data-ok="0"] {
+  color: var(--cor-bloqueio-forte);
+  background: var(--cor-bloqueio-suave);
+}
+
+.log-sentido {
+  list-style: none;
+  margin: 0 8px;
+  padding: 0;
+  max-height: 170px;
+  overflow-y: auto;
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+}
+
+.log-sentido li {
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--cor-borda);
+}
+
+.log-sentido li:first-child {
+  color: var(--cor-texto-forte);
+}
+
+@media (max-width: 720px) {
+  .layout:has(.mapa-sentido) {
+    grid-template-areas:
+      "header header"
+      "main main"
+      "sidebar sidebar";
+    grid-template-columns: 1fr;
+    grid-template-rows: 60px 55vh 1fr;
+  }
+
+  .hint-sentido {
+    font-size: 11px;
+  }
 }

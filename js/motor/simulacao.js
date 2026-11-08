@@ -1,5 +1,6 @@
 // Simulação de veículos sobre o grafo. Cada veículo segue a rota mais rápida até
-// um destino; ao chegar, sorteia outro. Respeita lombadas, semáforos e filas.
+// um destino; ao chegar, sorteia outro. Respeita lombadas, semáforos, filas e
+// inversões de sentido.
 import { Emissor } from "./eventos.js";
 import { maiorComponenteForte, menorCaminho } from "./roteamento.js";
 import { GerenciadorDispositivos } from "./dispositivos.js";
@@ -14,23 +15,44 @@ const DISTANCIA_SEGURANCA_FILA = 7.0; // m
 const MARGEM_PARADA_SEMAFORO = 2.0; // m
 
 export class Simulacao extends Emissor {
-  constructor(grafo, { aleatorio = Math.random, fatorTempo = 4, dispositivos } = {}) {
+  constructor(
+    grafo,
+    {
+      aleatorio = Math.random,
+      fatorTempo = 4,
+      dispositivos,
+      politicaSentido = "complete",
+      intervaloSpawn = 0.2,
+    } = {}
+  ) {
     super();
+    if (!Number.isFinite(intervaloSpawn) || intervaloSpawn <= 0) {
+      throw new RangeError("O intervalo de spawn deve ser um número positivo.");
+    }
     this.grafo = grafo;
     this.aleatorio = aleatorio;
     this.fatorTempo = fatorTempo;
     this.dispositivos = dispositivos ?? new GerenciadorDispositivos();
+    this.politicaSentido = politicaSentido; // "complete" | "uturn"
+    this.intervaloSpawn = intervaloSpawn;
     this.tempo = 0;
+    this.tempoSpawn = 0;
+    this.quantidadeDesejada = 0;
     this.veiculos = [];
     this.rotasRecalculadas = 0;
     this.viagensConcluidas = 0;
+    this.inversoes = 0;
+    this.evacuados = 0;
+    this.retornos = 0;
     this.duracoes = [];
     this.proximoId = 1;
     this.#atualizarMalhaPrincipal();
     grafo.on("bloqueioAlterado", (evento) => this.#aoAlterarBloqueio(evento));
+    grafo.on("sentidoAlterado", (evento) => this.#aoAlterarSentido(evento));
   }
 
   definirQuantidade(quantidade) {
+    this.quantidadeDesejada = quantidade;
     while (this.veiculos.length > quantidade) this.veiculos.pop();
     while (this.veiculos.length < quantidade) {
       const veiculo = this.#criarVeiculo();
@@ -43,6 +65,20 @@ export class Simulacao extends Emissor {
   avancar(dtReal) {
     const dt = dtReal * this.fatorTempo;
     this.tempo += dt;
+    if (this.veiculos.length >= this.quantidadeDesejada) {
+      this.tempoSpawn = 0;
+    } else {
+      this.tempoSpawn += dt;
+      while (this.tempoSpawn >= this.intervaloSpawn) {
+        this.tempoSpawn -= this.intervaloSpawn;
+        const veiculo = this.#criarVeiculo({ naEntrada: true });
+        if (!veiculo) {
+          this.tempoSpawn = 0;
+          break;
+        }
+        this.veiculos.push(veiculo);
+      }
+    }
     this.dispositivos.avancar(dt);
     this.#atualizarVeiculos(dt);
     this.emitir("tick", { tempo: this.tempo });
@@ -64,8 +100,12 @@ export class Simulacao extends Emissor {
       ativos: this.veiculos.length,
       retidos: this.veiculos.filter((v) => v.status === "retido").length,
       desviados: this.veiculos.filter((v) => v.status === "desviado").length,
+      evacuando: this.veiculos.filter((v) => v.evacuando).length,
       rotasRecalculadas: this.rotasRecalculadas,
       viagensConcluidas: this.viagensConcluidas,
+      inversoes: this.inversoes,
+      evacuados: this.evacuados,
+      retornos: this.retornos,
       tempoMedioViagem: media,
       tempoSimulado: this.tempo,
     };
@@ -82,6 +122,8 @@ export class Simulacao extends Emissor {
       porAresta.get(arestaId).push(v);
     }
 
+    const paraRemover = new Set();
+
     for (const [arestaId, veiculosNaAresta] of porAresta.entries()) {
       veiculosNaAresta.sort((a, b) => b.progresso - a.progresso);
 
@@ -93,6 +135,7 @@ export class Simulacao extends Emissor {
 
       for (let i = 0; i < veiculosNaAresta.length; i++) {
         const v = veiculosNaAresta[i];
+        if (paraRemover.has(v)) continue;
         if (v.velocidade == null) v.velocidade = aresta.velocidade;
 
         let posParada = aresta.comprimento;
@@ -100,9 +143,13 @@ export class Simulacao extends Emissor {
 
         if (i > 0) {
           const vFrente = veiculosNaAresta[i - 1];
-          const posFrenteFila = Math.max(0, vFrente.progresso - DISTANCIA_SEGURANCA_FILA);
-          if (posFrenteFila < posParada) {
-            posParada = posFrenteFila;
+          if (paraRemover.has(vFrente)) {
+            // ignore
+          } else {
+            const posFrenteFila = Math.max(0, vFrente.progresso - DISTANCIA_SEGURANCA_FILA);
+            if (posFrenteFila < posParada) {
+              posParada = posFrenteFila;
+            }
           }
         }
 
@@ -177,9 +224,16 @@ export class Simulacao extends Emissor {
           const falta = aresta.comprimento - v.progresso;
           v.progresso = aresta.comprimento;
 
+          // Terminou a aresta atual (inclusive ao evacuar após inversão).
+          if (v.evacuando) {
+            v.evacuando = false;
+            if (!this.#novaViagem(v, aresta.para)) continue;
+            continue;
+          }
+
           if (v.indice === v.rota.length - 1) {
             this.#registrarChegada(v);
-            this.#novaViagem(v, aresta.para);
+            paraRemover.add(v);
             continue;
           }
 
@@ -192,10 +246,17 @@ export class Simulacao extends Emissor {
           v.progresso = 0;
           const tempoResidual = v.velocidade > 0 ? Math.max(0, dt - falta / v.velocidade) : 0;
           if (tempoResidual > 0) {
-            v.progresso = Math.min(aresta.comprimento * 0.1, v.velocidade * tempoResidual);
+            const proxima = this.grafo.arestas.get(v.rota[v.indice]);
+            if (proxima) {
+              v.progresso = Math.min(proxima.comprimento * 0.1, v.velocidade * tempoResidual);
+            }
           }
         }
       }
+    }
+
+    if (paraRemover.size) {
+      this.veiculos = this.veiculos.filter((veiculo) => !paraRemover.has(veiculo));
     }
   }
 
@@ -276,6 +337,74 @@ export class Simulacao extends Emissor {
     this.emitir("rotasRecalculadas", { trechoId, bloqueado, quantidade: recalculadas });
   }
 
+  #aoAlterarSentido({ trechoId, sentido, anterior }) {
+    this.#atualizarMalhaPrincipal();
+    this.inversoes += 1;
+    let recalculadas = 0;
+    let evacuando = 0;
+    let retornos = 0;
+
+    for (const veiculo of this.veiculos) {
+      const arestaAtualId = veiculo.rota[veiculo.indice];
+      const arestaAtual = this.grafo.arestas.get(arestaAtualId);
+      const noTrecho = arestaAtual.trechoId === trechoId;
+      const sentidoFechouAresta = noTrecho && !this.grafo.estaAcessivel(arestaAtualId);
+
+      if (sentidoFechouAresta) {
+        if (this.politicaSentido === "uturn") {
+          if (this.#fazerUturn(veiculo, trechoId)) {
+            retornos += 1;
+            recalculadas += 1;
+            continue;
+          }
+        }
+        // complete (ou uturn sem aresta oposta): conclui a travessia atual.
+        veiculo.evacuando = true;
+        veiculo.rota = [arestaAtualId];
+        veiculo.indice = 0;
+        veiculo.status = "desviado";
+        evacuando += 1;
+        continue;
+      }
+
+      const futuras = veiculo.rota.slice(veiculo.indice + 1);
+      const precisa = futuras.some((id) => !this.grafo.estaAcessivel(id));
+      if (!precisa) continue;
+      this.#recalcular(veiculo);
+      if (veiculo.status !== "retido") veiculo.status = "desviado";
+      recalculadas += 1;
+    }
+
+    this.evacuados += evacuando;
+    this.retornos += retornos;
+    this.rotasRecalculadas += recalculadas;
+    this.emitir("sentidoReagido", {
+      trechoId,
+      sentido,
+      anterior,
+      evacuando,
+      retornos,
+      recalculadas,
+    });
+  }
+
+  #fazerUturn(veiculo, trechoId) {
+    const atualId = veiculo.rota[veiculo.indice];
+    const atual = this.grafo.arestas.get(atualId);
+    const opostaId = atualId.endsWith(">") ? `${trechoId}<` : `${trechoId}>`;
+    const oposta = this.grafo.arestas.get(opostaId);
+    if (!oposta || !this.grafo.estaAcessivel(opostaId)) return false;
+
+    veiculo.evacuando = false;
+    veiculo.progresso = Math.max(0, atual.comprimento - veiculo.progresso);
+    veiculo.rota = [opostaId];
+    veiculo.indice = 0;
+    veiculo.status = "desviado";
+    veiculo.velocidade = oposta.velocidade;
+    // Escolhe novo destino a partir do fim da aresta oposta.
+    return this.#novaViagem(veiculo, oposta.para);
+  }
+
   #atualizarMalhaPrincipal() {
     const principal = maiorComponenteForte(this.grafo);
     this.malhaPrincipal = [...principal];
@@ -288,20 +417,35 @@ export class Simulacao extends Emissor {
     return this.malhaPrincipal[Math.floor(this.aleatorio() * this.malhaPrincipal.length)];
   }
 
-  #criarVeiculo() {
+  #criarVeiculo({ naEntrada = false } = {}) {
     if (this.arestasPrincipais.length === 0) return null;
-    const inicial =
-      this.arestasPrincipais[Math.floor(this.aleatorio() * this.arestasPrincipais.length)];
-    const veiculo = {
-      id: this.proximoId++,
-      destino: null,
-      rota: [inicial.id],
-      indice: 0,
-      progresso: this.aleatorio() * inicial.comprimento,
-      velocidade: inicial.velocidade,
-      inicio: this.tempo,
-      status: "circulando",
-    };
-    return this.#novaViagem(veiculo, inicial.para) ? veiculo : null;
+    for (let tentativa = 0; tentativa < TENTATIVAS_DE_SORTEIO; tentativa++) {
+      const inicial =
+        this.arestasPrincipais[Math.floor(this.aleatorio() * this.arestasPrincipais.length)];
+      const progresso = naEntrada ? 0 : this.aleatorio() * inicial.comprimento;
+      if (
+        naEntrada &&
+        this.veiculos.some(
+          (veiculo) =>
+            veiculo.rota[veiculo.indice] === inicial.id &&
+            veiculo.progresso < DISTANCIA_SEGURANCA_FILA
+        )
+      ) {
+        continue;
+      }
+      const veiculo = {
+        id: this.proximoId++,
+        destino: null,
+        rota: [inicial.id],
+        indice: 0,
+        progresso,
+        velocidade: inicial.velocidade,
+        inicio: this.tempo,
+        status: "circulando",
+        evacuando: false,
+      };
+      if (this.#novaViagem(veiculo, inicial.para)) return veiculo;
+    }
+    return null;
   }
 }

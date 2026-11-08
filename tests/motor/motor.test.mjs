@@ -99,6 +99,75 @@ test("validação recusa trecho já bloqueado ou inexistente", () => {
   assert.equal(validarBloqueio(g, "XX", []).permitido, false);
 });
 
+test("inverter sentido em mão dupla cicla 0→1→-1→0 e emite evento", () => {
+  const g = criarMalha();
+  const eventos = [];
+  g.on("sentidoAlterado", (e) => eventos.push(e.sentido));
+  assert.equal(g.sentidoDoTrecho("AB"), 0);
+  g.inverterSentido("AB");
+  assert.equal(g.sentidoDoTrecho("AB"), 1);
+  assert.equal(g.estaAcessivel("AB>"), true);
+  assert.equal(g.estaAcessivel("AB<"), false);
+  g.inverterSentido("AB");
+  assert.equal(g.sentidoDoTrecho("AB"), -1);
+  assert.equal(g.estaAcessivel("AB>"), false);
+  assert.equal(g.estaAcessivel("AB<"), true);
+  g.inverterSentido("AB");
+  assert.equal(g.sentidoDoTrecho("AB"), 0);
+  assert.deepEqual(eventos, [1, -1, 0]);
+});
+
+test("inverter sentido em mão única cria aresta oposta e alterna 1↔-1", () => {
+  const g = new Grafo();
+  g.adicionarAresta({
+    id: "X>",
+    de: "A",
+    para: "B",
+    peso: 10,
+    trechoId: "X",
+    comprimento: 100,
+    velocidade: 10,
+    geometria: {
+      pontos: [
+        [0, 0],
+        [0, 0.001],
+      ],
+      acumulado: [0, 100],
+      comprimento: 100,
+    },
+  });
+  g.adicionarTrecho({ id: "X", arestas: ["X>"], permiteDuplo: false, sentido: 1 });
+  assert.equal(g.inverterSentido("X"), true);
+  assert.equal(g.sentidoDoTrecho("X"), -1);
+  assert.ok(g.arestas.has("X<"));
+  assert.equal(g.estaAcessivel("X>"), false);
+  assert.equal(g.estaAcessivel("X<"), true);
+});
+
+test("política complete: veículo na via invertida evacua e conclui a travessia", () => {
+  const g = criarMalha();
+  let semente = 3;
+  const aleatorio = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);
+  const sim = new Simulacao(g, { politicaSentido: "complete", aleatorio });
+  sim.definirQuantidade(5);
+  assert.ok(sim.veiculos.length > 0);
+  const v = sim.veiculos[0];
+  Object.assign(v, {
+    rota: ["AB>"],
+    indice: 0,
+    progresso: 40,
+    destino: "C",
+    status: "circulando",
+    evacuando: false,
+  });
+  g.inverterSentido("AB"); // 0 → 1, AB> ainda acessível
+  g.inverterSentido("AB"); // 1 → -1, fecha AB>
+  assert.equal(v.evacuando, true);
+  assert.equal(g.estaAcessivel("AB>"), false);
+  for (let i = 0; i < 80; i++) sim.avancar(0.2);
+  assert.equal(v.evacuando, false);
+});
+
 test("simulação recalcula a rota de quem passaria pelo trecho bloqueado", () => {
   const g = criarMalha();
   // Gerador previsível para não depender do acaso.
