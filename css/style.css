@@ -944,3 +944,387 @@ path.veiculo.retido {
     padding: 28px 22px;
   }
 }
+
+
+/* =====================================================================
+   Controles de tráfego: Lombadas, Semáforos e Ferramentas Interativas
+   ===================================================================== */
+
+/* ---------- Grupo de ferramentas na barra ---------- */
+.grupo-ferramentas {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.botao-ferramenta {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  background: var(--cor-superficie);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  color: var(--cor-texto-forte);
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transicao);
+}
+
+.botao-ferramenta:hover {
+  background: var(--cor-fundo);
+  border-color: #cbd5e1;
+}
+
+.botao-ferramenta.ativo {
+  background: var(--cor-primaria);
+  border-color: var(--cor-primaria-forte);
+  color: var(--cor-branco);
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.1);
+}
+
+.botao-ferramenta .icone-btn {
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.divisor-barra {
+  width: 1px;
+  height: 22px;
+  background: var(--cor-borda);
+  margin: 0 4px;
+}
+
+/* ---------- Cursor de inserção sobre o mapa ---------- */
+#mapa.cursor-insercao,
+#mapa.cursor-insercao .leaflet-grab,
+#mapa.cursor-insercao .leaflet-interactive {
+  cursor: crosshair !important;
+}
+
+/* ---------- Banner flutuante de ferramenta ativa ---------- */
+.banner-ferramenta {
+  position: absolute;
+  top: 72px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 16px;
+  background: rgba(30, 41, 59, 0.95);
+  backdrop-filter: blur(4px);
+  color: #fff;
+  font-size: 0.82rem;
+  font-weight: 500;
+  border-radius: 999px;
+  box-shadow: var(--sombra);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  animation: fadeInDown 0.2s ease-out;
+}
+
+.banner-ferramenta[hidden] {
+  display: none;
+}
+
+.botao-fechar-banner {
+  background: transparent;
+  border: 0;
+  color: #cbd5e1;
+  font-size: 0.85rem;
+  cursor: pointer;
+  padding: 2px 6px;
+  border-radius: 50%;
+  transition: color var(--transicao), background var(--transicao);
+}
+
+.botao-fechar-banner:hover {
+  color: #fff;
+  background: rgba(255, 255, 255, 0.2);
+}
+
+@keyframes fadeInDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -10px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* ---------- Painel lateral: Dispositivos de tráfego ---------- */
+.sub-contadores {
+  display: flex;
+  gap: 8px;
+  margin: 0 8px 10px;
+}
+
+.tag-contador {
+  flex: 1;
+  padding: 4px 8px;
+  background: var(--cor-fundo);
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  font-size: 0.75rem;
+  color: var(--cor-texto-suave);
+  text-align: center;
+}
+
+.tag-contador b {
+  color: var(--cor-texto-forte);
+}
+
+.lista-dispositivos .item-dispositivo {
+  padding: 10px;
+  margin: 0 0 8px;
+  border-radius: var(--raio);
+  background: #f8fafc;
+  border: 1px solid var(--cor-borda);
+  border-left: 4px solid #f59e0b;
+}
+
+.lista-dispositivos .item-semaforo {
+  border-left-color: #3b82f6;
+}
+
+.item-dispositivo-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.badge-item {
+  display: inline-block;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.badge-lombada {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.badge-semaforo {
+  background: #e2e8f0;
+  color: #334155;
+  transition: background var(--transicao), color var(--transicao);
+}
+
+.badge-semaforo.badge-verde {
+  background: #dcfce7;
+  color: #15803d;
+}
+
+.badge-semaforo.badge-amarelo {
+  background: #fef3c7;
+  color: #b45309;
+}
+
+.badge-semaforo.badge-vermelho {
+  background: #fee2e2;
+  color: #b91c1c;
+}
+
+/* ---------- Marcadores no mapa: Lombada e Semáforo ---------- */
+.marcador-dispositivo {
+  background: transparent;
+  border: 0;
+}
+
+.icone-lombada {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
+  background: #fbbf24;
+  border: 2px solid #1e293b;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+  cursor: grab;
+  transition: transform 0.15s;
+}
+
+.icone-lombada:hover {
+  transform: scale(1.15);
+}
+
+.icone-lombada:active {
+  cursor: grabbing;
+}
+
+.icone-semaforo {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-evenly;
+  width: 20px;
+  height: 38px;
+  padding: 3px 0;
+  background: #0f172a;
+  border: 2px solid #334155;
+  border-radius: 5px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.35);
+  cursor: grab;
+  transition: transform 0.15s;
+}
+
+.icone-semaforo:hover {
+  transform: scale(1.15);
+}
+
+.icone-semaforo:active {
+  cursor: grabbing;
+}
+
+.icone-semaforo .luz {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  opacity: 0.25;
+  transition: opacity 0.2s, box-shadow 0.2s, transform 0.15s;
+}
+
+.icone-semaforo .luz-vermelha {
+  background: #ef4444;
+}
+
+.icone-semaforo .luz-amarela {
+  background: #f59e0b;
+}
+
+.icone-semaforo .luz-verde {
+  background: #10b981;
+}
+
+.icone-semaforo .luz.ativa {
+  opacity: 1;
+  transform: scale(1.12);
+}
+
+.icone-semaforo .luz-vermelha.ativa {
+  box-shadow: 0 0 8px #ef4444, 0 0 2px #fff;
+}
+
+.icone-semaforo .luz-amarela.ativa {
+  box-shadow: 0 0 8px #f59e0b, 0 0 2px #fff;
+}
+
+.icone-semaforo .luz-verde.ativa {
+  box-shadow: 0 0 8px #10b981, 0 0 2px #fff;
+}
+
+/* ---------- Popup Leaflet customizado ---------- */
+.leaflet-popup-fastflow .leaflet-popup-content-wrapper {
+  border-radius: 8px;
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.2);
+  padding: 0;
+  overflow: hidden;
+}
+
+.leaflet-popup-fastflow .leaflet-popup-content {
+  margin: 0;
+  min-width: 250px;
+  font-family: var(--fonte);
+  font-size: 0.85rem;
+}
+
+.popup-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #f8fafc;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.popup-corpo {
+  padding: 12px 14px;
+}
+
+.popup-trecho {
+  font-size: 0.82rem;
+  color: var(--cor-texto);
+  margin-bottom: 8px;
+}
+
+.popup-detalhe {
+  font-size: 0.8rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 6px;
+}
+
+.popup-dica {
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-style: italic;
+}
+
+.campos-tempos {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin: 10px 0 6px;
+}
+
+.campos-tempos label span {
+  display: block;
+  font-size: 0.68rem;
+  color: var(--cor-texto-suave);
+  margin-bottom: 2px;
+}
+
+.campos-tempos input {
+  width: 100%;
+  padding: 4px;
+  border: 1px solid var(--cor-borda);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  text-align: center;
+}
+
+.popup-acoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px 14px;
+  background: #f8fafc;
+  border-top: 1px solid var(--cor-borda);
+}
+
+/* ---------- Amostras na Legenda ---------- */
+.legenda .amostra-lombada {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  background: #fbbf24;
+  border: 1px solid #1e293b;
+  border-radius: 3px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #1e293b;
+  line-height: 1;
+}
+
+.legenda .amostra-semaforo {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 12px;
+  height: 16px;
+  background: #0f172a;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  line-height: 1;
+  color: #10b981;
+}

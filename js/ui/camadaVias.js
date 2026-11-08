@@ -15,7 +15,7 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
       bubblingMouseEvents: false,
     });
     linha.bindTooltip(rotulo(trecho), { sticky: true, direction: "top", opacity: 0.95 });
-    linha.on("click", () => aoClicar(trecho.id));
+    linha.on("click", (e) => aoClicar(trecho.id, e?.latlng));
     linha.addTo(grupo);
     linhas.set(trecho.id, linha);
   }
@@ -60,7 +60,7 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
           keyboard: false,
           zIndexOffset: 1000,
         })
-          .on("click", () => aoClicar(id))
+          .on("click", (e) => aoClicar(id, e?.latlng))
           .addTo(destaques);
         sinalizacoes.set(id, { contorno, icone });
       }
