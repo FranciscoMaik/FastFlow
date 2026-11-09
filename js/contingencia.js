@@ -303,10 +303,13 @@ import { iniciarBarraCenario } from "./ui/barraCenario.js";
     return tracado || {};
   }
 
+  // Sem setView inicial o Leaflet não carrega tiles até o primeiro fitBounds
+  // bem-sucedido — e o fitBounds assíncrono (após carregar a malha) pode
+  // rodar com o container ainda sem tamanho, deixando o mapa cinza.
   const mapa = L.map("mapa", {
     zoomControl: false,
     scrollWheelZoom: false
-  });
+  }).setView([-23.356, -46.876], 12);
 
   // Tiles do OpenStreetMap. A política de uso exige um Referer válido; forçar a
   // política aqui evita que extensões/configurações de privacidade o removam.
@@ -769,7 +772,21 @@ import { iniciarBarraCenario } from "./ui/barraCenario.js";
   }
 
   function enquadrarRotas() {
-    mapa.fitBounds(limites.getBounds(), { padding: [34, 34] });
+    const bounds = limites.getBounds();
+    if (!bounds.isValid()) return;
+    mapa.invalidateSize();
+    mapa.fitBounds(bounds, { padding: [34, 34], maxZoom: 15 });
+  }
+
+  function refrescarMapa() {
+    // Duas frames + timeout curto: a barra F5 e o layout ainda podem
+    // estar estabilizando quando a malha termina de carregar.
+    requestAnimationFrame(function () {
+      requestAnimationFrame(function () {
+        enquadrarRotas();
+        window.setTimeout(enquadrarRotas, 120);
+      });
+    });
   }
 
   function atualizarAnimacaoRotas(tipoAtivo) {
@@ -940,6 +957,7 @@ import { iniciarBarraCenario } from "./ui/barraCenario.js";
     if (id) {
       atualizarCenario(id);
     }
+    refrescarMapa();
   });
 
   botoesRota.forEach(function (botao) {
@@ -960,10 +978,7 @@ import { iniciarBarraCenario } from "./ui/barraCenario.js";
     if (id) {
       atualizarCenario(id);
     }
-    window.setTimeout(function () {
-      mapa.invalidateSize();
-      enquadrarRotas();
-    }, 0);
+    refrescarMapa();
   }
 
   Promise.all([
