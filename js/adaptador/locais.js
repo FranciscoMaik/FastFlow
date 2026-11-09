@@ -1,14 +1,9 @@
-// Cadastro de locais (regiões) simuláveis e carregamento da malha de cada um.
-// Toda malha passa por validarMalha() antes de chegar ao motor: assim um arquivo
-// fora do padrão vira uma mensagem de erro, e não uma simulação quebrada.
+// Gerenciamento e validação de malhas e locais simuláveis.
 
 const SENTIDOS_VALIDOS = new Set([-1, 0, 1]);
 const MAX_ERROS = 5;
 
-// Schema padrão de uma malha viária (o mesmo gerado por scripts/gerar-malha.mjs):
-// FeatureCollection de LineStrings com [lon, lat] e as propriedades
-// { nome: texto|null, tipo: texto, sentidoUnico: -1|0|1, velocidade: km/h > 0 }.
-// Devolve a lista de problemas encontrados (vazia = malha válida).
+// Valida o schema GeoJSON da malha viária.
 export function validarMalha(geojson) {
   if (geojson?.type !== "FeatureCollection" || !Array.isArray(geojson.features)) {
     return ["O arquivo não é uma FeatureCollection GeoJSON."];
@@ -42,7 +37,7 @@ export function validarMalha(geojson) {
   return erros.slice(0, MAX_ERROS);
 }
 
-// Confere o cadastro (data/locais.json) e devolve a lista de problemas.
+// Valida o cadastro de locais (data/locais.json).
 export function validarCadastro(cadastro) {
   if (!Array.isArray(cadastro?.locais) || cadastro.locais.length === 0) {
     return ["O cadastro não tem nenhum local."];
@@ -79,7 +74,6 @@ export async function carregarLocais(url) {
   };
 }
 
-// Malhas já baixadas e validadas ficam guardadas: voltar a uma região é instantâneo.
 const cache = new Map();
 
 export async function carregarMalhaDoLocal(local) {

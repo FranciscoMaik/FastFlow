@@ -55,8 +55,6 @@ export class Simulacao extends Emissor {
 
   #desligarEventos;
 
-  // Teardown: remove todos os veículos e rotas, impede novos e solta o grafo.
-  // Usado ao trocar o local simulado, para nada da região anterior continuar vivo.
   encerrar() {
     this.#desligarEventos.forEach((desligar) => desligar());
     this.#desligarEventos = [];

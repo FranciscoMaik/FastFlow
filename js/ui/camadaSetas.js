@@ -145,7 +145,6 @@ export function criarCamadaSetas(mapa) {
       redesenhar(trechos, selecionado);
     },
 
-    // Solta o evento de zoom (senão ele seguraria os trechos do local anterior).
     remover() {
       mapa.off("zoomend", aoZoom);
       mapa.removeLayer(grupo);

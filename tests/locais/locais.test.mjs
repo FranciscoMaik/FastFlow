@@ -1,4 +1,3 @@
-// Testes do cadastro de locais e da validação de malhas. Rodar com: node --test
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

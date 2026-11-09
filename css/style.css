@@ -647,7 +647,6 @@ body {
   display: none;
 }
 
-/* Troca de local: o mapa anterior fica visível ao fundo enquanto a nova malha carrega. */
 .carregando.sobre-mapa {
   background: color-mix(in srgb, var(--cor-fundo) 72%, transparent);
   color: var(--cor-texto-forte);

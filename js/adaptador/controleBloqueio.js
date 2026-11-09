@@ -240,7 +240,6 @@ export class ControleBloqueio extends Emissor {
     this.#simulacao.fatorTempo = fator;
   }
 
-  // Encerra esta simulação (troca de local): some com veículos, rotas e bloqueios.
   encerrar() {
     this.#simulacao.encerrar();
     this.#bloqueios.clear();

@@ -11,7 +11,6 @@ import { iniciarSeletorLocal } from "./seletorLocal.js";
 const CENTRO_CAJAMAR = [-23.355, -46.878];
 const $ = (id) => document.getElementById(id);
 
-// Vale para todos os locais: a pausa continua como o operador deixou.
 let rodando = true;
 
 function iniciar() {
@@ -37,7 +36,6 @@ function iniciar() {
   });
 }
 
-// Monta a simulação de um local e devolve como desmontá-la por completo.
 function montar(mapa, local, geojson, primeiraVez) {
   const eventos = new AbortController();
   const { signal } = eventos;
@@ -198,12 +196,11 @@ function montar(mapa, local, geojson, primeiraVez) {
 
   return {
     totalTrechos: controle.trechos().length,
-    // Teardown: nada do local anterior pode continuar rodando ou ouvindo eventos.
     desmontar() {
       loop.parar();
       eventos.abort();
       mapa.off("click", aoClicarMapa);
-      mapa.stop(); // interrompe um "voo" de câmera em andamento
+      mapa.stop();
       controle.encerrar();
       camadaVeiculos.remover();
       camadaSetas.remover();

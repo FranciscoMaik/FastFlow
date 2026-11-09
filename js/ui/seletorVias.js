@@ -1,10 +1,8 @@
 // Seleção por lista: primeiro o logradouro, depois o trecho dele.
 
-// `signal` (opcional) desliga os eventos dos selects quando o local simulado muda.
 export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros, obterTrecho, eventos, { signal } = {}) {
   const trechosPorNome = new Map(logradouros.map((l) => [l.nome, l.trechos]));
 
-  // Mantém só a opção "Selecione um logradouro…" (lista de um local anterior sai).
   selectLogradouro.length = 1;
   selectLogradouro.value = "";
   for (const { nome, trechos } of logradouros) {
@@ -56,7 +54,6 @@ export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros
       selectTrecho.value = t?.temNome ? trechoId : "";
     },
     trechosDo: (nome) => trechosPorNome.get(nome) ?? [],
-    // Esvazia as listas (usado no teardown, ao trocar de local).
     limpar() {
       trechosPorNome.clear();
       selectLogradouro.length = 1;
