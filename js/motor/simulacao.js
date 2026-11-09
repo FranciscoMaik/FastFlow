@@ -1,9 +1,17 @@
 // Simulação de veículos sobre o grafo. Cada veículo segue a rota mais rápida até
 // um destino; ao chegar, sorteia outro. Respeita lombadas, semáforos, filas e
-// inversões de sentido.
+// inversões de sentido. Com demanda fixa (F1), destinos vêm de uma matriz OD.
+// F4 (opcional): a cada intervalo BPR, pesos das arestas sobem com a ocupação
+// e rotas podem ser recalculadas — não a cada frame, para preservar FPS.
 import { Emissor } from "./eventos.js";
 import { maiorComponenteForte, menorCaminho } from "./roteamento.js";
 import { GerenciadorDispositivos } from "./dispositivos.js";
+import { resolverDemanda, sortearParDemanda } from "./demandaFixa.js";
+import {
+  atualizarCongestionamento,
+  resolverBprConfig,
+  restaurarPesosLivres,
+} from "./congestionamento.js";
 
 const VIAGENS_NA_MEDIA = 50;
 const TENTATIVAS_DE_SORTEIO = 12;
@@ -23,6 +31,11 @@ export class Simulacao extends Emissor {
       dispositivos,
       politicaSentido = "complete",
       intervaloSpawn = 0.2,
+      // Matriz OD, `{ n, semente, nos? }`, ou `false`/`null` para destinos livres.
+      // Omitir gera demanda fixa padrão a partir da malha principal.
+      demanda,
+      // F4: `true`/objeto de overrides, ou `false` para desligar.
+      congestionamento = true,
     } = {}
   ) {
     super();
@@ -35,8 +48,14 @@ export class Simulacao extends Emissor {
     this.dispositivos = dispositivos ?? new GerenciadorDispositivos();
     this.politicaSentido = politicaSentido; // "complete" | "uturn"
     this.intervaloSpawn = intervaloSpawn;
+    this.congestionamentoAtivo = congestionamento !== false && congestionamento != null;
+    this.bpr = this.congestionamentoAtivo
+      ? resolverBprConfig(typeof congestionamento === "object" ? congestionamento : {})
+      : null;
     this.tempo = 0;
     this.tempoSpawn = 0;
+    this.#acumuladoBpr = 0;
+    this.ultimoCongestionamento = null;
     this.quantidadeDesejada = 0;
     this.veiculos = [];
     this.rotasRecalculadas = 0;
@@ -47,6 +66,7 @@ export class Simulacao extends Emissor {
     this.duracoes = [];
     this.proximoId = 1;
     this.#atualizarMalhaPrincipal();
+    this.demanda = resolverDemanda(demanda, this.malhaPrincipal);
     this.#desligarEventos = [
       grafo.on("bloqueioAlterado", (evento) => this.#aoAlterarBloqueio(evento)),
       grafo.on("sentidoAlterado", (evento) => this.#aoAlterarSentido(evento)),
@@ -54,12 +74,29 @@ export class Simulacao extends Emissor {
   }
 
   #desligarEventos;
+  #acumuladoBpr;
 
   encerrar() {
     this.#desligarEventos.forEach((desligar) => desligar());
     this.#desligarEventos = [];
     this.quantidadeDesejada = 0;
     this.veiculos = [];
+    if (this.congestionamentoAtivo) restaurarPesosLivres(this.grafo);
+  }
+
+  /** Liga/desliga F4 em runtime. Desligar restaura pesos free-flow. */
+  definirCongestionamento(ativo, overrides = {}) {
+    if (ativo) {
+      this.congestionamentoAtivo = true;
+      this.bpr = resolverBprConfig({ ...(this.bpr ?? {}), ...overrides });
+      this.#acumuladoBpr = 0;
+    } else {
+      this.congestionamentoAtivo = false;
+      this.bpr = null;
+      this.#acumuladoBpr = 0;
+      restaurarPesosLivres(this.grafo);
+      this.ultimoCongestionamento = null;
+    }
   }
 
   definirQuantidade(quantidade) {
@@ -92,6 +129,13 @@ export class Simulacao extends Emissor {
     }
     this.dispositivos.avancar(dt);
     this.#atualizarVeiculos(dt);
+    if (this.congestionamentoAtivo && this.bpr) {
+      this.#acumuladoBpr += dt;
+      if (this.#acumuladoBpr >= this.bpr.intervaloAtualizacao) {
+        this.#acumuladoBpr = 0;
+        this.#tickCongestionamento();
+      }
+    }
     this.emitir("tick", { tempo: this.tempo });
   }
 
@@ -119,7 +163,49 @@ export class Simulacao extends Emissor {
       retornos: this.retornos,
       tempoMedioViagem: media,
       tempoSimulado: this.tempo,
+      congestionamento: this.congestionamentoAtivo,
+      ultimoCongestionamento: this.ultimoCongestionamento
+        ? {
+            atualizadas: this.ultimoCongestionamento.atualizadas,
+            significativas: this.ultimoCongestionamento.significativas,
+            maxMudancaRelativa: this.ultimoCongestionamento.maxMudancaRelativa,
+            recalculadas: this.ultimoCongestionamento.recalculadas ?? 0,
+          }
+        : null,
     };
+  }
+
+  // Recomputa pesos BPR a partir da ocupação atual; rerroteia só se a mudança
+  // relativa cruzar o limiar (evita Dijkstra em massa a cada frame).
+  #tickCongestionamento() {
+    const resultado = atualizarCongestionamento(this.grafo, this.veiculos, this.bpr);
+    let recalculadas = 0;
+    if (
+      this.bpr.recalcularRotas &&
+      resultado.significativas > 0 &&
+      resultado.maxMudancaRelativa >= this.bpr.limiarRelativoRecalculo
+    ) {
+      recalculadas = this.#recalcularRotasPorCongestionamento();
+    }
+    this.ultimoCongestionamento = { ...resultado, recalculadas };
+    this.emitir("congestionamentoAtualizado", this.ultimoCongestionamento);
+  }
+
+  #recalcularRotasPorCongestionamento() {
+    let recalculadas = 0;
+    for (const veiculo of this.veiculos) {
+      if (veiculo.status === "retido") continue;
+      if (veiculo.evacuando) continue;
+      const futurasAntes = veiculo.rota.slice(veiculo.indice + 1).join();
+      if (!this.#recalcular(veiculo)) continue;
+      const futurasDepois = veiculo.rota.slice(veiculo.indice + 1).join();
+      if (futurasDepois !== futurasAntes) {
+        if (veiculo.status !== "retido") veiculo.status = "desviado";
+        recalculadas += 1;
+      }
+    }
+    this.rotasRecalculadas += recalculadas;
+    return recalculadas;
   }
 
   #atualizarVeiculos(dt) {
@@ -281,11 +367,13 @@ export class Simulacao extends Emissor {
   #novaViagem(veiculo, noAtual) {
     const arestaAtual = veiculo.rota[veiculo.indice];
     for (let i = 0; i < TENTATIVAS_DE_SORTEIO; i++) {
-      const destino = this.#sortearNo();
-      const caminho = menorCaminho(this.grafo, noAtual, destino);
+      const par = this.#sortearViagem(noAtual);
+      if (!par) break;
+      const caminho = menorCaminho(this.grafo, noAtual, par.destino);
       if (caminho && caminho.length > 0) {
         Object.assign(veiculo, {
-          destino,
+          origem: par.origem,
+          destino: par.destino,
           rota: [arestaAtual, ...caminho],
           indice: 0,
           inicio: this.tempo,
@@ -428,8 +516,37 @@ export class Simulacao extends Emissor {
     return this.malhaPrincipal[Math.floor(this.aleatorio() * this.malhaPrincipal.length)];
   }
 
+  // Com demanda fixa, sorteia um par OD (preferindo origem === noAtual).
+  // Sem demanda, devolve destino livre com origem = noAtual.
+  #sortearViagem(noAtual) {
+    if (!this.demanda?.length) {
+      return { origem: noAtual, destino: this.#sortearNo() };
+    }
+
+    if (noAtual != null) {
+      const noLocal = [];
+      for (const par of this.demanda) {
+        if (par.origem === noAtual && par.destino !== noAtual) noLocal.push(par);
+      }
+      if (noLocal.length) {
+        return noLocal[Math.floor(this.aleatorio() * noLocal.length)];
+      }
+    }
+
+    for (let i = 0; i < TENTATIVAS_DE_SORTEIO; i++) {
+      const par = sortearParDemanda(this.demanda, this.aleatorio);
+      if (par && par.destino !== noAtual) return par;
+    }
+    return sortearParDemanda(this.demanda, this.aleatorio);
+  }
+
   #criarVeiculo({ naEntrada = false } = {}) {
     if (this.arestasPrincipais.length === 0) return null;
+
+    if (this.demanda?.length) {
+      return this.#criarVeiculoComDemanda({ naEntrada });
+    }
+
     for (let tentativa = 0; tentativa < TENTATIVAS_DE_SORTEIO; tentativa++) {
       const inicial =
         this.arestasPrincipais[Math.floor(this.aleatorio() * this.arestasPrincipais.length)];
@@ -446,6 +563,7 @@ export class Simulacao extends Emissor {
       }
       const veiculo = {
         id: this.proximoId++,
+        origem: null,
         destino: null,
         rota: [inicial.id],
         indice: 0,
@@ -456,6 +574,45 @@ export class Simulacao extends Emissor {
         evacuando: false,
       };
       if (this.#novaViagem(veiculo, inicial.para)) return veiculo;
+    }
+    return null;
+  }
+
+  // Coloca o veículo já na rota do par OD sorteado (sai da origem rumo ao destino).
+  #criarVeiculoComDemanda({ naEntrada = false } = {}) {
+    for (let tentativa = 0; tentativa < TENTATIVAS_DE_SORTEIO; tentativa++) {
+      const par = this.#sortearViagem(null);
+      if (!par) return null;
+      const caminho = menorCaminho(this.grafo, par.origem, par.destino);
+      if (!caminho || caminho.length === 0) continue;
+
+      const inicial = this.grafo.arestas.get(caminho[0]);
+      if (!inicial || !this.grafo.estaAcessivel(inicial.id)) continue;
+
+      const progresso = naEntrada ? 0 : this.aleatorio() * inicial.comprimento;
+      if (
+        naEntrada &&
+        this.veiculos.some(
+          (veiculo) =>
+            veiculo.rota[veiculo.indice] === inicial.id &&
+            veiculo.progresso < DISTANCIA_SEGURANCA_FILA
+        )
+      ) {
+        continue;
+      }
+
+      return {
+        id: this.proximoId++,
+        origem: par.origem,
+        destino: par.destino,
+        rota: caminho,
+        indice: 0,
+        progresso,
+        velocidade: inicial.velocidade,
+        inicio: this.tempo,
+        status: "circulando",
+        evacuando: false,
+      };
     }
     return null;
   }

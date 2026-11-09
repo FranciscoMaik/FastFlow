@@ -8,16 +8,21 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
   const linhas = new Map();
   const sinalizacoes = new Map(); // trechoId -> { contorno, icone }
 
-  for (const trecho of trechos) {
+  function registrarTrecho(trecho, { nova = false } = {}) {
+    if (!trecho?.id || !trecho.pontos || linhas.has(trecho.id)) return;
     const linha = L.polyline(trecho.pontos, {
-      className: "via",
-      weight: 6,
+      className: nova ? "via via-nova-ligacao" : "via",
+      weight: nova ? 7 : 6,
       bubblingMouseEvents: false,
     });
     linha.bindTooltip(rotulo(trecho), { sticky: true, direction: "top", opacity: 0.95 });
     linha.on("click", (e) => aoClicar(trecho.id, e?.latlng));
     linha.addTo(grupo);
     linhas.set(trecho.id, linha);
+  }
+
+  for (const trecho of trechos) {
+    registrarTrecho(trecho);
   }
 
   function classe(id, nome, ligar) {
@@ -27,6 +32,26 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
 
   return {
     limites: () => grupo.getBounds(),
+
+    /** Inclui trecho criado em runtime (ex.: Nova ligação). */
+    adicionarTrecho(trecho) {
+      registrarTrecho(trecho, { nova: true });
+      const linha = linhas.get(trecho?.id);
+      if (linha) linha.bringToFront();
+    },
+
+    removerTrecho(trechoId) {
+      const linha = linhas.get(trechoId);
+      if (!linha) return;
+      grupo.removeLayer(linha);
+      linhas.delete(trechoId);
+      const s = sinalizacoes.get(trechoId);
+      if (s) {
+        destaques.removeLayer(s.contorno);
+        destaques.removeLayer(s.icone);
+        sinalizacoes.delete(trechoId);
+      }
+    },
 
     atualizar({ selecionados = [], bloqueados = [], alterados = [] }) {
       const sel = new Set(selecionados);

@@ -67,10 +67,16 @@ export function criarCamadaVeiculos(mapa) {
   const grupo = L.layerGroup().addTo(mapa);
   const marcadores = new Map(); // id -> { layer, modo, tipo, status, rumo, lat, lon }
   let modoDetalhe = mapa.getZoom() >= ZOOM_DETALHE;
+  /** @type {Set<string|number>} */
+  let idsDestaque = new Set();
 
   function limparMarcadores() {
     for (const item of marcadores.values()) grupo.removeLayer(item.layer);
     marcadores.clear();
+  }
+
+  function aplicarDestaque(item, id) {
+    item.layer.getElement()?.classList.toggle("preso-alerta", idsDestaque.has(id));
   }
 
   function sincronizarModo() {
@@ -153,6 +159,8 @@ export function criarCamadaVeiculos(mapa) {
           el?.classList.toggle("evacuando", v.status === "evacuando");
           item.status = v.status;
         }
+
+        aplicarDestaque(item, v.id);
       }
 
       for (const [id, item] of marcadores) {
@@ -163,10 +171,20 @@ export function criarCamadaVeiculos(mapa) {
       }
     },
 
+    /**
+     * Destaca veículos (ex.: sem rota de escape se o bloqueio fosse aplicado).
+     * @param {Iterable<string|number>|null|undefined} ids
+     */
+    destacar(ids) {
+      idsDestaque = new Set(ids ?? []);
+      for (const [id, item] of marcadores) aplicarDestaque(item, id);
+    },
+
     remover() {
       mapa.off("zoomend", sincronizarModo);
       mapa.removeLayer(grupo);
       marcadores.clear();
+      idsDestaque = new Set();
     },
   };
 }

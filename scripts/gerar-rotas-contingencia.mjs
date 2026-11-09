@@ -89,7 +89,11 @@ for (const [id, cenario] of Object.entries(cenarios)) {
   saida[id] = { bloqueio: cenario.bloqueio, rotas: {} };
   for (const [tipo, rota] of Object.entries(cenario.rotas)) {
     const tracado = await tracar(pontosDePassagem(cenario, tipo, rota));
-    saida[id].rotas[tipo] = { pontos: tracado.pontos };
+    saida[id].rotas[tipo] = {
+      pontos: tracado.pontos,
+      distanciaM: tracado.distanciaM,
+      duracaoS: tracado.duracaoS,
+    };
     console.error(
       `${id} / ${tipo}: ${tracado.pontos.length} pontos, ` +
         `${(tracado.distanciaM / 1000).toFixed(1)} km, ${Math.round(tracado.duracaoS / 60)} min, ` +

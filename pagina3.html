@@ -12,7 +12,7 @@
   <link rel="stylesheet" href="css/contingencia.css">
 </head>
 <body>
-  <div class="layout">
+  <div class="layout com-barra-cenario">
     <header class="topbar">
       <a class="brand" href="pagina1.html" aria-label="FastFlow, início">
         <span class="brand-mark" aria-hidden="true">F</span>
@@ -21,20 +21,23 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a href="pagina1.html">Inversão de Sentido</a>
+        <a href="pagina1.html">Simulação de Trânsito</a>
         <a href="pagina2.html">Bloqueio Viário</a>
         <a class="active" href="pagina3.html" aria-current="page">Contingência</a>
+        <a href="pagina4.html">Comparador</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
       <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
+    <div id="barraCenario" class="barra-cenario" role="region" aria-label="Cenário salvo"></div>
+
     <aside class="sidebar">
       <div class="sidebar-heading">
         <span class="eyebrow">DIRECIONAMENTO</span>
         <h2>Planejar rota</h2>
-        <p>Escolha o local e o cenário. Origem e destino vêm do cenário e não recalculam a rota.</p>
+        <p>Use o catálogo demonstrativo ou clique no mapa para origem/destino e recalcule com o cenário F5 ativo.</p>
       </div>
 
       <form class="route-form" id="route-form">
@@ -45,25 +48,29 @@
           </select>
         </div>
 
-        <label for="scenario-select">Cenário de simulação</label>
+        <label for="scenario-select">Cenário demonstrativo</label>
         <div class="input-wrap select-wrap">
           <select id="scenario-select" name="scenario"></select>
         </div>
 
-        <label for="origin">Ponto de partida do cenário</label>
+        <label for="origin">Ponto de partida</label>
         <div class="input-wrap">
           <span class="input-marker origin-marker" aria-hidden="true"></span>
-          <input id="origin" name="origin" type="text" value="Centro de Cajamar" readonly tabindex="-1">
+          <input id="origin" name="origin" type="text" value="Centro de Cajamar" autocomplete="off">
         </div>
 
         <div class="route-connector" aria-hidden="true"></div>
 
-        <label for="destination">Destino do cenário</label>
+        <label for="destination">Destino</label>
         <div class="input-wrap">
           <span class="input-marker destination-marker" aria-hidden="true"></span>
-          <input id="destination" name="destination" type="text" value="Jordanésia" readonly tabindex="-1">
+          <input id="destination" name="destination" type="text" value="Jordanésia" autocomplete="off">
         </div>
 
+        <div class="route-actions">
+          <button class="botao botao-secundario" id="btn-definir-mapa" type="button">Definir no mapa</button>
+          <button class="botao botao-primario" id="btn-calcular-rotas" type="submit">Calcular na malha</button>
+        </div>
         <p class="form-feedback" id="form-feedback" aria-live="polite"></p>
       </form>
 
@@ -125,34 +132,67 @@
               <span class="eyebrow">OPÇÕES DE DESLOCAMENTO</span>
               <h2 id="routes-title">Rotas disponíveis</h2>
             </div>
-            <span class="route-count">3 opções</span>
+            <div class="route-heading-acoes">
+              <span class="route-count">3 opções</span>
+              <div class="contingencia-export" role="group" aria-label="Exportar resumo">
+                <button type="button" class="botao botao-secundario" id="btnResumoContingenciaHtml" title="Baixa HTML comparativo (rota × desvios)">Gerar resumo</button>
+                <button type="button" class="botao botao-secundario" id="btnResumoContingenciaPdf" title="Abre o relatório e o diálogo Imprimir → Salvar como PDF">Gerar PDF</button>
+              </div>
+            </div>
           </div>
 
           <div class="route-options">
             <button class="route-option" type="button" data-route="primary" aria-pressed="false">
               <span class="route-option-top">
                 <span class="route-name"><i class="route-swatch swatch-primary"></i> <span data-route-name>Rota principal</span></span>
-                <span class="route-tag tag-neutral" data-route-tag>Interrompida</span>
+                <span class="route-tags">
+                  <span class="route-tag tag-neutral" data-route-tag>Interrompida</span>
+                  <span class="route-tag tag-neutral" data-route-robustez hidden></span>
+                </span>
               </span>
-              <span class="route-metrics"><strong data-route-time>24 min</strong><span>·</span><span data-route-distance>8,4 km</span><span class="delay" data-route-delay></span></span>
+              <span class="route-metrics"><strong data-route-time>—</strong><span>·</span><span data-route-distance>—</span><span class="delay" data-route-delay></span></span>
+              <div class="atraso-barra" data-route-atraso-barra hidden title="Composição do atraso">
+                <span class="atraso-seg atraso-distancia" data-atraso-distancia></span>
+                <span class="atraso-seg atraso-dispositivos" data-atraso-dispositivos></span>
+                <span class="atraso-seg atraso-congestao" data-atraso-congestao></span>
+              </div>
+              <span class="atraso-legenda" data-route-atraso-legenda hidden>Distância · Dispositivos · Congestão</span>
               <span class="route-description" data-route-description>Passa pelo trecho com bloqueio simulado.</span>
             </button>
 
             <button class="route-option selected" type="button" data-route="alternative" aria-pressed="true">
               <span class="route-option-top">
                 <span class="route-name"><i class="route-swatch swatch-alternative"></i> <span data-route-name>Desvio sugerido</span></span>
-                <span class="route-tag tag-recommended" data-route-tag>Recomendada</span>
+                <span class="route-tags">
+                  <span class="route-tag tag-recommended" data-route-tag>Recomendada</span>
+                  <span class="route-tag tag-neutral" data-route-robustez hidden></span>
+                </span>
               </span>
-              <span class="route-metrics"><strong data-route-time>32 min</strong><span>·</span><span data-route-distance>10,2 km</span><span class="delay" data-route-delay>+8 min</span></span>
+              <span class="route-metrics"><strong data-route-time>—</strong><span>·</span><span data-route-distance>—</span><span class="delay" data-route-delay></span></span>
+              <div class="atraso-barra" data-route-atraso-barra hidden title="Composição do atraso">
+                <span class="atraso-seg atraso-distancia" data-atraso-distancia></span>
+                <span class="atraso-seg atraso-dispositivos" data-atraso-dispositivos></span>
+                <span class="atraso-seg atraso-congestao" data-atraso-congestao></span>
+              </div>
+              <span class="atraso-legenda" data-route-atraso-legenda hidden>Distância · Dispositivos · Congestão</span>
               <span class="route-description" data-route-description>Via Av. Brigadeiro Luís Antônio · evita o bloqueio.</span>
             </button>
 
             <button class="route-option" type="button" data-route="alternative-two" aria-pressed="false">
               <span class="route-option-top">
                 <span class="route-name"><i class="route-swatch swatch-third"></i> <span data-route-name>Alternativa 2</span></span>
-                <span class="route-tag tag-neutral" data-route-tag>Mais distante</span>
+                <span class="route-tags">
+                  <span class="route-tag tag-neutral" data-route-tag>Mais distante</span>
+                  <span class="route-tag tag-neutral" data-route-robustez hidden></span>
+                </span>
               </span>
-              <span class="route-metrics"><strong data-route-time>36 min</strong><span>·</span><span data-route-distance>11,6 km</span><span class="delay" data-route-delay>+12 min</span></span>
+              <span class="route-metrics"><strong data-route-time>—</strong><span>·</span><span data-route-distance>—</span><span class="delay" data-route-delay></span></span>
+              <div class="atraso-barra" data-route-atraso-barra hidden title="Composição do atraso">
+                <span class="atraso-seg atraso-distancia" data-atraso-distancia></span>
+                <span class="atraso-seg atraso-dispositivos" data-atraso-dispositivos></span>
+                <span class="atraso-seg atraso-congestao" data-atraso-congestao></span>
+              </div>
+              <span class="atraso-legenda" data-route-atraso-legenda hidden>Distância · Dispositivos · Congestão</span>
               <span class="route-description" data-route-description>Via Rua Vergueiro · desvio ampliado para contingência.</span>
             </button>
           </div>

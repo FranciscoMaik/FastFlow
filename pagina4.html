@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Comparador de Cenários - FastFlow</title>
+  <script src="js/auth.js"></script>
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="layout layout-comparador" id="raizComparador" data-locais="data/locais.json">
+    <header class="topbar">
+      <a class="brand" href="pagina1.html" aria-label="FastFlow, início">
+        <span class="brand-mark" aria-hidden="true">F</span>
+        <span>FastFlow</span>
+      </a>
+      <span class="topbar-context">Central de operações</span>
+      <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
+      <nav aria-label="Navegação principal">
+        <a href="pagina1.html">Simulação de Trânsito</a>
+        <a href="pagina2.html">Bloqueio Viário</a>
+        <a href="pagina3.html">Contingência</a>
+        <a class="active" href="pagina4.html" aria-current="page">Comparador</a>
+      </nav>
+      <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
+      <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
+      <button class="botao-sair" type="button" data-logout>Sair</button>
+    </header>
+
+    <main class="main main-comparador" aria-labelledby="titulo-comparador">
+      <header class="comparador-cabecalho">
+        <h1 id="titulo-comparador">Comparador de cenários</h1>
+        <p class="comparador-lead">
+          Compare <strong>Base × Cenário A × Cenário B</strong> com o vocabulário comum de indicadores.
+          A cascata mostra a contribuição de cada mudança (bloqueio, inversão, etc.).
+        </p>
+        <p id="statusFonte" class="dica" role="status"></p>
+      </header>
+
+      <section class="comparador-controles painel-secao" aria-labelledby="h-setup">
+        <h2 id="h-setup">Configuração</h2>
+        <div class="comparador-grade-controles">
+          <label class="campo">
+            <span>Área simulada</span>
+            <select id="selLocal" disabled>
+              <option value="">Carregando locais…</option>
+            </select>
+          </label>
+          <p id="infoLocal" class="dica" aria-live="polite"></p>
+          <label class="campo">
+            <span>Amostra (viagens)</span>
+            <select id="selAmostra">
+              <option value="60">60</option>
+              <option value="120" selected>120</option>
+              <option value="200">200</option>
+            </select>
+          </label>
+          <label class="campo">
+            <span>Semente da demanda</span>
+            <input id="selSemente" type="number" min="1" step="1" value="1">
+          </label>
+          <button type="button" class="botao botao-secundario" id="btnAtualizarFonte">Atualizar fonte F5</button>
+        </div>
+        <p id="listaStub" class="dica"></p>
+      </section>
+
+      <div class="comparador-lados">
+        <section class="comparador-lado painel-secao" aria-labelledby="h-cenario-a">
+          <h2 id="h-cenario-a">Cenário A</h2>
+          <fieldset class="comparador-modo">
+            <legend>Origem</legend>
+            <label><input type="radio" name="modoA" value="salvo" checked> Cenário salvo</label>
+            <label><input type="radio" name="modoA" value="json"> Lista JSON</label>
+          </fieldset>
+          <div id="blocoSalvoA">
+            <label class="campo">
+              <span>Cenário</span>
+              <select id="selCenarioA"></select>
+            </label>
+          </div>
+          <div id="blocoJsonA" hidden>
+            <label class="campo">
+              <span>Nome</span>
+              <input id="nomeJsonA" type="text" placeholder="Ex.: Obra Av. Abdalla" autocomplete="off">
+            </label>
+            <label class="campo">
+              <span>Mudanças (JSON F3)</span>
+              <textarea id="jsonA" rows="8" spellcheck="false" placeholder='[{"tipo":"bloquear","trechoId":"…"}]'></textarea>
+            </label>
+            <label class="campo">
+              <span>Importar arquivo</span>
+              <input id="arquivoA" type="file" accept="application/json,.json">
+            </label>
+            <button type="button" class="botao botao-secundario" id="btnSalvarStubA">Salvar na fonte</button>
+          </div>
+        </section>
+
+        <section class="comparador-lado painel-secao" aria-labelledby="h-cenario-b">
+          <h2 id="h-cenario-b">Cenário B</h2>
+          <fieldset class="comparador-modo">
+            <legend>Origem</legend>
+            <label><input type="radio" name="modoB" value="salvo" checked> Cenário salvo</label>
+            <label><input type="radio" name="modoB" value="json"> Lista JSON</label>
+          </fieldset>
+          <div id="blocoSalvoB">
+            <label class="campo">
+              <span>Cenário</span>
+              <select id="selCenarioB"></select>
+            </label>
+          </div>
+          <div id="blocoJsonB" hidden>
+            <label class="campo">
+              <span>Nome</span>
+              <input id="nomeJsonB" type="text" placeholder="Ex.: Plano B — desvio" autocomplete="off">
+            </label>
+            <label class="campo">
+              <span>Mudanças (JSON F3)</span>
+              <textarea id="jsonB" rows="8" spellcheck="false" placeholder='[{"tipo":"inverter","trechoId":"…"}]'></textarea>
+            </label>
+            <label class="campo">
+              <span>Importar arquivo</span>
+              <input id="arquivoB" type="file" accept="application/json,.json">
+            </label>
+            <button type="button" class="botao botao-secundario" id="btnSalvarStubB">Salvar na fonte</button>
+          </div>
+        </section>
+      </div>
+
+      <div class="comparador-acoes">
+        <button type="button" class="botao botao-bloquear" id="btnComparar">Comparar</button>
+        <p id="feedbackComparador" class="mensagem" role="status" aria-live="polite"></p>
+      </div>
+
+      <section id="painelResultados" class="comparador-resultados" hidden>
+        <div class="comparador-resultados-cabecalho">
+          <h2>Tabela Base × A × B</h2>
+          <div class="comparador-export">
+            <button type="button" class="botao botao-secundario" id="btnResumoHtml">Gerar resumo (HTML)</button>
+            <button type="button" class="botao botao-secundario" id="btnResumoPdf" title="Abre o relatório e o diálogo Imprimir → Salvar como PDF">Gerar PDF</button>
+            <button type="button" class="botao botao-secundario" id="btnResumoJson">Gerar resumo (JSON)</button>
+          </div>
+        </div>
+        <p class="dica">Células em verde = melhor valor entre as três colunas.</p>
+        <div class="tabela-comparacao-wrap">
+          <table class="tabela-comparacao" aria-describedby="rodapeTabela">
+            <thead id="theadComparacao"></thead>
+            <tbody id="tbodyComparacao"></tbody>
+          </table>
+        </div>
+        <p id="rodapeTabela" class="preview-inversao-rodape"></p>
+
+        <section class="comparador-mapa-painel" aria-labelledby="h-mapa-diff">
+          <div class="comparador-mapa-cabecalho">
+            <h3 id="h-mapa-diff">Mapa de diferença de fluxo</h3>
+            <fieldset class="comparador-mapa-modo">
+              <legend class="visually-hidden">Comparar fluxo entre</legend>
+              <label><input type="radio" name="modoMapaDiff" value="base-a" checked> Base → A</label>
+              <label><input type="radio" name="modoMapaDiff" value="base-b"> Base → B</label>
+              <label><input type="radio" name="modoMapaDiff" value="a-b"> A → B</label>
+            </fieldset>
+          </div>
+          <p id="legendaMapaDiff" class="dica">Vermelho = recebe mais fluxo; verde = alivia, em relação à referência escolhida.</p>
+          <div id="mapaComparador" class="comparador-mapa" role="img" aria-label="Mapa da variação de fluxo entre cenários"></div>
+        </section>
+
+        <div class="comparador-cascatas">
+          <section id="cascataA" class="cascata-painel" hidden>
+            <h3 data-cascata-titulo>Cascata A</h3>
+            <p class="dica" data-cascata-meta></p>
+            <ol data-cascata-passos class="cascata-lista"></ol>
+          </section>
+          <section id="cascataB" class="cascata-painel" hidden>
+            <h3 data-cascata-titulo>Cascata B</h3>
+            <p class="dica" data-cascata-meta></p>
+            <ol data-cascata-passos class="cascata-lista"></ol>
+          </section>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script type="module" src="js/ui/telaComparador.js"></script>
+  <script>
+    if (location.protocol === "file:") {
+      const el = document.getElementById("feedbackComparador");
+      if (el) {
+        el.textContent =
+          "Esta tela precisa de um servidor local. Na pasta do projeto: python3 -m http.server 8000 e abra http://localhost:8000/pagina4.html";
+      }
+    }
+  </script>
+</body>
+</html>

@@ -448,6 +448,25 @@ body {
   font-size: 0.68rem;
 }
 
+.route-heading-acoes {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.contingencia-export {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  justify-content: flex-end;
+}
+
+.contingencia-export .botao {
+  font-size: 0.72rem;
+  padding: 0.4rem 0.75rem;
+}
+
 .route-options {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -512,6 +531,13 @@ body {
   border-color: #a56add;
 }
 
+.route-tags {
+  display: inline-flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 4px;
+}
+
 .route-tag {
   padding: 4px 7px;
   border-radius: 5px;
@@ -528,6 +554,16 @@ body {
 .tag-recommended {
   background: #e9f7f3;
   color: #21836f;
+}
+
+.tag-robust {
+  background: #e8f1ff;
+  color: #3a5fad;
+}
+
+.tag-fragile {
+  background: #fdeceb;
+  color: #b4453a;
 }
 
 .route-metrics {
@@ -549,10 +585,71 @@ body {
   font-size: 0.63rem;
 }
 
+.atraso-barra {
+  display: flex;
+  overflow: hidden;
+  width: 100%;
+  height: 7px;
+  border-radius: 999px;
+  background: #eef2f7;
+}
+
+.atraso-seg {
+  display: block;
+  min-width: 0;
+  height: 100%;
+}
+
+.atraso-distancia {
+  background: #4778e8;
+}
+
+.atraso-dispositivos {
+  background: #17a88b;
+}
+
+.atraso-congestao {
+  background: #d4a017;
+}
+
+.atraso-legenda {
+  color: #9aa6b8;
+  font-size: 0.55rem;
+  letter-spacing: 0.02em;
+}
+
 .route-description {
   color: #8a96a8;
   font-size: 0.65rem;
   line-height: 1.4;
+}
+
+.route-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.route-actions .botao {
+  min-height: 38px;
+  font-size: 0.72rem;
+  padding: 0 10px;
+}
+
+.route-form .botao-secundario {
+  background: #fff;
+  border: 1px solid #d5dde8;
+  color: #3a4a63;
+}
+
+.route-form .botao-secundario:hover {
+  border-color: #b7c4d8;
+  background: #f7f9fc;
+}
+
+.mapa-definindo {
+  cursor: crosshair;
 }
 
 .dispatch-bar {

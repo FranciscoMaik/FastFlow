@@ -9,7 +9,8 @@ const ATALHOS_SENTIDO = [
 const ATALHOS_BLOQUEIO = [
   ["Esc", "Cancelar ferramenta ou limpar seleção"],
   ["Espaço", "Pausar / continuar (foque fora de campos)"],
-  ["Clique + ferramenta", "Posicionar lombada ou semáforo na via"],
+  ["Clique + ferramenta", "Posicionar lombada, semáforo ou ligação"],
+  ["Onde construir?", "Sugerir ligações curtas (<300 m) por ganho de tempo"],
 ];
 
 export function montarAtalhos(container, modo = "bloqueio") {

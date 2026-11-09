@@ -29,7 +29,18 @@ export async function iniciarSeletorLocal({
 
   let desmontarAtual = null;
   let localAtual = null;
+  let geojsonAtual = null;
   let pedido = 0;
+
+  function aplicarMontagem(local, geojson, { primeiraVez = false } = {}) {
+    const montado = montar(local, geojson, { primeiraVez });
+    desmontarAtual = montado?.desmontar ?? null;
+    localAtual = local;
+    geojsonAtual = geojson;
+    salvarLocalId(local.id);
+    info.textContent = [local.descricao, `${montado.totalTrechos} trechos`].filter(Boolean).join(" · ");
+    return montado;
+  }
 
   async function trocar(local, { primeiraVez = false } = {}) {
     const meuPedido = ++pedido;
@@ -51,11 +62,7 @@ export async function iniciarSeletorLocal({
       const [geojson] = await Promise.all([carregarMalhaDoLocal(local), tempoMinimo]);
       if (meuPedido !== pedido) return;
 
-      const montado = montar(local, geojson, { primeiraVez });
-      desmontarAtual = montado.desmontar;
-      localAtual = local;
-      salvarLocalId(local.id);
-      info.textContent = [local.descricao, `${montado.totalTrechos} trechos`].filter(Boolean).join(" · ");
+      aplicarMontagem(local, geojson, { primeiraVez });
 
       if (primeiraVez) mapa.fitBounds(local.limites);
       else mapa.flyToBounds(local.limites, { duration: 0.8 });
@@ -72,6 +79,17 @@ export async function iniciarSeletorLocal({
         mapa.getContainer().removeAttribute("aria-busy");
       }
     }
+  }
+
+  /**
+   * Remonta a sessão atual (mesmo local/malha) — usado ao trocar o cenário ativo (F5)
+   * para reaplicar mudanças via `aplicarCenarioNaSessao` sem reload da página.
+   */
+  function reiniciarSessao() {
+    if (!localAtual || !geojsonAtual) return null;
+    desmontarAtual?.();
+    desmontarAtual = null;
+    return aplicarMontagem(localAtual, geojsonAtual, { primeiraVez: false });
   }
 
   select.addEventListener("change", async () => {
@@ -97,4 +115,9 @@ export async function iniciarSeletorLocal({
   });
 
   await trocar(locais.find((l) => l.id === idInicial) ?? locais[0], { primeiraVez: true });
+
+  return {
+    reiniciarSessao,
+    obterLocal: () => localAtual,
+  };
 }
