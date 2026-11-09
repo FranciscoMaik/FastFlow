@@ -1,8 +1,13 @@
-(function () {
-  const cenarios = {
+/* global L */
+import { carregarLocais } from "./adaptador/locais.js";
+
+const URL_LOCAIS = "data/locais.json";
+
+const cenarios = {
     "cajamar-centro": {
       origem: "Centro de Cajamar",
       destino: "Jordanésia",
+      locais: ["centro", "jordanesia"],
       ocorrencia: "Bloqueio viário",
       localOcorrencia: "Av. Dr. Antônio João Abdalla · Cajamar",
       bloqueio: [-23.356, -46.875],
@@ -36,6 +41,7 @@
     "polvilho-distrito": {
       origem: "Polvilho, Cajamar",
       destino: "Distrito Industrial de Cajamar",
+      locais: ["polvilho"],
       ocorrencia: "Interdição simulada",
       localOcorrencia: "Estrada de Cajamar · acesso ao Distrito Industrial",
       bloqueio: [-23.397, -46.872],
@@ -69,6 +75,7 @@
     "ponunduva-cajamar": {
       origem: "Ponunduva, Cajamar",
       destino: "Centro de Cajamar",
+      locais: ["ponunduva", "centro"],
       ocorrencia: "Obra simulada",
       localOcorrencia: "Estrada de Ponunduva · Cajamar",
       bloqueio: [-23.344, -46.913],
@@ -102,6 +109,7 @@
     "jordanesia-polvilho": {
       origem: "Jordanésia, Cajamar",
       destino: "Polvilho, Cajamar",
+      locais: ["jordanesia", "polvilho"],
       ocorrencia: "Bloqueio simulado",
       localOcorrencia: "Av. Tenente Marques · Cajamar",
       bloqueio: [-23.389, -46.861],
@@ -135,6 +143,7 @@
     "centro-parque": {
       origem: "Centro de Cajamar",
       destino: "Parque Maria Aparecida, Cajamar",
+      locais: ["centro"],
       ocorrencia: "Bloqueio simulado",
       localOcorrencia: "Av. Professor Walter Ribas de Andrade · Cajamar",
       bloqueio: [-23.354, -46.879],
@@ -168,6 +177,7 @@
     "jordanesia-empresarial": {
       origem: "Jordanésia, Cajamar",
       destino: "Parque Empresarial de Cajamar",
+      locais: ["jordanesia"],
       ocorrencia: "Obra simulada",
       localOcorrencia: "Estrada de Jordanésia · acesso empresarial",
       bloqueio: [-23.368, -46.858],
@@ -201,6 +211,7 @@
     "polvilho-centro": {
       origem: "Polvilho, Cajamar",
       destino: "Centro de Cajamar",
+      locais: ["polvilho", "centro"],
       ocorrencia: "Interdição simulada",
       localOcorrencia: "Av. Tenente Marques · região de Polvilho",
       bloqueio: [-23.405, -46.866],
@@ -234,6 +245,7 @@
     "ponunduva-jordanesia": {
       origem: "Ponunduva, Cajamar",
       destino: "Jordanésia, Cajamar",
+      locais: ["ponunduva", "jordanesia"],
       ocorrencia: "Bloqueio viário simulado",
       localOcorrencia: "Estrada de Ponunduva · acesso a Jordanésia",
       bloqueio: [-23.351, -46.900],
@@ -325,6 +337,7 @@
     radius: 7, color: "#fff", weight: 3, fillColor: "#172338", fillOpacity: 1
   }).addTo(mapa);
 
+  const seletorLocal = document.getElementById("selLocal");
   const seletorCenario = document.getElementById("scenario-select");
   const entradaOrigem = document.getElementById("origin");
   const entradaDestino = document.getElementById("destination");
@@ -338,9 +351,60 @@
   const botaoDirecionamento = document.getElementById("dispatch-button");
   const feedbackDirecionamento = document.getElementById("dispatch-feedback");
   let rotaSelecionada = "alternative";
+  const locaisPorId = {};
+
+  function idsCenariosDoLocal(idLocal) {
+    return Object.keys(cenarios).filter(function (id) {
+      return (cenarios[id].locais || []).includes(idLocal);
+    });
+  }
+
+  function popularCenarios(idLocal, preferido) {
+    const ids = idsCenariosDoLocal(idLocal);
+    seletorCenario.innerHTML = "";
+    ids.forEach(function (id) {
+      const cenario = cenarios[id];
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = cenario.origem + " → " + cenario.destino;
+      seletorCenario.appendChild(option);
+    });
+    const escolhido = ids.includes(preferido) ? preferido : ids[0];
+    if (escolhido) {
+      seletorCenario.value = escolhido;
+    }
+    seletorCenario.disabled = ids.length === 0;
+    return escolhido;
+  }
+
+  function popularLocais(lista, padrao) {
+    seletorLocal.innerHTML = "";
+    lista.forEach(function (local) {
+      locaisPorId[local.id] = local;
+      const option = document.createElement("option");
+      option.value = local.id;
+      option.textContent = local.nome;
+      seletorLocal.appendChild(option);
+    });
+    const escolhido = locaisPorId[padrao] ? padrao : lista[0] && lista[0].id;
+    if (escolhido) {
+      seletorLocal.value = escolhido;
+    }
+    seletorLocal.disabled = lista.length === 0;
+    return escolhido;
+  }
 
   function enquadrarRotas() {
     mapa.fitBounds(limites.getBounds(), { padding: [34, 34] });
+  }
+
+  function aoTrocarLocal(idLocal) {
+    const id = popularCenarios(idLocal, seletorCenario.value);
+    if (id) {
+      atualizarCenario(id);
+      return;
+    }
+    feedbackFormulario.textContent = "Nenhum cenário disponível para esta região.";
   }
 
   function selecionarRota(tipo) {
@@ -423,30 +487,48 @@
     atualizarCenario(seletorCenario.value);
   });
 
+  seletorLocal.addEventListener("change", function () {
+    aoTrocarLocal(seletorLocal.value);
+  });
+
   botoesRota.forEach(function (botao) {
     botao.addEventListener("click", function () {
       selecionarRota(botao.dataset.route);
     });
   });
 
-  function iniciar() {
-    atualizarCenario(seletorCenario.value);
+  function iniciar(idLocal) {
+    const id = popularCenarios(idLocal, seletorCenario.value);
+    if (id) {
+      atualizarCenario(id);
+    } else {
+      feedbackFormulario.textContent = "Nenhum cenário disponível para esta região.";
+    }
     window.setTimeout(function () {
       mapa.invalidateSize();
       enquadrarRotas();
     }, 0);
   }
 
-  fetch("data/rotas-contingencia.json")
-    .then(function (resposta) {
-      return resposta.ok ? resposta.json() : {};
+  Promise.all([
+    fetch("data/rotas-contingencia.json")
+      .then(function (resposta) {
+        return resposta.ok ? resposta.json() : {};
+      })
+      .catch(function () {
+        return {};
+      }),
+    carregarLocais(URL_LOCAIS)
+  ])
+    .then(function (resultado) {
+      tracados = resultado[0];
+      const cadastro = resultado[1];
+      const idLocal = popularLocais(cadastro.locais, cadastro.padrao);
+      iniciar(idLocal);
     })
-    .catch(function () {
-      return {};
-    })
-    .then(function (dados) {
-      tracados = dados;
-      iniciar();
+    .catch(function (erro) {
+      seletorLocal.disabled = true;
+      feedbackFormulario.textContent = erro.message || "Não foi possível carregar as regiões.";
     });
 
   document.getElementById("fit-map").addEventListener("click", enquadrarRotas);
@@ -478,4 +560,3 @@
     feedbackDirecionamento.textContent =
       "Simulação local: nenhuma equipe real foi notificada.";
   });
-})();
