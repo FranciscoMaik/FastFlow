@@ -29,9 +29,9 @@
 
     <aside class="sidebar sidebar-sentido" aria-label="Painel de inversão de sentido">
       <section class="painel-secao" aria-labelledby="h-local">
-        <h2 id="h-local">Região simulada</h2>
+        <h2 id="h-local">Local</h2>
         <label class="campo">
-          <span>Local</span>
+          <span>Área simulada</span>
           <select id="selLocal" disabled>
             <option value="">Carregando locais…</option>
           </select>
@@ -77,15 +77,24 @@
       <section class="painel-secao" aria-labelledby="h-sim">
         <h2 id="h-sim">Simulação</h2>
         <div class="acoes">
-          <button class="botao botao-secundario" id="btn-play" type="button" aria-pressed="false">Pausar</button>
+          <button class="botao botao-secundario" id="btnPausar" type="button" aria-pressed="false">Pausar</button>
         </div>
-        <label class="campo campo-range" for="speed">
-          <span>Velocidade <output id="speed-out">1×</output></span>
-          <input id="speed" type="range" min="1" max="8" step="1" value="1">
+        <label class="campo" for="selQuantidade">
+          <span>Veículos</span>
+          <select id="selQuantidade">
+            <option value="30">30</option>
+            <option value="60" selected>60</option>
+            <option value="100">100</option>
+            <option value="150">150</option>
+          </select>
         </label>
-        <label class="campo campo-range" for="cars">
-          <span>Veículos <output id="cars-out">50</output></span>
-          <input id="cars" type="range" min="10" max="150" step="10" value="50">
+        <label class="campo" for="selVelocidade">
+          <span>Velocidade</span>
+          <select id="selVelocidade">
+            <option value="1">1×</option>
+            <option value="4" selected>4×</option>
+            <option value="8">8×</option>
+          </select>
         </label>
         <label class="campo" for="policy">
           <span>Veículos já na via ao inverter</span>

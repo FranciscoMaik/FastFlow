@@ -1,4 +1,4 @@
-import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
+import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js";
 
 (function () {
   const cenarios = {
@@ -73,7 +73,7 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     "ponunduva-cajamar": {
       origem: "Ponunduva, Cajamar",
       destino: "Centro de Cajamar",
-      regioes: ["centro"],
+      regioes: ["ponunduva", "centro"],
       ocorrencia: "Obra simulada",
       localOcorrencia: "Estrada de Ponunduva · Cajamar",
       bloqueio: [-23.344, -46.913],
@@ -243,7 +243,7 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     "ponunduva-jordanesia": {
       origem: "Ponunduva, Cajamar",
       destino: "Jordanésia, Cajamar",
-      regioes: ["jordanesia"],
+      regioes: ["ponunduva", "jordanesia"],
       ocorrencia: "Bloqueio viário simulado",
       localOcorrencia: "Estrada de Ponunduva · acesso a Jordanésia",
       bloqueio: [-23.351, -46.900],
@@ -473,13 +473,17 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     atualizarCenario(seletorCenario.value);
   });
 
-  ligarSeletorRegiao(document.getElementById("selRegiao"), {
-    aoTrocar(idRegiao) {
-      const id = popularCenarios(idRegiao, seletorCenario.value);
-      if (id) {
-        atualizarCenario(id);
-      }
-    },
+  const seletorLocal = document.getElementById("selLocal");
+  const urlLocais = seletorLocal.dataset.locais || "data/locais.json";
+
+  seletorLocal.addEventListener("change", function () {
+    const idLocal = seletorLocal.value;
+    if (!idLocal) return;
+    salvarLocalId(idLocal);
+    const id = popularCenarios(idLocal, seletorCenario.value);
+    if (id) {
+      atualizarCenario(id);
+    }
   });
 
   botoesRota.forEach(function (botao) {
@@ -488,8 +492,8 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     });
   });
 
-  function iniciar() {
-    const id = popularCenarios(lerRegiao(), seletorCenario.value);
+  function iniciarComLocal(idLocal) {
+    const id = popularCenarios(idLocal, seletorCenario.value);
     if (id) {
       atualizarCenario(id);
     }
@@ -499,17 +503,42 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     }, 0);
   }
 
-  fetch("data/rotas-contingencia.json")
-    .then(function (resposta) {
-      return resposta.ok ? resposta.json() : {};
-    })
-    .catch(function () {
-      return {};
-    })
-    .then(function (dados) {
-      tracados = dados;
-      iniciar();
+  Promise.all([
+    carregarLocais(urlLocais).catch(function () {
+      return { locais: [], padrao: "centro" };
+    }),
+    fetch("data/rotas-contingencia.json")
+      .then(function (resposta) {
+        return resposta.ok ? resposta.json() : {};
+      })
+      .catch(function () {
+        return {};
+      }),
+  ]).then(function (resultado) {
+    const cadastro = resultado[0];
+    tracados = resultado[1];
+
+    const locais = cadastro.locais || [];
+    if (locais.length === 0) {
+      seletorLocal.replaceChildren(new Option("Locais indisponíveis", ""));
+      seletorLocal.disabled = true;
+      return;
+    }
+
+    const ids = locais.map(function (local) {
+      return local.id;
     });
+    const idInicial = lerLocalId(ids, cadastro.padrao);
+    seletorLocal.replaceChildren(
+      ...locais.map(function (local) {
+        return new Option(local.nome, local.id);
+      })
+    );
+    seletorLocal.value = idInicial;
+    seletorLocal.disabled = false;
+    salvarLocalId(idInicial);
+    iniciarComLocal(idInicial);
+  });
 
   function sincronizarPausaAnimacoes() {
     document.body.classList.toggle("animacoes-pausadas", document.hidden);

@@ -1,7 +1,16 @@
-// Seletor de região simulada compartilhado pelas telas de simulação.
-import { carregarLocais, carregarMalhaDoLocal } from "../adaptador/locais.js";
+// Seletor de local simulável compartilhado pelas telas (persistência + confirmação de troca).
+import { carregarLocais, carregarMalhaDoLocal, lerLocalId, salvarLocalId } from "../adaptador/locais.js";
+import { confirmar } from "./confirmacao.js";
 
-export async function iniciarSeletorLocal({ mapa, urlLocais, select, info, carregando, montar }) {
+export async function iniciarSeletorLocal({
+  mapa,
+  urlLocais,
+  select,
+  info,
+  carregando,
+  montar,
+  obterResumoAlteracoes = null,
+} = {}) {
   let locais;
   let padrao;
   try {
@@ -12,10 +21,13 @@ export async function iniciarSeletorLocal({ mapa, urlLocais, select, info, carre
     return;
   }
 
+  const ids = locais.map((l) => l.id);
+  const idInicial = lerLocalId(ids, padrao);
   select.replaceChildren(...locais.map((l) => new Option(l.nome, l.id)));
-  select.value = padrao;
+  select.value = idInicial;
 
   let desmontarAtual = null;
+  let localAtual = null;
   let pedido = 0;
 
   async function trocar(local, { primeiraVez = false } = {}) {
@@ -39,6 +51,8 @@ export async function iniciarSeletorLocal({ mapa, urlLocais, select, info, carre
 
       const montado = montar(local, geojson, { primeiraVez });
       desmontarAtual = montado.desmontar;
+      localAtual = local;
+      salvarLocalId(local.id);
       info.textContent = [local.descricao, `${montado.totalTrechos} trechos`].filter(Boolean).join(" · ");
 
       if (primeiraVez) mapa.fitBounds(local.limites);
@@ -56,10 +70,27 @@ export async function iniciarSeletorLocal({ mapa, urlLocais, select, info, carre
     }
   }
 
-  select.addEventListener("change", () => {
+  select.addEventListener("change", async () => {
     const local = locais.find((l) => l.id === select.value);
-    if (local) trocar(local);
+    if (!local || local.id === localAtual?.id) return;
+
+    const resumo = typeof obterResumoAlteracoes === "function" ? obterResumoAlteracoes() : null;
+    if (resumo) {
+      const ok = await confirmar({
+        titulo: "Trocar local da simulação?",
+        mensagem: `A simulação em ${localAtual.nome} será reiniciada. ${resumo}`,
+        confirmarTexto: "Trocar e reiniciar",
+        cancelarTexto: "Manter local",
+        perigo: true,
+      });
+      if (!ok) {
+        select.value = localAtual.id;
+        return;
+      }
+    }
+
+    await trocar(local);
   });
 
-  await trocar(locais.find((l) => l.id === padrao), { primeiraVez: true });
+  await trocar(locais.find((l) => l.id === idInicial) ?? locais[0], { primeiraVez: true });
 }

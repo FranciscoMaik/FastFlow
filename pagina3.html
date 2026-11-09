@@ -37,9 +37,11 @@
       </div>
 
       <form class="route-form" id="route-form">
-        <label for="selRegiao">Região</label>
+        <label for="selLocal">Local</label>
         <div class="input-wrap select-wrap">
-          <select id="selRegiao" name="regiao"></select>
+          <select id="selLocal" name="local" data-locais="data/locais.json" disabled>
+            <option value="">Carregando locais…</option>
+          </select>
         </div>
 
         <label for="scenario-select">Cenário de simulação</label>

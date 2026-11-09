@@ -443,6 +443,15 @@ body {
   background: var(--cor-bloqueio-forte);
 }
 
+.botao-primario {
+  background: var(--cor-primaria);
+  color: var(--cor-branco);
+}
+
+.botao-primario:not(:disabled):hover {
+  background: var(--cor-primaria-forte);
+}
+
 .botao-secundario {
   background: var(--cor-superficie);
   border-color: var(--cor-borda);
@@ -1589,4 +1598,79 @@ path.veiculo.evacuando {
   .hint-sentido {
     font-size: 11px;
   }
+}
+
+/* ---------- Confirmação e desfazer ---------- */
+.dialogo-confirmacao {
+  border: 1px solid var(--cor-borda);
+  border-radius: 10px;
+  padding: 0;
+  max-width: min(420px, calc(100vw - 32px));
+  box-shadow: var(--sombra);
+  color: var(--cor-texto);
+  background: var(--cor-superficie);
+}
+
+.dialogo-confirmacao::backdrop {
+  background: rgba(15, 23, 42, 0.45);
+}
+
+.dialogo-confirmacao-corpo {
+  display: grid;
+  gap: 12px;
+  padding: 20px;
+}
+
+.dialogo-titulo {
+  margin: 0;
+  font-size: 1.05rem;
+  color: var(--cor-texto);
+}
+
+.dialogo-mensagem {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.45;
+  color: var(--cor-texto-forte);
+}
+
+.dialogo-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.dialogo-acoes .botao {
+  flex: 0 0 auto;
+  min-width: 7.5rem;
+}
+
+.toast-desfazer {
+  position: fixed;
+  left: 50%;
+  bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: min(520px, calc(100vw - 24px));
+  padding: 12px 14px;
+  border-radius: 10px;
+  background: var(--cor-topbar);
+  color: var(--cor-branco);
+  box-shadow: var(--sombra);
+  font-size: 0.875rem;
+}
+
+.toast-desfazer .botao {
+  flex: 0 0 auto;
+  background: transparent;
+  border-color: rgba(255, 255, 255, 0.35);
+  color: var(--cor-branco);
+}
+
+.toast-desfazer .botao:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
