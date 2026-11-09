@@ -85,3 +85,37 @@ export function projetarPontoNaMalha(ponto, grafo, raioMaxMetros = 50, trechoIdP
     motivo: `Posição fora da malha viária (distância mais próxima: ${Math.round(menorDistancia)}m, máx permitido: ${raioMaxMetros}m).`,
   };
 }
+
+/**
+ * Snap magnético ao cruzamento (nó) mais próximo do clique.
+ * Usado pela ferramenta “Nova ligação” (dois nós).
+ *
+ * @param {[number, number]} ponto `[lat, lon]`
+ * @param {import("./grafo.js").Grafo} grafo
+ * @param {number} [raioMaxMetros=40]
+ * @returns {{ valido: true, noId: string, coordenadas: [number, number], distanciaMetros: number }
+ *   | { valido: false, motivo: string }}
+ */
+export function snapParaNoMaisProximo(ponto, grafo, raioMaxMetros = 40) {
+  let melhor = null;
+  let menorDistancia = Infinity;
+
+  for (const no of grafo.nos.values()) {
+    if (no.lat == null || no.lon == null) continue;
+    const coords = [no.lat, no.lon];
+    const d = distanciaMetros(ponto, coords);
+    if (d < menorDistancia) {
+      menorDistancia = d;
+      melhor = { noId: no.id, coordenadas: coords, distanciaMetros: d };
+    }
+  }
+
+  if (melhor && menorDistancia <= raioMaxMetros) {
+    return { valido: true, ...melhor };
+  }
+
+  return {
+    valido: false,
+    motivo: `Nenhuma interseção próxima (distância mais próxima: ${Math.round(menorDistancia)}m, máx permitido: ${raioMaxMetros}m).`,
+  };
+}

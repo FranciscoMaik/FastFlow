@@ -12,7 +12,7 @@
 </head>
 
 <body>
-  <div class="layout">
+  <div class="layout com-barra-cenario">
     <header class="topbar">
       <a class="brand" href="pagina1.html" aria-label="FastFlow, início">
         <span class="brand-mark" aria-hidden="true">F</span>
@@ -21,14 +21,17 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a href="pagina1.html">Inversão de Sentido</a>
+        <a href="pagina1.html">Simulação de Trânsito</a>
         <a class="active" href="pagina2.html" aria-current="page">Bloqueio Viário</a>
         <a href="pagina3.html">Contingência</a>
+        <a href="pagina4.html">Comparador</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
       <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
+
+    <div id="barraCenario" class="barra-cenario" role="region" aria-label="Cenário salvo"></div>
 
     <aside class="sidebar" aria-label="Painel de controle viário e tráfego">
       <section class="painel-secao" aria-labelledby="h-local">
@@ -76,6 +79,74 @@
 
           <section class="painel-secao">
             <h2>Ações de via</h2>
+            <aside id="preview-bloqueio" class="preview-inversao preview-bloqueio" hidden aria-live="polite">
+              <h3 class="preview-inversao-titulo" data-preview="titulo">Se bloquear…</h3>
+              <div class="preview-bloqueio-opcoes">
+                <label class="preview-bloqueio-periodo">
+                  <span>Período</span>
+                  <select data-preview="periodo" aria-label="Período da demanda (pico ou fora de pico)"></select>
+                </label>
+                <label class="preview-bloqueio-bpr">
+                  <input type="checkbox" data-preview="bpr-analitico" />
+                  <span>Incluir congestionamento (BPR)</span>
+                </label>
+              </div>
+              <dl class="preview-inversao-metas">
+                <div>
+                  <dt>Viagens afetadas</dt>
+                  <dd data-preview="afetadas">—</dd>
+                </div>
+                <div>
+                  <dt>Tempo médio</dt>
+                  <dd data-preview="tempo">—</dd>
+                </div>
+                <div>
+                  <dt>Pior caso</dt>
+                  <dd data-preview="pior-caso">—</dd>
+                </div>
+                <div data-preview="desvios-linha" hidden>
+                  <dt>Rotas de desvio</dt>
+                  <dd data-preview="desvios">—</dd>
+                </div>
+              </dl>
+              <p class="preview-inversao-alerta" data-preview="alerta-acesso" hidden></p>
+              <div class="preview-desvio-recomendado" data-preview="recomendacao" hidden>
+                <p class="preview-desvio-recomendado-titulo">Desvio recomendado</p>
+                <p class="preview-desvio-recomendado-texto" data-preview="recomendacao-texto">—</p>
+                <button type="button" class="botao botao-secundario botao-pequeno" data-preview="recomendacao-testar" hidden>
+                  Testar
+                </button>
+              </div>
+              <p class="preview-inversao-rodape" data-preview="rodape"></p>
+            </aside>
+            <aside id="preview-ligacao" class="preview-inversao preview-ligacao" hidden aria-live="polite">
+              <h3 class="preview-inversao-titulo" data-preview-lig="titulo">Se construir ligação…</h3>
+              <dl class="preview-inversao-metas">
+                <div>
+                  <dt>Tempo médio</dt>
+                  <dd data-preview-lig="tempo">—</dd>
+                </div>
+                <div>
+                  <dt>Viagens que usariam</dt>
+                  <dd data-preview-lig="usariam">—</dd>
+                </div>
+                <div>
+                  <dt>Trechos aliviados</dt>
+                  <dd data-preview-lig="aliviados">—</dd>
+                </div>
+                <div>
+                  <dt>Áreas reconectadas</dt>
+                  <dd data-preview-lig="reconectados">—</dd>
+                </div>
+              </dl>
+              <p class="preview-ligacao-detalhe" data-preview-lig="detalhe"></p>
+              <p class="preview-inversao-alerta preview-ligacao-aviso" data-preview-lig="aviso" hidden></p>
+              <div class="preview-ligacao-acoes">
+                <button type="button" class="botao botao-secundario botao-pequeno" data-preview-lig="cancelar">Cancelar</button>
+                <button type="button" class="botao botao-primario botao-pequeno" data-preview-lig="aplicar" disabled>Aplicar ligação</button>
+              </div>
+              <p class="preview-inversao-rodape" data-preview-lig="rodape"></p>
+            </aside>
             <div class="acoes">
               <button id="btnBloquear" type="button" class="botao botao-bloquear" disabled>Bloquear</button>
               <button id="btnDesbloquear" type="button" class="botao botao-secundario" disabled>Desbloquear</button>
@@ -86,9 +157,57 @@
           <section class="painel-secao">
             <h2>Vias bloqueadas <span id="contadorBloqueios" class="contador">0</span></h2>
             <ul id="listaBloqueios" class="lista-bloqueios"></ul>
+            <aside id="custo-bloqueios" class="custo-bloqueios" hidden aria-live="polite">
+              <h3 class="custo-bloqueios-titulo" data-custo="titulo">Impacto acumulado</h3>
+              <dl class="custo-bloqueios-metas">
+                <div>
+                  <dt>Viagens afetadas</dt>
+                  <dd data-custo="afetadas">—</dd>
+                </div>
+                <div>
+                  <dt>Tempo médio</dt>
+                  <dd data-custo="tempo">—</dd>
+                </div>
+                <div>
+                  <dt>Retidos</dt>
+                  <dd data-custo="retidos">—</dd>
+                </div>
+                <div>
+                  <dt>Acesso</dt>
+                  <dd data-custo="acesso">—</dd>
+                </div>
+              </dl>
+              <p class="custo-bloqueios-rodape" data-custo="rodape"></p>
+            </aside>
             <p id="semBloqueios" class="vazio">Nenhuma via bloqueada — selecione um trecho e clique em Bloquear.</p>
             <button id="btnRemoverTodos" type="button" class="botao botao-secundario remover-todos" hidden>Remover
               todos</button>
+          </section>
+
+          <section class="painel-secao" aria-labelledby="h-onde-construir" id="secao-onde-construir">
+            <div class="secao-cabecalho-acoes">
+              <h2 id="h-onde-construir">Onde construir?</h2>
+              <div class="secao-acoes-grupo">
+                <button type="button" class="botao botao-secundario botao-pequeno" data-onde="cancelar" hidden>
+                  Cancelar
+                </button>
+                <button type="button" class="botao botao-secundario botao-pequeno" id="btnOndeConstruirPainel"
+                  data-onde="buscar">
+                  Buscar
+                </button>
+              </div>
+            </div>
+            <div class="onde-construir-progresso" data-onde="progresso" hidden>
+              <div class="onde-construir-barra" role="progressbar" aria-valuemin="0" aria-valuemax="100"
+                aria-valuenow="0">
+                <span data-onde="barra"></span>
+              </div>
+            </div>
+            <ul class="lista-oportunidades" data-onde="lista" aria-live="polite"></ul>
+            <p class="vazio" data-onde="vazio">
+              Busca lacunas 40–300 m sem aresta direta e ranqueia por ganho de tempo (amostra limitada).
+            </p>
+            <p class="onde-construir-rodape" data-onde="rodape">Cap apertado · 40–300 m · OD=60 · até 10 candidatos</p>
           </section>
         </div>
 
@@ -100,6 +219,25 @@
               <span class="tag-contador">Lombadas: <b id="contadorLombadas">0</b></span>
               <span class="tag-contador">Semáforos: <b id="contadorSemaforos">0</b></span>
             </div>
+            <aside id="preview-dispositivo" class="preview-inversao preview-dispositivo" hidden aria-live="polite">
+              <h3 class="preview-inversao-titulo" data-preview-disp="titulo">Se colocar dispositivo…</h3>
+              <dl class="preview-inversao-metas">
+                <div>
+                  <dt>Viagens afetadas</dt>
+                  <dd data-preview-disp="afetadas">—</dd>
+                </div>
+                <div>
+                  <dt>Tempo médio</dt>
+                  <dd data-preview-disp="tempo">—</dd>
+                </div>
+                <div>
+                  <dt>Pior caso</dt>
+                  <dd data-preview-disp="pior-caso">—</dd>
+                </div>
+              </dl>
+              <p class="preview-inversao-alerta preview-dispositivo-aviso" data-preview-disp="aviso" hidden></p>
+              <p class="preview-inversao-rodape" data-preview-disp="rodape"></p>
+            </aside>
             <ul id="listaDispositivos" class="lista-bloqueios lista-dispositivos"></ul>
             <p id="semDispositivos" class="vazio">Nenhum dispositivo — use + Lombada ou + Semáforo na barra do mapa.</p>
             <button id="btnRemoverTodosDispositivos" type="button" class="botao botao-secundario remover-todos"
@@ -161,6 +299,14 @@
             title="Posicionar semáforo na via">
             <span class="icone-btn">🚦</span> + Semáforo
           </button>
+          <button id="btnModoLigacao" type="button" class="botao botao-ferramenta" aria-pressed="false"
+            title="Propor nova ligação entre duas interseções">
+            <span class="icone-btn">⟷</span> + Ligação
+          </button>
+          <button id="btnOndeConstruir" type="button" class="botao botao-ferramenta"
+            title="Sugerir lacunas 40–300 m por ganho de tempo (amostra limitada)">
+            <span class="icone-btn">⌖</span> Onde construir?
+          </button>
         </div>
 
         <div class="divisor-barra" aria-hidden="true"></div>
@@ -200,6 +346,7 @@
         <li><span class="amostra ponto retido"></span> Veículo retido</li>
         <li><span class="amostra amostra-lombada">▲</span> Lombada</li>
         <li><span class="amostra amostra-semaforo">●</span> Semáforo</li>
+        <li><span class="amostra amostra-ligacao"></span> Nova ligação</li>
       </ul>
       <p class="dica-mapa">Aproxime o zoom para ver carros, motos e caminhões.</p>
 

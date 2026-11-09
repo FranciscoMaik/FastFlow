@@ -3,14 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Inversão de Sentido - FastFlow</title>
+  <title>Simulação de Trânsito - FastFlow</title>
   <script src="js/auth.js"></script>
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-  <div class="layout">
+  <div class="layout com-barra-cenario">
     <header class="topbar">
       <a class="brand" href="pagina1.html" aria-label="FastFlow, início">
         <span class="brand-mark" aria-hidden="true">F</span>
@@ -19,16 +19,19 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a class="active" href="pagina1.html" aria-current="page">Inversão de Sentido</a>
+        <a class="active" href="pagina1.html" aria-current="page">Simulação de Trânsito</a>
         <a href="pagina2.html">Bloqueio Viário</a>
         <a href="pagina3.html">Contingência</a>
+        <a href="pagina4.html">Comparador</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
       <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
-    <aside class="sidebar sidebar-sentido" aria-label="Painel de inversão de sentido">
+    <div id="barraCenario" class="barra-cenario" role="region" aria-label="Cenário salvo"></div>
+
+    <aside class="sidebar sidebar-sentido" aria-label="Painel de simulação de trânsito">
       <section class="painel-secao" aria-labelledby="h-local">
         <h2 id="h-local">Local</h2>
         <label class="campo">
@@ -89,6 +92,41 @@
                   <dd id="sel-count">0</dd>
                 </div>
               </dl>
+              <aside id="preview-inversao" class="preview-inversao" hidden aria-live="polite">
+                <h3 class="preview-inversao-titulo" data-preview="titulo">Se inverter…</h3>
+                <dl class="preview-inversao-metas">
+                  <div>
+                    <dt>Viagens afetadas</dt>
+                    <dd data-preview="afetadas">—</dd>
+                  </div>
+                  <div>
+                    <dt>Tempo médio</dt>
+                    <dd data-preview="tempo">—</dd>
+                  </div>
+                  <div>
+                    <dt>Distância média</dt>
+                    <dd data-preview="distancia">—</dd>
+                  </div>
+                  <div>
+                    <dt>Pior caso</dt>
+                    <dd data-preview="pior-caso">—</dd>
+                  </div>
+                  <div>
+                    <dt>Acesso</dt>
+                    <dd data-preview="acesso">—</dd>
+                  </div>
+                  <div>
+                    <dt>Carga extra</dt>
+                    <dd data-preview="sobrecarga">—</dd>
+                  </div>
+                  <div data-preview="desvio-linha" hidden>
+                    <dt>Desvio de moradores</dt>
+                    <dd data-preview="desvio">—</dd>
+                  </div>
+                </dl>
+                <p class="preview-inversao-alerta" data-preview="alerta-acesso" hidden></p>
+                <p class="preview-inversao-rodape" data-preview="rodape"></p>
+              </aside>
               <div class="acoes acoes-empilhadas">
                 <button class="botao botao-bloquear" id="btn-reverse" type="button" disabled>⇄ Inverter sentido (R)</button>
                 <button class="botao botao-secundario" id="btn-clear" type="button">Limpar seleção</button>
@@ -119,6 +157,16 @@
               <li><span class="amostra seta-mantido"></span> Sentido mantido</li>
               <li><span class="amostra seta-alterado"></span> Sentido alterado</li>
             </ul>
+            <div id="legenda-variacao-fluxo" class="legenda-variacao-fluxo" hidden>
+              <label class="campo-check legenda-variacao-toggle" for="chk-variacao-fluxo">
+                <input type="checkbox" id="chk-variacao-fluxo" checked>
+                <span>Mapa de variação de fluxo</span>
+              </label>
+              <ul class="legenda-sentido" aria-label="Legenda da variação de fluxo">
+                <li><span class="amostra fluxo-mais"></span> Recebe mais fluxo</li>
+                <li><span class="amostra fluxo-menos"></span> Aliviada</li>
+              </ul>
+            </div>
           </section>
         </div>
 
@@ -134,6 +182,46 @@
               <div class="stat"><b id="st-desp">0</b><span>retidos</span></div>
             </div>
             <span id="st-conn" class="badge-conn" data-ok="1">Rede viária íntegra</span>
+          </section>
+
+          <section class="painel-secao" aria-labelledby="h-base-atual" id="secao-base-atual">
+            <h2 id="h-base-atual">Base × Atual</h2>
+            <aside id="painel-base-atual" class="painel-base-atual" data-estado="vazio" aria-live="polite">
+              <dl class="painel-base-atual-metas">
+                <div>
+                  <dt>Tempo médio</dt>
+                  <dd data-base-atual="tempo">—</dd>
+                </div>
+                <div>
+                  <dt>Km rodados</dt>
+                  <dd data-base-atual="km">—</dd>
+                </div>
+                <div>
+                  <dt>Retidos</dt>
+                  <dd data-base-atual="retidos">—</dd>
+                </div>
+                <div>
+                  <dt>Viagens concluídas</dt>
+                  <dd data-base-atual="viagens">—</dd>
+                </div>
+              </dl>
+              <p class="painel-base-atual-rodape" data-base-atual="rodape">
+                Comparativo analítico · amostra fixa · sem efeito de congestionamento
+              </p>
+            </aside>
+          </section>
+
+          <section class="painel-secao" aria-labelledby="h-oportunidades" id="secao-oportunidades">
+            <div class="secao-cabecalho-acoes">
+              <h2 id="h-oportunidades">Oportunidades</h2>
+              <button type="button" class="botao botao-secundario botao-pequeno" id="btn-oportunidades">
+                Atualizar
+              </button>
+            </div>
+            <ul id="lista-oportunidades" class="lista-oportunidades" aria-live="polite"></ul>
+            <p id="oportunidades-vazio" class="vazio">
+              Nenhuma oportunidade com ganho de tempo na amostra (cap apertado).
+            </p>
           </section>
 
           <section class="painel-secao" aria-labelledby="h-log">
