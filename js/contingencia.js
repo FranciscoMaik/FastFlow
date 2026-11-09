@@ -285,9 +285,13 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
     return tracado ? tracado.pontos : cenarios[id].rotas[tipo].pontos;
   }
 
+  // A visão inicial é obrigatória: sem ela o Leaflet adia a renderização das
+  // camadas e `bringToFront()` falha antes do primeiro `fitBounds`.
   const mapa = L.map("mapa", {
     zoomControl: false,
-    scrollWheelZoom: false
+    scrollWheelZoom: false,
+    center: [-23.356, -46.875],
+    zoom: 14
   });
 
   // Tiles do OpenStreetMap. A política de uso exige um Referer válido; forçar a
@@ -430,7 +434,9 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       }
       elemento.classList.toggle("rota-contingencia-ativa", chave === tipoAtivo);
     });
-    linhas[tipoAtivo].bringToFront();
+    if (linhas[tipoAtivo].getElement()) {
+      linhas[tipoAtivo].bringToFront();
+    }
   }
 
   function selecionarRota(tipo) {
