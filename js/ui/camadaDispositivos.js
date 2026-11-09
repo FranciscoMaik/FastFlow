@@ -78,10 +78,11 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
           <label><span>Amarelo (s)</span><input type="number" class="ipt-amarelo" min="1" max="10" value="${d.tempos.amarelo}"></label>
           <label><span>Vermelho (s)</span><input type="number" class="ipt-vermelho" min="2" max="60" value="${d.tempos.vermelho}"></label>
         </div>
+        <p class="popup-status-tempos" role="status" aria-live="polite" data-estado="salvo">Tempos salvos</p>
       </div>
       <footer class="popup-acoes">
         <button type="button" class="botao botao-secundario botao-pequeno btn-alternar-fase">Avançar fase</button>
-        <button type="button" class="botao botao-secundario botao-pequeno btn-salvar-tempos">Salvar tempos</button>
+        <button type="button" class="botao botao-secundario botao-pequeno btn-salvar-tempos" disabled>Salvar tempos</button>
         <button type="button" class="botao botao-bloquear botao-pequeno btn-remover-dispositivo">Remover</button>
       </footer>
     `;
@@ -89,6 +90,50 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
     const btnAlternar = div.querySelector(".btn-alternar-fase");
     const btnSalvar = div.querySelector(".btn-salvar-tempos");
     const btnRemover = div.querySelector(".btn-remover-dispositivo");
+    const statusTempos = div.querySelector(".popup-status-tempos");
+    const inputs = [
+      div.querySelector(".ipt-verde"),
+      div.querySelector(".ipt-amarelo"),
+      div.querySelector(".ipt-vermelho"),
+    ];
+
+    let salvos = {
+      verde: Number(d.tempos.verde),
+      amarelo: Number(d.tempos.amarelo),
+      vermelho: Number(d.tempos.vermelho),
+    };
+
+    function lerTempos() {
+      return {
+        verde: Number(inputs[0].value) || salvos.verde,
+        amarelo: Number(inputs[1].value) || salvos.amarelo,
+        vermelho: Number(inputs[2].value) || salvos.vermelho,
+      };
+    }
+
+    function temAlteracoes() {
+      const atuais = lerTempos();
+      return (
+        atuais.verde !== salvos.verde ||
+        atuais.amarelo !== salvos.amarelo ||
+        atuais.vermelho !== salvos.vermelho
+      );
+    }
+
+    function atualizarEstadoSalvar() {
+      const sujo = temAlteracoes();
+      btnSalvar.disabled = !sujo;
+      btnSalvar.classList.toggle("botao-primario", sujo);
+      btnSalvar.classList.toggle("botao-secundario", !sujo);
+      btnSalvar.textContent = sujo ? "Salvar tempos" : "Salvo";
+      statusTempos.dataset.estado = sujo ? "pendente" : "salvo";
+      statusTempos.textContent = sujo ? "Alterações não salvas" : "Tempos salvos";
+    }
+
+    for (const input of inputs) {
+      input.addEventListener("input", atualizarEstadoSalvar);
+      input.addEventListener("change", atualizarEstadoSalvar);
+    }
 
     btnAlternar.addEventListener("click", () => {
       const novoEstado = aoAlternarSemaforo(d.id);
@@ -100,10 +145,17 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
     });
 
     btnSalvar.addEventListener("click", () => {
-      const verde = Number(div.querySelector(".ipt-verde").value) || d.tempos.verde;
-      const amarelo = Number(div.querySelector(".ipt-amarelo").value) || d.tempos.amarelo;
-      const vermelho = Number(div.querySelector(".ipt-vermelho").value) || d.tempos.vermelho;
-      aoConfigurarSemaforo(d.id, { verde, amarelo, vermelho });
+      if (!temAlteracoes()) return;
+      const tempos = lerTempos();
+      inputs[0].value = String(tempos.verde);
+      inputs[1].value = String(tempos.amarelo);
+      inputs[2].value = String(tempos.vermelho);
+      aoConfigurarSemaforo(d.id, tempos);
+      salvos = { ...tempos };
+      atualizarEstadoSalvar();
+      statusTempos.dataset.estado = "sucesso";
+      statusTempos.textContent = "Tempos salvos com sucesso";
+      btnSalvar.textContent = "Salvo";
       if (aoNotificar) aoNotificar("Tempos do semáforo atualizados com sucesso.", "sucesso");
     });
 
@@ -112,6 +164,7 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
       aoRemover(d.id);
     });
 
+    atualizarEstadoSalvar();
     return div;
   }
 
@@ -155,7 +208,11 @@ export function criarCamadaDispositivos(mapa, { aoReposicionar, aoRemover, aoCon
             }
           });
 
-          marcador.bindPopup(() => (d.tipo === "lombada" ? montarPopupLombada(d) : montarPopupSemaforo(d)), {
+          const idDispositivo = d.id;
+          marcador.bindPopup(() => {
+            const dados = marcadores.get(idDispositivo)?.dados ?? d;
+            return dados.tipo === "lombada" ? montarPopupLombada(dados) : montarPopupSemaforo(dados);
+          }, {
             maxWidth: 320,
             className: "leaflet-popup-fastflow",
           });

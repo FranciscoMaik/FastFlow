@@ -74,14 +74,22 @@
           <section class="painel-secao" aria-labelledby="h-sel">
             <h2 id="h-sel">Via selecionada</h2>
             <p class="empty" id="sel-empty">Nenhuma via selecionada. Clique em um trecho do mapa.</p>
-            <div id="sel-info" hidden>
-              <dl class="estatisticas info-via">
-                <div><dt>Via</dt><dd id="sel-name">—</dd></div>
-                <div><dt>Cruzamento / referência</dt><dd id="sel-id">—</dd></div>
-                <div><dt>Sentido atual</dt><dd id="sel-dir">—</dd></div>
-                <div><dt>Veículos na via</dt><dd id="sel-count">0</dd></div>
+            <div id="sel-info" hidden class="via-selecionada">
+              <div class="via-selecionada-titulo">
+                <p id="sel-name" class="via-nome">—</p>
+                <p id="sel-id" class="via-referencia">—</p>
+              </div>
+              <dl class="estatisticas via-selecionada-metas">
+                <div>
+                  <dt>Sentido atual</dt>
+                  <dd id="sel-dir">—</dd>
+                </div>
+                <div>
+                  <dt>Veículos</dt>
+                  <dd id="sel-count">0</dd>
+                </div>
               </dl>
-              <div class="acoes">
+              <div class="acoes acoes-empilhadas">
                 <button class="botao botao-bloquear" id="btn-reverse" type="button" disabled>⇄ Inverter sentido (R)</button>
                 <button class="botao botao-secundario" id="btn-clear" type="button">Limpar seleção</button>
               </div>

@@ -106,7 +106,7 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
     $("btn-reverse").disabled = !trecho;
     if (!trecho) return;
     $("sel-name").textContent = trecho.nome;
-    $("sel-id").textContent = trecho.referencia ?? "Sem cruzamento cadastrado";
+    $("sel-id").textContent = trecho.referencia?.trim() || "Sem cruzamento cadastrado";
     $("sel-dir").textContent = trecho.sentidoRotulo;
     $("sel-count").textContent = String(trecho.veiculosNoTrecho);
   }

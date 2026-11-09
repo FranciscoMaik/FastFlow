@@ -1,3 +1,5 @@
+@import url("https://fonts.googleapis.com/css2?family=Fira+Sans:wght@400;500;600;700&display=swap");
+
 /* ---------- Tokens de design ---------- */
 :root {
   /* Base (valores originais do projeto) */
@@ -27,7 +29,7 @@
   --cor-sucesso-suave: #dcfce7;
   --cor-sucesso-forte: #166534;
 
-  --fonte: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+  --fonte: "Fira Sans", system-ui, -apple-system, "Segoe UI", sans-serif;
   --raio: 6px;
   --transicao: 0.15s;
   --sombra: 0 4px 16px rgba(15, 23, 42, 0.12);
@@ -1467,6 +1469,37 @@ path.veiculo.evacuando {
   text-align: center;
 }
 
+.popup-status-tempos {
+  margin: 8px 0 0;
+  min-height: 1.2em;
+  font-size: 0.75rem;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.popup-status-tempos[data-estado="salvo"],
+.popup-status-tempos[data-estado="sucesso"] {
+  color: var(--cor-sucesso-forte);
+}
+
+.popup-status-tempos[data-estado="pendente"] {
+  color: #9a3412;
+}
+
+.popup-acoes .btn-salvar-tempos.botao-primario {
+  background: var(--cor-primaria);
+  border-color: transparent;
+  color: var(--cor-branco);
+}
+
+.popup-acoes .btn-salvar-tempos.botao-primario:hover:not(:disabled) {
+  background: var(--cor-primaria-forte);
+}
+
+.popup-acoes .btn-salvar-tempos:disabled {
+  opacity: 0.7;
+}
+
 .popup-acoes {
   display: flex;
   flex-wrap: wrap;
@@ -1550,13 +1583,50 @@ path.veiculo.evacuando {
   line-height: 1.4;
 }
 
-.sidebar-sentido .info-via {
-  margin: 0 8px 12px;
+.via-selecionada {
+  margin: 0 8px 4px;
+  display: grid;
+  gap: 12px;
 }
 
-.sidebar-sentido .info-via dd {
-  text-align: right;
-  word-break: break-word;
+.via-selecionada-titulo {
+  display: grid;
+  gap: 4px;
+}
+
+.via-nome {
+  margin: 0;
+  color: var(--cor-texto);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.via-referencia {
+  margin: 0;
+  color: var(--cor-texto-suave);
+  font-size: 0.82rem;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.via-selecionada-metas {
+  margin: 0;
+}
+
+.via-selecionada-metas dd {
+  text-align: left;
+  font-size: 1rem;
+}
+
+.acoes-empilhadas {
+  flex-direction: column;
+}
+
+.acoes-empilhadas .botao {
+  width: 100%;
+  flex: none;
+  white-space: nowrap;
 }
 
 .campo-range {
