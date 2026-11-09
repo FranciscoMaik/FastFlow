@@ -14,7 +14,7 @@ O FastFlow é um aplicativo web de **simulação de tráfego**. Ele mostra um ma
 - se algum veículo fica sem saída;
 - quanto o tempo médio das viagens aumenta.
 
-A região simulada é o **centro de Cajamar (SP)**, com as ruas reais tiradas do OpenStreetMap.
+As regiões simuláveis são **Centro**, **Jordanésia**, **Polvilho** e **Ponunduva** (Cajamar/SP), com as ruas reais tiradas do OpenStreetMap. O seletor **Local** no painel troca a área nas telas de simulação.
 
 > **Importante:** tudo é uma simulação. Bloquear uma via ou posicionar semáforos no FastFlow não afeta o trânsito real nem nenhum outro sistema.
 
@@ -89,7 +89,7 @@ Esta tela serve para ver o mapa e a sua posição.
 
 É a tela principal de simulação. Clique em **Bloqueio Viário** no menu superior para abri-la.
 
-Ao abrir, aparece por alguns instantes a mensagem *"Carregando malha viária de Cajamar…"*. Em seguida o mapa mostra as ruas da região, e os veículos começam a se mover sozinhos.
+Ao abrir, aparece por alguns instantes a mensagem *"Carregando malha viária…"* com o nome do local escolhido. Em seguida o mapa mostra as ruas da área, e os veículos começam a se mover sozinhos. Use o seletor **Local** no painel para alternar entre Centro, Jordanésia, Polvilho e Ponunduva.
 
 ### 5.1 Partes da tela
 

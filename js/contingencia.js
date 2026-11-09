@@ -1,8 +1,11 @@
+import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
+
 (function () {
   const cenarios = {
     "cajamar-centro": {
       origem: "Centro de Cajamar",
       destino: "Jordanésia",
+      regioes: ["centro", "jordanesia"],
       ocorrencia: "Bloqueio viário",
       localOcorrencia: "Av. Dr. Antônio João Abdalla · Cajamar",
       bloqueio: [-23.356, -46.875],
@@ -36,6 +39,7 @@
     "polvilho-distrito": {
       origem: "Polvilho, Cajamar",
       destino: "Distrito Industrial de Cajamar",
+      regioes: ["polvilho"],
       ocorrencia: "Interdição simulada",
       localOcorrencia: "Estrada de Cajamar · acesso ao Distrito Industrial",
       bloqueio: [-23.397, -46.872],
@@ -69,6 +73,7 @@
     "ponunduva-cajamar": {
       origem: "Ponunduva, Cajamar",
       destino: "Centro de Cajamar",
+      regioes: ["centro"],
       ocorrencia: "Obra simulada",
       localOcorrencia: "Estrada de Ponunduva · Cajamar",
       bloqueio: [-23.344, -46.913],
@@ -102,6 +107,7 @@
     "jordanesia-polvilho": {
       origem: "Jordanésia, Cajamar",
       destino: "Polvilho, Cajamar",
+      regioes: ["jordanesia", "polvilho"],
       ocorrencia: "Bloqueio simulado",
       localOcorrencia: "Av. Tenente Marques · Cajamar",
       bloqueio: [-23.389, -46.861],
@@ -135,6 +141,7 @@
     "centro-parque": {
       origem: "Centro de Cajamar",
       destino: "Parque Maria Aparecida, Cajamar",
+      regioes: ["centro"],
       ocorrencia: "Bloqueio simulado",
       localOcorrencia: "Av. Professor Walter Ribas de Andrade · Cajamar",
       bloqueio: [-23.354, -46.879],
@@ -168,6 +175,7 @@
     "jordanesia-empresarial": {
       origem: "Jordanésia, Cajamar",
       destino: "Parque Empresarial de Cajamar",
+      regioes: ["jordanesia"],
       ocorrencia: "Obra simulada",
       localOcorrencia: "Estrada de Jordanésia · acesso empresarial",
       bloqueio: [-23.368, -46.858],
@@ -201,6 +209,7 @@
     "polvilho-centro": {
       origem: "Polvilho, Cajamar",
       destino: "Centro de Cajamar",
+      regioes: ["polvilho", "centro"],
       ocorrencia: "Interdição simulada",
       localOcorrencia: "Av. Tenente Marques · região de Polvilho",
       bloqueio: [-23.405, -46.866],
@@ -234,6 +243,7 @@
     "ponunduva-jordanesia": {
       origem: "Ponunduva, Cajamar",
       destino: "Jordanésia, Cajamar",
+      regioes: ["jordanesia"],
       ocorrencia: "Bloqueio viário simulado",
       localOcorrencia: "Estrada de Ponunduva · acesso a Jordanésia",
       bloqueio: [-23.351, -46.900],
@@ -339,6 +349,29 @@
   const feedbackDirecionamento = document.getElementById("dispatch-feedback");
   let rotaSelecionada = "alternative";
 
+  function idsCenariosDaRegiao(idRegiao) {
+    return Object.keys(cenarios).filter(function (id) {
+      return (cenarios[id].regioes || []).includes(idRegiao);
+    });
+  }
+
+  function popularCenarios(idRegiao, preferido) {
+    const ids = idsCenariosDaRegiao(idRegiao);
+    seletorCenario.innerHTML = "";
+    ids.forEach(function (id) {
+      const cenario = cenarios[id];
+      const option = document.createElement("option");
+      option.value = id;
+      option.textContent = cenario.origem + " → " + cenario.destino;
+      seletorCenario.appendChild(option);
+    });
+    const escolhido = ids.includes(preferido) ? preferido : ids[0];
+    if (escolhido) {
+      seletorCenario.value = escolhido;
+    }
+    return escolhido;
+  }
+
   function enquadrarRotas() {
     mapa.fitBounds(limites.getBounds(), { padding: [34, 34] });
   }
@@ -423,6 +456,15 @@
     atualizarCenario(seletorCenario.value);
   });
 
+  ligarSeletorRegiao(document.getElementById("selRegiao"), {
+    aoTrocar(idRegiao) {
+      const id = popularCenarios(idRegiao, seletorCenario.value);
+      if (id) {
+        atualizarCenario(id);
+      }
+    },
+  });
+
   botoesRota.forEach(function (botao) {
     botao.addEventListener("click", function () {
       selecionarRota(botao.dataset.route);
@@ -430,7 +472,10 @@
   });
 
   function iniciar() {
-    atualizarCenario(seletorCenario.value);
+    const id = popularCenarios(lerRegiao(), seletorCenario.value);
+    if (id) {
+      atualizarCenario(id);
+    }
     window.setTimeout(function () {
       mapa.invalidateSize();
       enquadrarRotas();

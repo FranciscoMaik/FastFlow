@@ -37,18 +37,14 @@
       </div>
 
       <form class="route-form" id="route-form">
+        <label for="selRegiao">Região</label>
+        <div class="input-wrap select-wrap">
+          <select id="selRegiao" name="regiao"></select>
+        </div>
+
         <label for="scenario-select">Cenário de simulação</label>
         <div class="input-wrap select-wrap">
-          <select id="scenario-select" name="scenario">
-            <option value="cajamar-centro">Centro de Cajamar → Jordanésia</option>
-            <option value="polvilho-distrito">Polvilho → Distrito Industrial</option>
-            <option value="ponunduva-cajamar">Ponunduva → Centro de Cajamar</option>
-            <option value="jordanesia-polvilho">Jordanésia → Polvilho</option>
-            <option value="centro-parque">Centro de Cajamar → Parque Maria Aparecida</option>
-            <option value="jordanesia-empresarial">Jordanésia → Parque Empresarial</option>
-            <option value="polvilho-centro">Polvilho → Centro de Cajamar</option>
-            <option value="ponunduva-jordanesia">Ponunduva → Jordanésia</option>
-          </select>
+          <select id="scenario-select" name="scenario"></select>
         </div>
 
         <label for="origin">Ponto de partida</label>
@@ -176,6 +172,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/contingencia.js"></script>
+  <script type="module" src="js/contingencia.js"></script>
 </body>
 </html>

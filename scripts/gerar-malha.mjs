@@ -1,11 +1,17 @@
 // Converte uma resposta da Overpass API (formato `out geom tags`) no GeoJSON
-// usado pela tela de bloqueio. Rodar uma única vez quando a região mudar:
+// usado pelas telas de simulação. Rodar uma vez por região:
 //   node scripts/gerar-malha.mjs caminho/overpass.json > data/malha.geojson
+//   node scripts/gerar-malha.mjs jordanesia.json > data/malha-jordanesia.geojson
+//   node scripts/gerar-malha.mjs polvilho.json > data/malha-polvilho.geojson
 //
-// Consulta usada (centro de Cajamar/SP):
+// Consultas (sul, oeste, norte, leste):
+//   Centro:     (-23.365,-46.890,-23.345,-46.866) → data/malha.geojson
+//   Jordanésia: (-23.345,-46.848,-23.325,-46.824) → data/malha-jordanesia.geojson
+//   Polvilho:   (-23.418,-46.867,-23.398,-46.843) → data/malha-polvilho.geojson
+//
 //   [out:json];way["highway"~"^(primary|secondary|tertiary|residential|unclassified|
 //   trunk|primary_link|secondary_link|tertiary_link|living_street)$"]
-//   (-23.365,-46.890,-23.345,-46.866);out geom tags;
+//   (S,W,N,E);out geom tags;
 import { readFileSync } from "node:fs";
 
 const VELOCIDADE_PADRAO = { trunk: 60, primary: 50, primary_link: 40, secondary: 40,
