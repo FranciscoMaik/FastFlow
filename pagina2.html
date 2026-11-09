@@ -26,6 +26,7 @@
         <a href="pagina3.html">Contingência</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
+      <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
@@ -45,6 +46,7 @@
         <h2>Seleção de via</h2>
         <label class="campo">
           <span>Logradouro</span>
+          <input id="filtroLogradouro" type="search" placeholder="Buscar por nome…" autocomplete="off" enterkeyhint="search">
           <select id="selLogradouro">
             <option value="">Selecione um logradouro…</option>
           </select>

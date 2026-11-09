@@ -355,6 +355,45 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
   const botaoDirecionamento = document.getElementById("dispatch-button");
   const feedbackDirecionamento = document.getElementById("dispatch-feedback");
   let rotaSelecionada = "alternative";
+  let direcionamentoAtivo = false;
+
+  function atualizarRotuloDirecionamento() {
+    if (rotaSelecionada === "primary") {
+      tituloDirecionamento.textContent = "Rota principal selecionada";
+      descricaoDirecionamento.textContent = "A rota passa pela ocorrência deste cenário simulado.";
+    } else if (rotaSelecionada === "alternative") {
+      tituloDirecionamento.textContent = "Desvio selecionado";
+      descricaoDirecionamento.textContent = "A equipe seguirá pela rota de contingência sugerida.";
+    } else {
+      tituloDirecionamento.textContent = "Alternativa 2 selecionada";
+      descricaoDirecionamento.textContent = "A equipe seguirá pelo desvio ampliado de contingência.";
+    }
+  }
+
+  function definirDirecionamentoAtivo(ativo, { silencioso = false } = {}) {
+    direcionamentoAtivo = ativo;
+    botaoDirecionamento.disabled = false;
+    botaoDirecionamento.setAttribute("aria-pressed", String(ativo));
+    if (ativo) {
+      botaoDirecionamento.textContent = "Cancelar direcionamento";
+      tituloDirecionamento.textContent = "Direcionamento ativado";
+      descricaoDirecionamento.textContent =
+        "Cenário demonstrativo · " + nomesRotas[rotaSelecionada] + ".";
+      if (!silencioso) {
+        feedbackDirecionamento.textContent =
+          "Simulação local: nenhuma equipe real foi notificada.";
+      }
+      return;
+    }
+
+    botaoDirecionamento.textContent = "Ativar direcionamento";
+    atualizarRotuloDirecionamento();
+    if (!silencioso) {
+      feedbackDirecionamento.textContent = "Direcionamento cancelado.";
+    } else {
+      feedbackDirecionamento.textContent = "";
+    }
+  }
 
   function idsCenariosDaRegiao(idRegiao) {
     return Object.keys(cenarios).filter(function (id) {
@@ -411,20 +450,15 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
     });
     atualizarAnimacaoRotas(tipo);
 
-    if (tipo === "primary") {
-      tituloDirecionamento.textContent = "Rota principal selecionada";
-      descricaoDirecionamento.textContent = "A rota passa pela ocorrência deste cenário simulado.";
-    } else if (tipo === "alternative") {
-      tituloDirecionamento.textContent = "Desvio selecionado";
-      descricaoDirecionamento.textContent = "A equipe seguirá pela rota de contingência sugerida.";
+    if (direcionamentoAtivo) {
+      definirDirecionamentoAtivo(false, { silencioso: true });
     } else {
-      tituloDirecionamento.textContent = "Alternativa 2 selecionada";
-      descricaoDirecionamento.textContent = "A equipe seguirá pelo desvio ampliado de contingência.";
+      atualizarRotuloDirecionamento();
+      botaoDirecionamento.disabled = false;
+      botaoDirecionamento.textContent = "Ativar direcionamento";
+      botaoDirecionamento.setAttribute("aria-pressed", "false");
+      feedbackDirecionamento.textContent = "";
     }
-
-    botaoDirecionamento.disabled = false;
-    botaoDirecionamento.textContent = "Ativar direcionamento";
-    feedbackDirecionamento.textContent = "";
   }
 
   function atualizarCenario(id) {
@@ -466,6 +500,7 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       .bindPopup("Destino: " + cenario.destino);
 
     selecionarRota("alternative");
+    definirDirecionamentoAtivo(false, { silencioso: true });
     enquadrarRotas();
   }
 
@@ -551,29 +586,9 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
 
   document.getElementById("route-form").addEventListener("submit", function (evento) {
     evento.preventDefault();
-    const origem = entradaOrigem.value.trim();
-    const destino = entradaDestino.value.trim();
-
-    if (!origem || !destino) {
-      feedbackFormulario.textContent = "Informe o ponto de partida e o destino.";
-      return;
-    }
-
-    tituloRota.textContent = origem + " → " + destino;
-    feedbackFormulario.textContent =
-      "Endereços atualizados. O traçado continua ilustrativo do cenário selecionado.";
-    botaoDirecionamento.disabled = false;
-    botaoDirecionamento.textContent = "Ativar direcionamento";
-    feedbackDirecionamento.textContent = "";
   });
 
   botaoDirecionamento.addEventListener("click", function () {
-    botaoDirecionamento.disabled = true;
-    botaoDirecionamento.textContent = "Direcionamento ativado";
-    tituloDirecionamento.textContent = "Direcionamento ativado";
-    descricaoDirecionamento.textContent =
-      "Cenário demonstrativo · " + nomesRotas[rotaSelecionada] + ".";
-    feedbackDirecionamento.textContent =
-      "Simulação local: nenhuma equipe real foi notificada.";
+    definirDirecionamentoAtivo(!direcionamentoAtivo);
   });
 })();

@@ -99,6 +99,28 @@ body {
   font-size: 0.78rem;
 }
 
+.input-wrap input[readonly] {
+  color: #52627a;
+  cursor: default;
+}
+
+.input-wrap:has(input[readonly]) {
+  background: #f3f6fb;
+}
+
+.input-wrap:has(input[readonly]):focus-within {
+  border-color: #d7deea;
+  box-shadow: none;
+}
+
+.button-dispatch[aria-pressed="true"] {
+  background: #334155;
+}
+
+.button-dispatch[aria-pressed="true"]:hover {
+  background: #1e293b;
+}
+
 .select-wrap {
   margin-bottom: 15px;
 }

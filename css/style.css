@@ -1001,6 +1001,120 @@ path.veiculo.evacuando {
   text-align: center;
 }
 
+.login-demo {
+  margin-top: 22px;
+  padding: 14px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: #f8fafc;
+}
+
+.login-demo h2 {
+  margin: 0 0 6px;
+  color: var(--cor-texto);
+  font-size: 0.85rem;
+}
+
+.login-demo > p {
+  margin: 0 0 10px;
+  color: var(--cor-texto-suave);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.login-demo-creds {
+  display: grid;
+  gap: 6px;
+  margin: 0 0 12px;
+}
+
+.login-demo-creds div {
+  display: grid;
+  grid-template-columns: 4.5rem 1fr;
+  gap: 8px;
+  align-items: baseline;
+}
+
+.login-demo-creds dt {
+  color: var(--cor-texto-suave);
+  font-size: 0.75rem;
+}
+
+.login-demo-creds dd {
+  margin: 0;
+  color: var(--cor-texto);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 0.8rem;
+  word-break: break-all;
+}
+
+.login-preencher {
+  width: 100%;
+  min-height: 40px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto-forte);
+  font: inherit;
+  font-size: 0.85rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background var(--transicao);
+}
+
+.login-preencher:hover {
+  background: var(--cor-borda);
+}
+
+.login-preencher:focus-visible {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
+.topbar-ajuda {
+  display: inline-flex;
+  align-items: center;
+  padding: 6px 10px;
+  border-radius: var(--raio);
+  color: var(--cor-topbar-texto);
+  text-decoration: none;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.topbar-ajuda:hover {
+  background: var(--cor-topbar-hover);
+  color: var(--cor-branco);
+}
+
+.topbar-ajuda:focus-visible {
+  outline: 2px solid #93c5fd;
+  outline-offset: 2px;
+}
+
+.campo input[type="search"] {
+  width: 100%;
+  margin-bottom: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-superficie);
+  color: var(--cor-texto);
+  font: inherit;
+  font-size: 0.875rem;
+}
+
+.campo input[type="search"]:focus-visible {
+  border-color: var(--cor-primaria);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.16);
+}
+
+.campo input[type="search"]:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
 @media (max-width: 480px) {
   .login-shell {
     padding: 16px;

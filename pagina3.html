@@ -26,6 +26,7 @@
         <a class="active" href="pagina3.html" aria-current="page">Contingência</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
+      <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
@@ -33,7 +34,7 @@
       <div class="sidebar-heading">
         <span class="eyebrow">DIRECIONAMENTO</span>
         <h2>Planejar rota</h2>
-        <p>Defina o trajeto e escolha uma alternativa operacional.</p>
+        <p>Escolha o local e o cenário. Origem e destino vêm do cenário e não recalculam a rota.</p>
       </div>
 
       <form class="route-form" id="route-form">
@@ -49,23 +50,20 @@
           <select id="scenario-select" name="scenario"></select>
         </div>
 
-        <label for="origin">Ponto de partida</label>
+        <label for="origin">Ponto de partida do cenário</label>
         <div class="input-wrap">
           <span class="input-marker origin-marker" aria-hidden="true"></span>
-          <input id="origin" name="origin" type="text" value="Centro de Cajamar" required>
+          <input id="origin" name="origin" type="text" value="Centro de Cajamar" readonly tabindex="-1">
         </div>
 
         <div class="route-connector" aria-hidden="true"></div>
 
-        <label for="destination">Destino</label>
+        <label for="destination">Destino do cenário</label>
         <div class="input-wrap">
           <span class="input-marker destination-marker" aria-hidden="true"></span>
-          <input id="destination" name="destination" type="text" value="Jordanésia" required>
+          <input id="destination" name="destination" type="text" value="Jordanésia" readonly tabindex="-1">
         </div>
 
-        <button class="button button-primary update-route" type="submit">
-          Atualizar cenário
-        </button>
         <p class="form-feedback" id="form-feedback" aria-live="polite"></p>
       </form>
 
@@ -164,7 +162,7 @@
               <span class="dispatch-icon" aria-hidden="true">↗</span>
               <span><strong id="dispatch-title">Desvio selecionado</strong><small id="dispatch-description">A equipe seguirá pela rota de contingência.</small></span>
             </div>
-            <button class="button button-dispatch" id="dispatch-button" type="button">Ativar direcionamento</button>
+            <button class="button button-dispatch" id="dispatch-button" type="button" aria-pressed="false">Ativar direcionamento</button>
           </div>
           <p class="dispatch-feedback" id="dispatch-feedback" role="status" aria-live="polite"></p>
         </section>

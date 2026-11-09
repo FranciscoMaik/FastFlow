@@ -164,7 +164,11 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
   });
 
   const seletor = criarSeletorVias(
-    { selectLogradouro: $("selLogradouro"), selectTrecho: $("selTrecho") },
+    {
+      selectLogradouro: $("selLogradouro"),
+      selectTrecho: $("selTrecho"),
+      filtroLogradouro: $("filtroLogradouro"),
+    },
     controle.logradouros(),
     (id) => controle.trecho(id),
     {

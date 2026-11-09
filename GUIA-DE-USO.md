@@ -33,8 +33,8 @@ As regiões simuláveis são **Centro**, **Jordanésia**, **Polvilho** e **Ponun
 
 Ao abrir o FastFlow, entre com as credenciais de demonstração:
 
-- **E-mail:** `demo@fastflow.com`
-- **Senha:** `FastFlow2026!`
+- **E-mail:** `teste@teste.com`
+- **Senha:** `test123`
 
 A sessão fica salva neste navegador até você selecionar **Sair**. As credenciais são configuradas em `js/auth.config.js`; altere esse arquivo para outro ambiente demonstrativo. Esta autenticação é apenas um mock no navegador e não deve ser usada para proteger dados ou sistemas em produção.
 

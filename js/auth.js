@@ -84,8 +84,32 @@
     const passwordInput = document.getElementById("password");
     const feedback = document.getElementById("login-feedback");
     const submitButton = document.getElementById("login-submit");
+    const fillButton = document.getElementById("login-preencher");
+    const demoEmail = document.getElementById("demo-email");
+    const demoPassword = document.getElementById("demo-password");
     const config = window.FASTFLOW_AUTH_CONFIG;
     let isSubmitting = false;
+
+    if (config && typeof config.email === "string" && typeof config.password === "string") {
+      if (demoEmail) demoEmail.textContent = config.email;
+      if (demoPassword) demoPassword.textContent = config.password;
+    }
+
+    if (fillButton) {
+      fillButton.addEventListener("click", function () {
+        if (!config || typeof config.email !== "string" || typeof config.password !== "string") {
+          showError("A configuração de autenticação não está disponível. Contate a equipe responsável.");
+          return;
+        }
+        emailInput.value = config.email;
+        passwordInput.value = config.password;
+        emailInput.removeAttribute("aria-invalid");
+        passwordInput.removeAttribute("aria-invalid");
+        feedback.textContent = "";
+        feedback.hidden = true;
+        emailInput.focus();
+      });
+    }
 
     if (!canUseStorage) {
       showError("O armazenamento de sessão está indisponível neste navegador. Habilite o armazenamento local e tente novamente.");
