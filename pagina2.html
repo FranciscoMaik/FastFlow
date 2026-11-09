@@ -26,14 +26,15 @@
         <a href="pagina3.html">Contingência</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
+      <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
     <aside class="sidebar" aria-label="Painel de controle viário e tráfego">
       <section class="painel-secao" aria-labelledby="h-local">
-        <h2 id="h-local">Região simulada</h2>
+        <h2 id="h-local">Local</h2>
         <label class="campo">
-          <span>Local</span>
+          <span>Área simulada</span>
           <select id="selLocal" disabled>
             <option value="">Carregando locais…</option>
           </select>
@@ -41,86 +42,110 @@
         <p id="infoLocal" class="dica" aria-live="polite"></p>
       </section>
 
-      <section class="painel-secao">
-        <h2>Seleção de via</h2>
-        <label class="campo">
-          <span>Logradouro</span>
-          <select id="selLogradouro">
-            <option value="">Selecione um logradouro…</option>
-          </select>
-        </label>
-        <label class="campo">
-          <span>Trecho</span>
-          <select id="selTrecho" disabled>
-            <option value="">Escolha um logradouro</option>
-          </select>
-        </label>
-        <p class="dica">Ou clique diretamente em um trecho no mapa.</p>
-        <div id="infoTrecho" class="info-trecho" hidden></div>
-      </section>
-
-      <section class="painel-secao">
-        <h2>Ações de via</h2>
-        <div class="acoes">
-          <button id="btnBloquear" type="button" class="botao botao-bloquear" disabled>Bloquear</button>
-          <button id="btnDesbloquear" type="button" class="botao botao-secundario" disabled>Desbloquear</button>
+      <div class="painel-abas" id="painelAbas">
+        <div class="abas" role="tablist" aria-label="Seções do painel">
+          <button type="button" class="aba ativo" role="tab" id="aba-vias" data-aba="vias"
+            aria-controls="painel-vias" aria-selected="true">Vias</button>
+          <button type="button" class="aba" role="tab" id="aba-dispositivos" data-aba="dispositivos"
+            aria-controls="painel-dispositivos" aria-selected="false" tabindex="-1">Dispositivos</button>
+          <button type="button" class="aba" role="tab" id="aba-indicadores" data-aba="indicadores"
+            aria-controls="painel-indicadores" aria-selected="false" tabindex="-1">Indicadores</button>
         </div>
-        <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
-      </section>
 
-      <section class="painel-secao">
-        <h2>Vias bloqueadas <span id="contadorBloqueios" class="contador">0</span></h2>
-        <ul id="listaBloqueios" class="lista-bloqueios"></ul>
-        <p id="semBloqueios" class="vazio">Nenhuma via bloqueada nesta sessão.</p>
-        <button id="btnRemoverTodos" type="button" class="botao botao-secundario remover-todos" hidden>Remover
-          todos</button>
-      </section>
+        <div class="painel-aba ativo" role="tabpanel" id="painel-vias" data-painel="vias"
+          aria-labelledby="aba-vias">
+          <section class="painel-secao">
+            <h2>Seleção de via</h2>
+            <label class="campo">
+              <span>Logradouro</span>
+              <input id="filtroLogradouro" type="search" placeholder="Buscar por nome…" autocomplete="off"
+                enterkeyhint="search">
+              <select id="selLogradouro">
+                <option value="">Selecione um logradouro…</option>
+              </select>
+            </label>
+            <label class="campo">
+              <span>Trecho</span>
+              <select id="selTrecho" disabled>
+                <option value="">Escolha um logradouro</option>
+              </select>
+            </label>
+            <p class="dica">Ou clique diretamente em um trecho no mapa.</p>
+            <div id="infoTrecho" class="info-trecho" hidden></div>
+          </section>
 
-      <section class="painel-secao">
-        <h2>Dispositivos de tráfego <span id="contadorDispositivos" class="contador">0</span></h2>
-        <div class="sub-contadores">
-          <span class="tag-contador">Lombadas: <b id="contadorLombadas">0</b></span>
-          <span class="tag-contador">Semáforos: <b id="contadorSemaforos">0</b></span>
+          <section class="painel-secao">
+            <h2>Ações de via</h2>
+            <div class="acoes">
+              <button id="btnBloquear" type="button" class="botao botao-bloquear" disabled>Bloquear</button>
+              <button id="btnDesbloquear" type="button" class="botao botao-secundario" disabled>Desbloquear</button>
+            </div>
+            <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
+          </section>
+
+          <section class="painel-secao">
+            <h2>Vias bloqueadas <span id="contadorBloqueios" class="contador">0</span></h2>
+            <ul id="listaBloqueios" class="lista-bloqueios"></ul>
+            <p id="semBloqueios" class="vazio">Nenhuma via bloqueada — selecione um trecho e clique em Bloquear.</p>
+            <button id="btnRemoverTodos" type="button" class="botao botao-secundario remover-todos" hidden>Remover
+              todos</button>
+          </section>
         </div>
-        <ul id="listaDispositivos" class="lista-bloqueios lista-dispositivos"></ul>
-        <p id="semDispositivos" class="vazio">Nenhuma lombada ou semáforo adicionado.</p>
-        <button id="btnRemoverTodosDispositivos" type="button" class="botao botao-secundario remover-todos"
-          hidden>Remover todos dispositivos</button>
-      </section>
 
-      <section class="painel-secao">
-        <h2>Impacto na simulação</h2>
-        <dl class="estatisticas">
-          <div>
-            <dt>Veículos ativos</dt>
-            <dd id="estAtivos">—</dd>
-          </div>
-          <div>
-            <dt>Desviados</dt>
-            <dd id="estDesviados">—</dd>
-          </div>
-          <div>
-            <dt>Retidos</dt>
-            <dd id="estRetidos">—</dd>
-          </div>
-          <div>
-            <dt>Rotas recalculadas</dt>
-            <dd id="estRecalculos">—</dd>
-          </div>
-          <div>
-            <dt>Viagens concluídas</dt>
-            <dd id="estViagens">—</dd>
-          </div>
-          <div>
-            <dt>Tempo médio de viagem</dt>
-            <dd id="estTempoMedio">—</dd>
-          </div>
-        </dl>
-      </section>
+        <div class="painel-aba" role="tabpanel" id="painel-dispositivos" data-painel="dispositivos"
+          aria-labelledby="aba-dispositivos" hidden>
+          <section class="painel-secao">
+            <h2>Dispositivos de tráfego <span id="contadorDispositivos" class="contador">0</span></h2>
+            <div class="sub-contadores">
+              <span class="tag-contador">Lombadas: <b id="contadorLombadas">0</b></span>
+              <span class="tag-contador">Semáforos: <b id="contadorSemaforos">0</b></span>
+            </div>
+            <ul id="listaDispositivos" class="lista-bloqueios lista-dispositivos"></ul>
+            <p id="semDispositivos" class="vazio">Nenhum dispositivo — use + Lombada ou + Semáforo na barra do mapa.</p>
+            <button id="btnRemoverTodosDispositivos" type="button" class="botao botao-secundario remover-todos"
+              hidden>Remover todos dispositivos</button>
+          </section>
+        </div>
+
+        <div class="painel-aba" role="tabpanel" id="painel-indicadores" data-painel="indicadores"
+          aria-labelledby="aba-indicadores" hidden>
+          <section class="painel-secao">
+            <h2>Impacto na simulação</h2>
+            <dl class="estatisticas">
+              <div>
+                <dt>Veículos ativos</dt>
+                <dd id="estAtivos">—</dd>
+              </div>
+              <div>
+                <dt>Desviados</dt>
+                <dd id="estDesviados">—</dd>
+              </div>
+              <div>
+                <dt>Retidos</dt>
+                <dd id="estRetidos">—</dd>
+              </div>
+              <div>
+                <dt>Veículos redirecionados</dt>
+                <dd id="estRecalculos">—</dd>
+              </div>
+              <div>
+                <dt>Viagens concluídas</dt>
+                <dd id="estViagens">—</dd>
+              </div>
+              <div>
+                <dt>Tempo médio de viagem</dt>
+                <dd id="estTempoMedio">—</dd>
+              </div>
+            </dl>
+          </section>
+        </div>
+      </div>
     </aside>
 
     <main class="main">
       <div id="mapa" class="componente mapa-simulacao" data-locais="data/locais.json"></div>
+      <div id="badgeStatus" class="badge-status-sim status-carregando" role="status" aria-live="polite">Carregando…</div>
+      <div id="atalhosSim" class="atalhos-host"></div>
 
       <div class="barra-simulacao" role="group" aria-label="Controles da simulação e ferramentas">
         <div class="grupo-ferramentas" role="group" aria-label="Ferramentas interativas">
@@ -176,6 +201,7 @@
         <li><span class="amostra amostra-lombada">▲</span> Lombada</li>
         <li><span class="amostra amostra-semaforo">●</span> Semáforo</li>
       </ul>
+      <p class="dica-mapa">Aproxime o zoom para ver carros, motos e caminhões.</p>
 
       <div id="carregando" class="carregando" role="status" aria-live="polite">Carregando malha viária de Cajamar…</div>
     </main>

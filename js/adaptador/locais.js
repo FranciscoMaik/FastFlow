@@ -2,6 +2,50 @@
 
 const SENTIDOS_VALIDOS = new Set([-1, 0, 1]);
 const MAX_ERROS = 5;
+export const CHAVE_LOCAL = "fastflow.local";
+const CHAVE_LEGADA = "fastflow.regiao";
+
+function armazenamentoPadrao() {
+  try {
+    return globalThis.localStorage;
+  } catch {
+    return null;
+  }
+}
+
+/** Lê o local persistido (migra a chave legada `fastflow.regiao` se existir). */
+export function lerLocalId(idsPermitidos, padrao, storage = armazenamentoPadrao()) {
+  const permitidos = new Set(idsPermitidos);
+  const fallback = permitidos.has(padrao) ? padrao : [...permitidos][0];
+  if (!storage) return fallback;
+
+  let id = null;
+  try {
+    id = storage.getItem(CHAVE_LOCAL);
+    if (!id) {
+      const legado = storage.getItem(CHAVE_LEGADA);
+      if (legado && permitidos.has(legado)) {
+        id = legado;
+        storage.setItem(CHAVE_LOCAL, legado);
+        storage.removeItem(CHAVE_LEGADA);
+      }
+    }
+  } catch {
+    return fallback;
+  }
+
+  return permitidos.has(id) ? id : fallback;
+}
+
+export function salvarLocalId(id, storage = armazenamentoPadrao()) {
+  if (!storage || typeof id !== "string" || id === "") return;
+  try {
+    storage.setItem(CHAVE_LOCAL, id);
+    storage.removeItem(CHAVE_LEGADA);
+  } catch {
+    /* persistência é best-effort */
+  }
+}
 
 // Valida o schema GeoJSON da malha viária.
 export function validarMalha(geojson) {

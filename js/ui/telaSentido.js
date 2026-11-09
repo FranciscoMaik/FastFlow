@@ -7,11 +7,13 @@ import { criarCamadaSetas } from "./camadaSetas.js";
 import { criarSeletorVias } from "./seletorVias.js";
 import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
 import { iniciarSeletorLocal } from "./seletorLocal.js";
+import { ligarPausa } from "./pausaSimulacao.js";
+import { criarStatusSimulacao } from "./statusSimulacao.js";
+import { montarAtalhos } from "./atalhos.js";
+import { ligarPainelAbas } from "./painelAbas.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
 const $ = (id) => document.getElementById(id);
-
-let rodando = true;
 
 function iniciar() {
   const mapa = L.map("mapa", { zoomControl: true }).setView(CENTRO_CAJAMAR, 15);
@@ -20,11 +22,17 @@ function iniciar() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
 
-  $("btn-play").addEventListener("click", (e) => {
-    rodando = !rodando;
-    e.target.textContent = rodando ? "Pausar" : "Retomar";
-    e.target.setAttribute("aria-pressed", String(!rodando));
+  const status = criarStatusSimulacao($("badgeStatus"));
+  montarAtalhos($("atalhosSim"), "sentido");
+  ligarPainelAbas($("painelAbas"));
+
+  const pausa = ligarPausa($("btnPausar"), {
+    aoMudar(rodando) {
+      if (!$("carregando")?.hidden) return;
+      status.definir(rodando ? "executando" : "pausada");
+    },
   });
+  let montagemAtual = null;
 
   iniciarSeletorLocal({
     mapa,
@@ -32,17 +40,26 @@ function iniciar() {
     select: $("selLocal"),
     info: $("infoLocal"),
     carregando: $("carregando"),
-    montar: (local, geojson, { primeiraVez }) => montar(mapa, local, geojson, primeiraVez),
+    obterResumoAlteracoes: () => montagemAtual?.resumoAlteracoes() ?? null,
+    aoEstadoCarregamento(estado, detalhe) {
+      if (estado === "carregando") status.definir("carregando", detalhe);
+      else if (estado === "erro") status.definir("erro", detalhe);
+      else status.definir(pausa.estaRodando() ? "executando" : "pausada");
+    },
+    montar: (local, geojson, { primeiraVez }) => {
+      montagemAtual = montar(mapa, local, geojson, primeiraVez, pausa);
+      return montagemAtual;
+    },
   });
 }
 
-function montar(mapa, local, geojson, primeiraVez) {
+function montar(mapa, local, geojson, primeiraVez, pausa) {
   const eventos = new AbortController();
   const { signal } = eventos;
 
   const controle = new ControleSentido(geojson, {
-    quantidadeVeiculos: Number($("cars").value),
-    fatorTempo: Number($("speed").value),
+    quantidadeVeiculos: Number($("selQuantidade").value),
+    fatorTempo: Number($("selVelocidade").value),
     politicaSentido: $("policy").value,
   });
 
@@ -54,7 +71,11 @@ function montar(mapa, local, geojson, primeiraVez) {
   const camadaVeiculos = criarCamadaVeiculos(mapa);
 
   const seletor = criarSeletorVias(
-    { selectLogradouro: $("selLogradouro"), selectTrecho: $("selTrecho") },
+    {
+      selectLogradouro: $("selLogradouro"),
+      selectTrecho: $("selTrecho"),
+      filtroLogradouro: $("filtroLogradouro"),
+    },
     controle.logradouros(),
     (id) => controle.trecho(id),
     {
@@ -85,20 +106,23 @@ function montar(mapa, local, geojson, primeiraVez) {
     $("btn-reverse").disabled = !trecho;
     if (!trecho) return;
     $("sel-name").textContent = trecho.nome;
-    $("sel-id").textContent = trecho.referencia ?? trecho.id;
+    $("sel-id").textContent = trecho.referencia?.trim() || "Sem cruzamento cadastrado";
     $("sel-dir").textContent = trecho.sentidoRotulo;
     $("sel-count").textContent = String(trecho.veiculosNoTrecho);
   }
 
   function atualizarRegistro() {
+    const itens = controle.registro();
     const ul = $("log");
     ul.replaceChildren(
-      ...controle.registro().map((item) => {
+      ...itens.map((item) => {
         const li = document.createElement("li");
         li.textContent = item.texto;
         return li;
       })
     );
+    const vazio = $("log-vazio");
+    if (vazio) vazio.hidden = itens.length > 0;
   }
 
   function atualizarStats() {
@@ -109,8 +133,8 @@ function montar(mapa, local, geojson, primeiraVez) {
     $("st-evac").textContent = String(s.evacuados + s.retornos);
     $("st-desp").textContent = String(s.retidos);
     $("st-conn").textContent = s.malhaConectada
-      ? "Malha conectada"
-      : `Malha parcial (${s.nosNaMalha}/${s.nosTotal} nós)`;
+      ? "Rede viária íntegra"
+      : `Rede parcial (${s.nosNaMalha}/${s.nosTotal} nós)`;
     $("st-conn").dataset.ok = s.malhaConectada ? "1" : "0";
   }
 
@@ -162,21 +186,18 @@ function montar(mapa, local, geojson, primeiraVez) {
       mapa.fire("click");
     } else if (e.key === " " && e.target.tagName !== "BUTTON") {
       e.preventDefault();
-      $("btn-play").click();
+      $("btnPausar").click();
     }
   }, { signal });
 
   $("btn-reverse").addEventListener("click", inverter, { signal });
   $("btn-clear").addEventListener("click", () => mapa.fire("click"), { signal });
 
-  $("speed").addEventListener("input", () => {
-    const v = Number($("speed").value);
-    $("speed-out").textContent = `${v}×`;
-    controle.definirFatorTempo(v);
+  $("selVelocidade").addEventListener("change", (e) => {
+    controle.definirFatorTempo(Number(e.target.value));
   }, { signal });
-  $("cars").addEventListener("input", () => {
-    $("cars-out").textContent = $("cars").value;
-    controle.definirQuantidadeVeiculos(Number($("cars").value));
+  $("selQuantidade").addEventListener("change", (e) => {
+    controle.definirQuantidadeVeiculos(Number(e.target.value));
   }, { signal });
   $("policy").addEventListener("change", () => controle.definirPolitica($("policy").value), { signal });
 
@@ -187,7 +208,7 @@ function montar(mapa, local, geojson, primeiraVez) {
   const loop = criarLoopAnimacaoVeiculos({
     controle,
     camadaVeiculos,
-    estaRodando: () => rodando,
+    estaRodando: () => pausa.estaRodando(),
     aoAtualizar() {
       atualizarStats();
       atualizarInfo();
@@ -196,6 +217,13 @@ function montar(mapa, local, geojson, primeiraVez) {
 
   return {
     totalTrechos: controle.trechos().length,
+    resumoAlteracoes() {
+      const inversoes = controle.estatisticas().inversoes;
+      if (!inversoes) return null;
+      return inversoes === 1
+        ? "Há 1 inversão de sentido nesta sessão."
+        : `Há ${inversoes} inversões de sentido nesta sessão.`;
+    },
     desmontar() {
       loop.parar();
       eventos.abort();
@@ -211,6 +239,8 @@ function montar(mapa, local, geojson, primeiraVez) {
       $("sel-info").hidden = true;
       $("btn-reverse").disabled = true;
       $("log").replaceChildren();
+      const vazio = $("log-vazio");
+      if (vazio) vazio.hidden = false;
       for (const id of ["st-cars", "st-rev", "st-rer", "st-evac", "st-desp"]) $(id).textContent = "—";
     },
   };

@@ -24,14 +24,15 @@
         <a href="pagina3.html">Contingência</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
+      <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
     <aside class="sidebar sidebar-sentido" aria-label="Painel de inversão de sentido">
       <section class="painel-secao" aria-labelledby="h-local">
-        <h2 id="h-local">Região simulada</h2>
+        <h2 id="h-local">Local</h2>
         <label class="campo">
-          <span>Local</span>
+          <span>Área simulada</span>
           <select id="selLocal" disabled>
             <option value="">Carregando locais…</option>
           </select>
@@ -39,90 +40,138 @@
         <p id="infoLocal" class="dica" aria-live="polite"></p>
       </section>
 
-      <section class="painel-secao">
-        <h2>Seleção de via</h2>
-        <label class="campo">
-          <span>Logradouro</span>
-          <select id="selLogradouro">
-            <option value="">Selecione um logradouro…</option>
-          </select>
-        </label>
-        <label class="campo">
-          <span>Trecho</span>
-          <select id="selTrecho" disabled>
-            <option value="">Escolha um logradouro</option>
-          </select>
-        </label>
-        <p class="dica">Ou clique diretamente em um trecho no mapa.</p>
-      </section>
-
-      <section class="painel-secao" aria-labelledby="h-sel">
-        <h2 id="h-sel">Via selecionada</h2>
-        <p class="empty" id="sel-empty">Nenhuma via selecionada. Clique em um trecho do mapa.</p>
-        <div id="sel-info" hidden>
-          <dl class="estatisticas info-via">
-            <div><dt>Via</dt><dd id="sel-name">—</dd></div>
-            <div><dt>Trecho</dt><dd id="sel-id">—</dd></div>
-            <div><dt>Sentido atual</dt><dd id="sel-dir">—</dd></div>
-            <div><dt>Veículos na via</dt><dd id="sel-count">0</dd></div>
-          </dl>
-          <div class="acoes">
-            <button class="botao botao-bloquear" id="btn-reverse" type="button" disabled>⇄ Inverter sentido (R)</button>
-            <button class="botao botao-secundario" id="btn-clear" type="button">Limpar seleção</button>
-          </div>
+      <div class="painel-abas" id="painelAbas">
+        <div class="abas" role="tablist" aria-label="Seções do painel">
+          <button type="button" class="aba ativo" role="tab" id="aba-vias" data-aba="vias"
+            aria-controls="painel-vias" aria-selected="true">Vias</button>
+          <button type="button" class="aba" role="tab" id="aba-politica" data-aba="politica"
+            aria-controls="painel-politica" aria-selected="false" tabindex="-1">Política</button>
+          <button type="button" class="aba" role="tab" id="aba-indicadores" data-aba="indicadores"
+            aria-controls="painel-indicadores" aria-selected="false" tabindex="-1">Indicadores</button>
         </div>
-        <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
-      </section>
 
-      <section class="painel-secao" aria-labelledby="h-sim">
-        <h2 id="h-sim">Simulação</h2>
-        <div class="acoes">
-          <button class="botao botao-secundario" id="btn-play" type="button" aria-pressed="false">Pausar</button>
+        <div class="painel-aba ativo" role="tabpanel" id="painel-vias" data-painel="vias"
+          aria-labelledby="aba-vias">
+          <section class="painel-secao">
+            <h2>Seleção de via</h2>
+            <label class="campo">
+              <span>Logradouro</span>
+              <input id="filtroLogradouro" type="search" placeholder="Buscar por nome…" autocomplete="off"
+                enterkeyhint="search">
+              <select id="selLogradouro">
+                <option value="">Selecione um logradouro…</option>
+              </select>
+            </label>
+            <label class="campo">
+              <span>Trecho</span>
+              <select id="selTrecho" disabled>
+                <option value="">Escolha um logradouro</option>
+              </select>
+            </label>
+            <p class="dica">Ou clique diretamente em um trecho no mapa.</p>
+          </section>
+
+          <section class="painel-secao" aria-labelledby="h-sel">
+            <h2 id="h-sel">Via selecionada</h2>
+            <p class="empty" id="sel-empty">Nenhuma via selecionada. Clique em um trecho do mapa.</p>
+            <div id="sel-info" hidden class="via-selecionada">
+              <div class="via-selecionada-titulo">
+                <p id="sel-name" class="via-nome">—</p>
+                <p id="sel-id" class="via-referencia">—</p>
+              </div>
+              <dl class="estatisticas via-selecionada-metas">
+                <div>
+                  <dt>Sentido atual</dt>
+                  <dd id="sel-dir">—</dd>
+                </div>
+                <div>
+                  <dt>Veículos</dt>
+                  <dd id="sel-count">0</dd>
+                </div>
+              </dl>
+              <div class="acoes acoes-empilhadas">
+                <button class="botao botao-bloquear" id="btn-reverse" type="button" disabled>⇄ Inverter sentido (R)</button>
+                <button class="botao botao-secundario" id="btn-clear" type="button">Limpar seleção</button>
+              </div>
+            </div>
+            <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
+          </section>
         </div>
-        <label class="campo campo-range" for="speed">
-          <span>Velocidade <output id="speed-out">1×</output></span>
-          <input id="speed" type="range" min="1" max="8" step="1" value="1">
-        </label>
-        <label class="campo campo-range" for="cars">
-          <span>Veículos <output id="cars-out">50</output></span>
-          <input id="cars" type="range" min="10" max="150" step="10" value="50">
-        </label>
-        <label class="campo" for="policy">
-          <span>Veículos já na via ao inverter</span>
-          <select id="policy">
-            <option value="complete">Concluem a travessia com segurança</option>
-            <option value="uturn">Retornam pelo novo sentido</option>
-          </select>
-        </label>
-        <ul class="legenda-sentido" aria-label="Legenda">
-          <li><span class="amostra selecionada"></span> Via selecionada</li>
-          <li><span class="amostra evacuando"></span> Concluindo travessia</li>
-          <li><span class="amostra seta-mantido"></span> Sentido mantido</li>
-          <li><span class="amostra seta-alterado"></span> Sentido alterado</li>
-        </ul>
-      </section>
 
-      <section class="painel-secao" aria-labelledby="h-st">
-        <h2 id="h-st">Indicadores</h2>
-        <div class="stats-sentido">
-          <div class="stat"><b id="st-cars">0</b><span>veículos</span></div>
-          <div class="stat"><b id="st-rev">0</b><span>inversões</span></div>
-          <div class="stat"><b id="st-rer">0</b><span>rotas recalculadas</span></div>
-          <div class="stat"><b id="st-evac">0</b><span>reagiram à inversão</span></div>
-          <div class="stat"><b id="st-desp">0</b><span>retidos</span></div>
+        <div class="painel-aba" role="tabpanel" id="painel-politica" data-painel="politica"
+          aria-labelledby="aba-politica" hidden>
+          <section class="painel-secao" aria-labelledby="h-sim">
+            <h2 id="h-sim">Política de inversão</h2>
+            <label class="campo" for="policy">
+              <span>Veículos já na via ao inverter</span>
+              <select id="policy" aria-describedby="dica-policy">
+                <option value="complete">Concluem a travessia com segurança</option>
+                <option value="uturn">Retornam pelo novo sentido</option>
+              </select>
+            </label>
+            <p class="dica" id="dica-policy">
+              <strong>Concluem a travessia:</strong> quem já entrou termina o trecho com segurança.
+              <strong>Retornam:</strong> passam a seguir o novo sentido imediatamente.
+            </p>
+            <ul class="legenda-sentido" aria-label="Legenda">
+              <li><span class="amostra selecionada"></span> Via selecionada</li>
+              <li><span class="amostra evacuando"></span> Concluindo travessia</li>
+              <li><span class="amostra seta-mantido"></span> Sentido mantido</li>
+              <li><span class="amostra seta-alterado"></span> Sentido alterado</li>
+            </ul>
+          </section>
         </div>
-        <span id="st-conn" class="badge-conn" data-ok="1">Malha conectada</span>
-      </section>
 
-      <section class="painel-secao" aria-labelledby="h-log">
-        <h2 id="h-log">Registro</h2>
-        <ul id="log" class="log-sentido" aria-live="polite"></ul>
-      </section>
+        <div class="painel-aba" role="tabpanel" id="painel-indicadores" data-painel="indicadores"
+          aria-labelledby="aba-indicadores" hidden>
+          <section class="painel-secao" aria-labelledby="h-st">
+            <h2 id="h-st">Indicadores</h2>
+            <div class="stats-sentido">
+              <div class="stat"><b id="st-cars">0</b><span>veículos</span></div>
+              <div class="stat"><b id="st-rev">0</b><span>inversões</span></div>
+              <div class="stat"><b id="st-rer">0</b><span>veículos redirecionados</span></div>
+              <div class="stat"><b id="st-evac">0</b><span>reagiram à inversão</span></div>
+              <div class="stat"><b id="st-desp">0</b><span>retidos</span></div>
+            </div>
+            <span id="st-conn" class="badge-conn" data-ok="1">Rede viária íntegra</span>
+          </section>
+
+          <section class="painel-secao" aria-labelledby="h-log">
+            <h2 id="h-log">Registro</h2>
+            <ul id="log" class="log-sentido" aria-live="polite"></ul>
+            <p id="log-vazio" class="vazio">Nenhuma inversão registrada — selecione uma via e pressione R.</p>
+          </section>
+        </div>
+      </div>
     </aside>
 
     <main class="main">
       <div id="mapa" class="componente mapa-simulacao" data-locais="data/locais.json"></div>
-      <div class="hint-sentido">Clique numa via · R inverte · Espaço pausa · aproxime o zoom para ver setas em todas as vias</div>
+      <div id="badgeStatus" class="badge-status-sim status-carregando" role="status" aria-live="polite">Carregando…</div>
+      <div id="atalhosSim" class="atalhos-host"></div>
+
+      <div class="barra-simulacao" role="group" aria-label="Controles da simulação">
+        <button id="btnPausar" type="button" class="botao botao-secundario" aria-pressed="false">Pausar</button>
+        <label class="campo">
+          <span>Veículos</span>
+          <select id="selQuantidade">
+            <option value="30">30</option>
+            <option value="60" selected>60</option>
+            <option value="100">100</option>
+            <option value="150">150</option>
+          </select>
+        </label>
+        <label class="campo">
+          <span>Velocidade</span>
+          <select id="selVelocidade">
+            <option value="1">1×</option>
+            <option value="4" selected>4×</option>
+            <option value="8">8×</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="hint-sentido">Clique numa via · R inverte · Espaço pausa · aproxime o zoom para ver setas e veículos em detalhe</div>
       <div id="carregando" class="carregando" role="status" aria-live="polite">Carregando malha viária de Cajamar…</div>
     </main>
   </div>

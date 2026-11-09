@@ -1,7 +1,13 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
-import { validarMalha, validarCadastro } from "../../js/adaptador/locais.js";
+import {
+  validarMalha,
+  validarCadastro,
+  lerLocalId,
+  salvarLocalId,
+  CHAVE_LOCAL,
+} from "../../js/adaptador/locais.js";
 import { construirGrafo } from "../../js/adaptador/carregarMalha.js";
 
 const raiz = new URL("../../", import.meta.url);
@@ -51,4 +57,25 @@ test("todas as malhas do cadastro real seguem o padrão e viram um grafo utiliz�
     assert.deepEqual(validarMalha(geojson), [], local.nome);
     assert.ok(construirGrafo(geojson).trechos.size > 50, `${local.nome} tem trechos`);
   }
+});
+
+function storageMemoria(inicial = {}) {
+  const dados = new Map(Object.entries(inicial));
+  return {
+    getItem: (chave) => (dados.has(chave) ? dados.get(chave) : null),
+    setItem: (chave, valor) => dados.set(chave, String(valor)),
+    removeItem: (chave) => dados.delete(chave),
+  };
+}
+
+test("persistência do local salva, lê e migra a chave legada", () => {
+  const ids = ["centro", "polvilho", "ponunduva"];
+  const storage = storageMemoria({ "fastflow.regiao": "polvilho" });
+  assert.equal(lerLocalId(ids, "centro", storage), "polvilho");
+  assert.equal(storage.getItem(CHAVE_LOCAL), "polvilho");
+  assert.equal(storage.getItem("fastflow.regiao"), null);
+
+  salvarLocalId("ponunduva", storage);
+  assert.equal(lerLocalId(ids, "centro", storage), "ponunduva");
+  assert.equal(lerLocalId(ids, "centro", storageMemoria({ [CHAVE_LOCAL]: "inexistente" })), "centro");
 });

@@ -1,4 +1,4 @@
-import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
+import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js";
 
 (function () {
   const cenarios = {
@@ -73,7 +73,7 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     "ponunduva-cajamar": {
       origem: "Ponunduva, Cajamar",
       destino: "Centro de Cajamar",
-      regioes: ["centro"],
+      regioes: ["ponunduva", "centro"],
       ocorrencia: "Obra simulada",
       localOcorrencia: "Estrada de Ponunduva · Cajamar",
       bloqueio: [-23.344, -46.913],
@@ -243,7 +243,7 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     "ponunduva-jordanesia": {
       origem: "Ponunduva, Cajamar",
       destino: "Jordanésia, Cajamar",
-      regioes: ["jordanesia"],
+      regioes: ["ponunduva", "jordanesia"],
       ocorrencia: "Bloqueio viário simulado",
       localOcorrencia: "Estrada de Ponunduva · acesso a Jordanésia",
       bloqueio: [-23.351, -46.900],
@@ -355,6 +355,45 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
   const botaoDirecionamento = document.getElementById("dispatch-button");
   const feedbackDirecionamento = document.getElementById("dispatch-feedback");
   let rotaSelecionada = "alternative";
+  let direcionamentoAtivo = false;
+
+  function atualizarRotuloDirecionamento() {
+    if (rotaSelecionada === "primary") {
+      tituloDirecionamento.textContent = "Rota principal selecionada";
+      descricaoDirecionamento.textContent = "A rota passa pela ocorrência deste cenário simulado.";
+    } else if (rotaSelecionada === "alternative") {
+      tituloDirecionamento.textContent = "Desvio selecionado";
+      descricaoDirecionamento.textContent = "A equipe seguirá pela rota de contingência sugerida.";
+    } else {
+      tituloDirecionamento.textContent = "Alternativa 2 selecionada";
+      descricaoDirecionamento.textContent = "A equipe seguirá pelo desvio ampliado de contingência.";
+    }
+  }
+
+  function definirDirecionamentoAtivo(ativo, { silencioso = false } = {}) {
+    direcionamentoAtivo = ativo;
+    botaoDirecionamento.disabled = false;
+    botaoDirecionamento.setAttribute("aria-pressed", String(ativo));
+    if (ativo) {
+      botaoDirecionamento.textContent = "Cancelar direcionamento";
+      tituloDirecionamento.textContent = "Direcionamento ativado";
+      descricaoDirecionamento.textContent =
+        "Cenário demonstrativo · " + nomesRotas[rotaSelecionada] + ".";
+      if (!silencioso) {
+        feedbackDirecionamento.textContent =
+          "Simulação local: nenhuma equipe real foi notificada.";
+      }
+      return;
+    }
+
+    botaoDirecionamento.textContent = "Ativar direcionamento";
+    atualizarRotuloDirecionamento();
+    if (!silencioso) {
+      feedbackDirecionamento.textContent = "Direcionamento cancelado.";
+    } else {
+      feedbackDirecionamento.textContent = "";
+    }
+  }
 
   function idsCenariosDaRegiao(idRegiao) {
     return Object.keys(cenarios).filter(function (id) {
@@ -411,20 +450,15 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     });
     atualizarAnimacaoRotas(tipo);
 
-    if (tipo === "primary") {
-      tituloDirecionamento.textContent = "Rota principal selecionada";
-      descricaoDirecionamento.textContent = "A rota passa pela ocorrência deste cenário simulado.";
-    } else if (tipo === "alternative") {
-      tituloDirecionamento.textContent = "Desvio selecionado";
-      descricaoDirecionamento.textContent = "A equipe seguirá pela rota de contingência sugerida.";
+    if (direcionamentoAtivo) {
+      definirDirecionamentoAtivo(false, { silencioso: true });
     } else {
-      tituloDirecionamento.textContent = "Alternativa 2 selecionada";
-      descricaoDirecionamento.textContent = "A equipe seguirá pelo desvio ampliado de contingência.";
+      atualizarRotuloDirecionamento();
+      botaoDirecionamento.disabled = false;
+      botaoDirecionamento.textContent = "Ativar direcionamento";
+      botaoDirecionamento.setAttribute("aria-pressed", "false");
+      feedbackDirecionamento.textContent = "";
     }
-
-    botaoDirecionamento.disabled = false;
-    botaoDirecionamento.textContent = "Ativar direcionamento";
-    feedbackDirecionamento.textContent = "";
   }
 
   function atualizarCenario(id) {
@@ -466,6 +500,7 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
       .bindPopup("Destino: " + cenario.destino);
 
     selecionarRota("alternative");
+    definirDirecionamentoAtivo(false, { silencioso: true });
     enquadrarRotas();
   }
 
@@ -473,13 +508,17 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     atualizarCenario(seletorCenario.value);
   });
 
-  ligarSeletorRegiao(document.getElementById("selRegiao"), {
-    aoTrocar(idRegiao) {
-      const id = popularCenarios(idRegiao, seletorCenario.value);
-      if (id) {
-        atualizarCenario(id);
-      }
-    },
+  const seletorLocal = document.getElementById("selLocal");
+  const urlLocais = seletorLocal.dataset.locais || "data/locais.json";
+
+  seletorLocal.addEventListener("change", function () {
+    const idLocal = seletorLocal.value;
+    if (!idLocal) return;
+    salvarLocalId(idLocal);
+    const id = popularCenarios(idLocal, seletorCenario.value);
+    if (id) {
+      atualizarCenario(id);
+    }
   });
 
   botoesRota.forEach(function (botao) {
@@ -488,8 +527,8 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     });
   });
 
-  function iniciar() {
-    const id = popularCenarios(lerRegiao(), seletorCenario.value);
+  function iniciarComLocal(idLocal) {
+    const id = popularCenarios(idLocal, seletorCenario.value);
     if (id) {
       atualizarCenario(id);
     }
@@ -499,17 +538,42 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     }, 0);
   }
 
-  fetch("data/rotas-contingencia.json")
-    .then(function (resposta) {
-      return resposta.ok ? resposta.json() : {};
-    })
-    .catch(function () {
-      return {};
-    })
-    .then(function (dados) {
-      tracados = dados;
-      iniciar();
+  Promise.all([
+    carregarLocais(urlLocais).catch(function () {
+      return { locais: [], padrao: "centro" };
+    }),
+    fetch("data/rotas-contingencia.json")
+      .then(function (resposta) {
+        return resposta.ok ? resposta.json() : {};
+      })
+      .catch(function () {
+        return {};
+      }),
+  ]).then(function (resultado) {
+    const cadastro = resultado[0];
+    tracados = resultado[1];
+
+    const locais = cadastro.locais || [];
+    if (locais.length === 0) {
+      seletorLocal.replaceChildren(new Option("Locais indisponíveis", ""));
+      seletorLocal.disabled = true;
+      return;
+    }
+
+    const ids = locais.map(function (local) {
+      return local.id;
     });
+    const idInicial = lerLocalId(ids, cadastro.padrao);
+    seletorLocal.replaceChildren(
+      ...locais.map(function (local) {
+        return new Option(local.nome, local.id);
+      })
+    );
+    seletorLocal.value = idInicial;
+    seletorLocal.disabled = false;
+    salvarLocalId(idInicial);
+    iniciarComLocal(idInicial);
+  });
 
   function sincronizarPausaAnimacoes() {
     document.body.classList.toggle("animacoes-pausadas", document.hidden);
@@ -522,29 +586,9 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
 
   document.getElementById("route-form").addEventListener("submit", function (evento) {
     evento.preventDefault();
-    const origem = entradaOrigem.value.trim();
-    const destino = entradaDestino.value.trim();
-
-    if (!origem || !destino) {
-      feedbackFormulario.textContent = "Informe o ponto de partida e o destino.";
-      return;
-    }
-
-    tituloRota.textContent = origem + " → " + destino;
-    feedbackFormulario.textContent =
-      "Endereços atualizados. O traçado continua ilustrativo do cenário selecionado.";
-    botaoDirecionamento.disabled = false;
-    botaoDirecionamento.textContent = "Ativar direcionamento";
-    feedbackDirecionamento.textContent = "";
   });
 
   botaoDirecionamento.addEventListener("click", function () {
-    botaoDirecionamento.disabled = true;
-    botaoDirecionamento.textContent = "Direcionamento ativado";
-    tituloDirecionamento.textContent = "Direcionamento ativado";
-    descricaoDirecionamento.textContent =
-      "Cenário demonstrativo · " + nomesRotas[rotaSelecionada] + ".";
-    feedbackDirecionamento.textContent =
-      "Simulação local: nenhuma equipe real foi notificada.";
+    definirDirecionamentoAtivo(!direcionamentoAtivo);
   });
 })();

@@ -1,13 +1,46 @@
-// Seleção por lista: primeiro o logradouro, depois o trecho dele.
+// Seleção por lista: primeiro o logradouro (com busca), depois o trecho dele.
 
-export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros, obterTrecho, eventos, { signal } = {}) {
+function normalizar(texto) {
+  return String(texto ?? "")
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .trim();
+}
+
+export function criarSeletorVias(
+  { selectLogradouro, selectTrecho, filtroLogradouro = null },
+  logradouros,
+  obterTrecho,
+  eventos,
+  { signal } = {}
+) {
   const trechosPorNome = new Map(logradouros.map((l) => [l.nome, l.trechos]));
+  const listaCompleta = logradouros.map(({ nome, trechos }) => ({ nome, trechos }));
+  let filtroAtual = "";
 
-  selectLogradouro.length = 1;
-  selectLogradouro.value = "";
-  for (const { nome, trechos } of logradouros) {
-    const opcao = new Option(`${nome} (${trechos.length})`, nome);
-    selectLogradouro.add(opcao);
+  function preencherLogradouros(nomeSelecionado = "") {
+    const termo = normalizar(filtroAtual);
+    const filtrados = termo
+      ? listaCompleta.filter((item) => normalizar(item.nome).includes(termo))
+      : listaCompleta;
+
+    const valorAtual = nomeSelecionado || selectLogradouro.value;
+    selectLogradouro.replaceChildren(new Option("Selecione um logradouro…", ""));
+    for (const { nome, trechos } of filtrados) {
+      selectLogradouro.add(new Option(`${nome} (${trechos.length})`, nome));
+    }
+
+    if (valorAtual && trechosPorNome.has(valorAtual) && (!termo || normalizar(valorAtual).includes(termo))) {
+      selectLogradouro.value = valorAtual;
+    } else {
+      selectLogradouro.value = "";
+    }
+
+    if (filtroLogradouro) {
+      const vazio = filtrados.length === 0 && termo !== "";
+      filtroLogradouro.setAttribute("aria-invalid", vazio ? "true" : "false");
+    }
   }
 
   function preencherTrechos(nome) {
@@ -40,6 +73,19 @@ export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros
     }
   }, { signal });
 
+  if (filtroLogradouro) {
+    filtroLogradouro.addEventListener("input", () => {
+      const anterior = selectLogradouro.value;
+      filtroAtual = filtroLogradouro.value;
+      preencherLogradouros(anterior);
+      if (selectLogradouro.value !== anterior) {
+        preencherTrechos(selectLogradouro.value);
+        eventos.aoEscolherLogradouro(selectLogradouro.value || null);
+      }
+    }, { signal });
+  }
+
+  preencherLogradouros();
   preencherTrechos("");
 
   return {
@@ -47,16 +93,24 @@ export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros
     sincronizar(trechoId) {
       const t = trechoId ? obterTrecho(trechoId) : null;
       const nome = t?.temNome ? t.nome : "";
-      if (selectLogradouro.value !== nome) {
-        selectLogradouro.value = nome;
+      if (nome && filtroAtual && !normalizar(nome).includes(normalizar(filtroAtual))) {
+        filtroAtual = "";
+        if (filtroLogradouro) filtroLogradouro.value = "";
       }
+      preencherLogradouros(nome);
       preencherTrechos(nome);
       selectTrecho.value = t?.temNome ? trechoId : "";
     },
     trechosDo: (nome) => trechosPorNome.get(nome) ?? [],
     limpar() {
       trechosPorNome.clear();
-      selectLogradouro.length = 1;
+      listaCompleta.length = 0;
+      filtroAtual = "";
+      if (filtroLogradouro) {
+        filtroLogradouro.value = "";
+        filtroLogradouro.removeAttribute("aria-invalid");
+      }
+      selectLogradouro.replaceChildren(new Option("Selecione um logradouro…", ""));
       selectLogradouro.value = "";
       preencherTrechos("");
     },
