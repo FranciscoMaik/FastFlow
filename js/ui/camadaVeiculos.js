@@ -38,5 +38,10 @@ export function criarCamadaVeiculos(mapa) {
         }
       }
     },
+
+    remover() {
+      mapa.removeLayer(grupo);
+      marcadores.clear();
+    },
   };
 }

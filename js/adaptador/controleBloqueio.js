@@ -239,4 +239,10 @@ export class ControleBloqueio extends Emissor {
   definirFatorTempo(fator) {
     this.#simulacao.fatorTempo = fator;
   }
+
+  encerrar() {
+    this.#simulacao.encerrar();
+    this.#bloqueios.clear();
+    this.selecionado = null;
+  }
 }

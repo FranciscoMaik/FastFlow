@@ -1,7 +1,7 @@
 // Ponto de entrada da tela de simulação de bloqueio viário. Liga os componentes
 // de interface ao ControleBloqueio (adaptador); não acessa o motor diretamente.
 /* global L */
-import { carregarControle } from "../adaptador/controleBloqueio.js";
+import { ControleBloqueio } from "../adaptador/controleBloqueio.js";
 import { criarCamadaVias } from "./camadaVias.js";
 import { criarCamadaVeiculos } from "./camadaVeiculos.js";
 import { criarCamadaDispositivos } from "./camadaDispositivos.js";
@@ -13,32 +13,46 @@ import {
   renderizarInfoTrecho,
 } from "./painelBloqueios.js";
 import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
+import { iniciarSeletorLocal } from "./seletorLocal.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
-// Mesma área usada na consulta de scripts/gerar-malha.mjs (algumas vias seguem além dela).
-const AREA_SIMULADA = [[-23.365, -46.89], [-23.345, -46.866]];
 const $ = (id) => document.getElementById(id);
 
-async function iniciar() {
+let rodando = true;
+
+function iniciar() {
   const mapa = L.map("mapa", { zoomControl: true }).setView(CENTRO_CAJAMAR, 15);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
 
-  let controle;
-  try {
-    controle = await carregarControle($("mapa").dataset.malha, {
-      quantidadeVeiculos: Number($("selQuantidade").value),
-      fatorTempo: Number($("selVelocidade").value),
-    });
-  } catch (erro) {
-    $("carregando").textContent = `Erro ao carregar a malha viária: ${erro.message}`;
-    return;
-  }
-  $("carregando").hidden = true;
+  $("btnPausar").addEventListener("click", (e) => {
+    rodando = !rodando;
+    e.target.textContent = rodando ? "Pausar" : "Continuar";
+    e.target.setAttribute("aria-pressed", String(!rodando));
+  });
 
-  let modoFerramenta = "navegar"; // "navegar" | "lombada" | "semaforo"
+  iniciarSeletorLocal({
+    mapa,
+    urlLocais: $("mapa").dataset.locais,
+    select: $("selLocal"),
+    info: $("infoLocal"),
+    carregando: $("carregando"),
+    montar: (local, geojson, { primeiraVez }) => montar(mapa, local, geojson, primeiraVez),
+  });
+}
+
+function montar(mapa, local, geojson, primeiraVez) {
+  const eventos = new AbortController();
+  const { signal } = eventos;
+
+  const controle = new ControleBloqueio(geojson, {
+    quantidadeVeiculos: Number($("selQuantidade").value),
+    fatorTempo: Number($("selVelocidade").value),
+  });
+
+  let modoFerramenta = "navegar";
 
   function definirModo(modo) {
     modoFerramenta = modo;
@@ -127,7 +141,6 @@ async function iniciar() {
       controle.selecionar(id);
     },
   });
-  mapa.fitBounds(AREA_SIMULADA);
 
   const camadaVeiculos = criarCamadaVeiculos(mapa);
 
@@ -165,7 +178,8 @@ async function iniciar() {
         controle.selecionar(id);
         camadaVias.focar([id]);
       },
-    }
+    },
+    { signal }
   );
 
   const estatisticas = {
@@ -280,13 +294,17 @@ async function iniciar() {
     redesenhar();
   });
 
-  controle.on("dispositivosAlterados", () => {
+  function aoClicarMapa() {
+    controle.selecionar(null);
+    destacados = [];
+    seletor.sincronizar(null);
     redesenhar();
-  });
+  }
+  mapa.on("click", aoClicarMapa);
 
   controle.on("faseSemafóricaAlterada", () => {
     camadaDispositivos.atualizar(controle.dispositivos());
-  });
+  }, { signal });
 
   $("btnBloquear").addEventListener("click", () => {
     const id = controle.selecionado;
@@ -301,16 +319,16 @@ async function iniciar() {
     );
     seletor.sincronizar(id);
     redesenhar();
-  });
+  }, { signal });
 
-  $("btnDesbloquear").addEventListener("click", () => removerBloqueio(controle.selecionado));
+  $("btnDesbloquear").addEventListener("click", () => removerBloqueio(controle.selecionado), { signal });
 
   $("btnRemoverTodos").addEventListener("click", () => {
     for (const b of controle.bloqueios()) controle.removerBloqueio(b.id);
     mensagem("Todos os bloqueios foram removidos.", "sucesso");
     seletor.sincronizar(controle.selecionado);
     redesenhar();
-  });
+  }, { signal });
 
   $("btnRemoverTodosDispositivos").addEventListener("click", () => {
     const r = controle.removerTodosDispositivos();
@@ -318,19 +336,12 @@ async function iniciar() {
     redesenhar();
   });
 
-  $("selQuantidade").addEventListener("change", (e) => controle.definirQuantidadeVeiculos(Number(e.target.value)));
-  $("selVelocidade").addEventListener("change", (e) => controle.definirFatorTempo(Number(e.target.value)));
+  $("selQuantidade").addEventListener("change", (e) => controle.definirQuantidadeVeiculos(Number(e.target.value)), { signal });
+  $("selVelocidade").addEventListener("change", (e) => controle.definirFatorTempo(Number(e.target.value)), { signal });
 
-  let rodando = true;
-  $("btnPausar").addEventListener("click", (e) => {
-    rodando = !rodando;
-    e.target.textContent = rodando ? "Pausar" : "Continuar";
-    e.target.setAttribute("aria-pressed", String(!rodando));
-  });
-
-  // ---------- Laço da simulação ----------
   redesenhar();
-  criarLoopAnimacaoVeiculos({
+  if (!primeiraVez) mensagem(`Simulação reiniciada em ${local.nome}.`, "sucesso");
+  const loop = criarLoopAnimacaoVeiculos({
     controle,
     camadaVeiculos,
     estaRodando: () => rodando,
@@ -340,6 +351,26 @@ async function iniciar() {
       atualizarInfo();
     },
   });
+
+  return {
+    totalTrechos: controle.trechos().length,
+    desmontar() {
+      loop.parar();
+      eventos.abort();
+      mapa.off("click", aoClicarMapa);
+      mapa.stop();
+      controle.encerrar();
+      camadaVeiculos.remover();
+      camadaVias.remover();
+      seletor.limpar();
+      mensagem("");
+      renderizarInfoTrecho($("infoTrecho"), null);
+      $("btnBloquear").disabled = true;
+      $("btnDesbloquear").disabled = true;
+      renderizarBloqueios($("listaBloqueios"), $("contadorBloqueios"), $("btnRemoverTodos"), $("semBloqueios"), [], {});
+      for (const campo of Object.values(estatisticas)) campo.textContent = "—";
+    },
+  };
 }
 
 function plural(n, singular, varios) {

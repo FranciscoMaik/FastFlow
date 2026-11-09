@@ -47,8 +47,19 @@ export class Simulacao extends Emissor {
     this.duracoes = [];
     this.proximoId = 1;
     this.#atualizarMalhaPrincipal();
-    grafo.on("bloqueioAlterado", (evento) => this.#aoAlterarBloqueio(evento));
-    grafo.on("sentidoAlterado", (evento) => this.#aoAlterarSentido(evento));
+    this.#desligarEventos = [
+      grafo.on("bloqueioAlterado", (evento) => this.#aoAlterarBloqueio(evento)),
+      grafo.on("sentidoAlterado", (evento) => this.#aoAlterarSentido(evento)),
+    ];
+  }
+
+  #desligarEventos;
+
+  encerrar() {
+    this.#desligarEventos.forEach((desligar) => desligar());
+    this.#desligarEventos = [];
+    this.quantidadeDesejada = 0;
+    this.veiculos = [];
   }
 
   definirQuantidade(quantidade) {

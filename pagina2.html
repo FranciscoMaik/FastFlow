@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,6 +10,7 @@
     integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
   <link rel="stylesheet" href="css/style.css">
 </head>
+
 <body>
   <div class="layout">
     <header class="topbar">
@@ -28,6 +30,17 @@
     </header>
 
     <aside class="sidebar" aria-label="Painel de controle viário e tráfego">
+      <section class="painel-secao" aria-labelledby="h-local">
+        <h2 id="h-local">Região simulada</h2>
+        <label class="campo">
+          <span>Local</span>
+          <select id="selLocal" disabled>
+            <option value="">Carregando locais…</option>
+          </select>
+        </label>
+        <p id="infoLocal" class="dica" aria-live="polite"></p>
+      </section>
+
       <section class="painel-secao">
         <h2>Seleção de via</h2>
         <label class="campo">
@@ -59,7 +72,8 @@
         <h2>Vias bloqueadas <span id="contadorBloqueios" class="contador">0</span></h2>
         <ul id="listaBloqueios" class="lista-bloqueios"></ul>
         <p id="semBloqueios" class="vazio">Nenhuma via bloqueada nesta sessão.</p>
-        <button id="btnRemoverTodos" type="button" class="botao botao-secundario remover-todos" hidden>Remover todos</button>
+        <button id="btnRemoverTodos" type="button" class="botao botao-secundario remover-todos" hidden>Remover
+          todos</button>
       </section>
 
       <section class="painel-secao">
@@ -70,34 +84,56 @@
         </div>
         <ul id="listaDispositivos" class="lista-bloqueios lista-dispositivos"></ul>
         <p id="semDispositivos" class="vazio">Nenhuma lombada ou semáforo adicionado.</p>
-        <button id="btnRemoverTodosDispositivos" type="button" class="botao botao-secundario remover-todos" hidden>Remover todos dispositivos</button>
+        <button id="btnRemoverTodosDispositivos" type="button" class="botao botao-secundario remover-todos"
+          hidden>Remover todos dispositivos</button>
       </section>
 
       <section class="painel-secao">
         <h2>Impacto na simulação</h2>
         <dl class="estatisticas">
-          <div><dt>Veículos ativos</dt><dd id="estAtivos">—</dd></div>
-          <div><dt>Desviados</dt><dd id="estDesviados">—</dd></div>
-          <div><dt>Retidos</dt><dd id="estRetidos">—</dd></div>
-          <div><dt>Rotas recalculadas</dt><dd id="estRecalculos">—</dd></div>
-          <div><dt>Viagens concluídas</dt><dd id="estViagens">—</dd></div>
-          <div><dt>Tempo médio de viagem</dt><dd id="estTempoMedio">—</dd></div>
+          <div>
+            <dt>Veículos ativos</dt>
+            <dd id="estAtivos">—</dd>
+          </div>
+          <div>
+            <dt>Desviados</dt>
+            <dd id="estDesviados">—</dd>
+          </div>
+          <div>
+            <dt>Retidos</dt>
+            <dd id="estRetidos">—</dd>
+          </div>
+          <div>
+            <dt>Rotas recalculadas</dt>
+            <dd id="estRecalculos">—</dd>
+          </div>
+          <div>
+            <dt>Viagens concluídas</dt>
+            <dd id="estViagens">—</dd>
+          </div>
+          <div>
+            <dt>Tempo médio de viagem</dt>
+            <dd id="estTempoMedio">—</dd>
+          </div>
         </dl>
       </section>
     </aside>
 
     <main class="main">
-      <div id="mapa" class="componente mapa-simulacao" data-malha="data/malha.geojson"></div>
+      <div id="mapa" class="componente mapa-simulacao" data-locais="data/locais.json"></div>
 
       <div class="barra-simulacao" role="group" aria-label="Controles da simulação e ferramentas">
         <div class="grupo-ferramentas" role="group" aria-label="Ferramentas interativas">
-          <button id="btnModoNavegar" type="button" class="botao botao-ferramenta ativo" aria-pressed="true" title="Selecionar vias e mover mapa">
+          <button id="btnModoNavegar" type="button" class="botao botao-ferramenta ativo" aria-pressed="true"
+            title="Selecionar vias e mover mapa">
             <span class="icone-btn">✋</span> Selecionar
           </button>
-          <button id="btnModoLombada" type="button" class="botao botao-ferramenta" aria-pressed="false" title="Posicionar lombada na via">
+          <button id="btnModoLombada" type="button" class="botao botao-ferramenta" aria-pressed="false"
+            title="Posicionar lombada na via">
             <span class="icone-btn">▲</span> + Lombada
           </button>
-          <button id="btnModoSemaforo" type="button" class="botao botao-ferramenta" aria-pressed="false" title="Posicionar semáforo na via">
+          <button id="btnModoSemaforo" type="button" class="botao botao-ferramenta" aria-pressed="false"
+            title="Posicionar semáforo na via">
             <span class="icone-btn">🚦</span> + Semáforo
           </button>
         </div>
@@ -126,7 +162,8 @@
 
       <div id="bannerFerramenta" class="banner-ferramenta" hidden role="status" aria-live="polite">
         <span id="textoBannerFerramenta">Clique sobre um trecho de via para posicionar.</span>
-        <button id="btnCancelarFerramenta" type="button" class="botao-fechar-banner" aria-label="Cancelar ferramenta">✕</button>
+        <button id="btnCancelarFerramenta" type="button" class="botao-fechar-banner"
+          aria-label="Cancelar ferramenta">✕</button>
       </div>
 
       <ul class="legenda" aria-label="Legenda">
@@ -140,7 +177,7 @@
         <li><span class="amostra amostra-semaforo">●</span> Semáforo</li>
       </ul>
 
-      <div id="carregando" class="carregando">Carregando malha viária de Cajamar…</div>
+      <div id="carregando" class="carregando" role="status" aria-live="polite">Carregando malha viária de Cajamar…</div>
     </main>
   </div>
 
@@ -156,4 +193,5 @@
     }
   </script>
 </body>
+
 </html>

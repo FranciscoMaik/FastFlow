@@ -216,7 +216,25 @@ Para rodar todos os testes automatizados do motor, lombadas, semáforos e rotas:
 node --test
 ```
 
-São executados 16 testes unitários abrangentes cobrindo validação de bloqueios, roteamento Dijkstra, máquina de estados do semáforo, projeção de vias, desaceleração em lombadas e formação de fila segura.
+**Cadastrar uma nova região simulada:**
+1. Baixe as vias da nova área pela Overpass API. A consulta modelo está no início de `scripts/gerar-malha.mjs`; troque as coordenadas.
+2. Converta para o formato do aplicativo:
+   ```bash
+   node scripts/gerar-malha.mjs resposta-overpass.json > data/malha-nova-regiao.geojson
+   ```
+3. Acrescente a região em `data/locais.json` com `id`, `nome`, `descricao`, `arquivo` e `limites` (`[[sul, oeste], [norte, leste]]`, a área que o mapa enquadra). O campo `padrao` define a região que abre primeiro.
+4. Rode `node --test`: um dos testes confere se todas as malhas cadastradas seguem o formato padrão. No navegador, uma malha fora do padrão é recusada com uma mensagem, e o operador pode escolher outra região.
+
+**Organização do código:**
+
+| Pasta | Conteúdo |
+|---|---|
+| `js/motor/` | Lógica da simulação: grafo viário, cálculo de rotas, veículos e regra de bloqueio. Não depende da tela. |
+| `js/adaptador/` | Ponte entre a tela e o motor; também carrega o arquivo de vias |
+| `js/ui/` | Tudo o que é visual: mapa, listas, painel |
+| `data/locais.json` | Cadastro das regiões que aparecem no seletor |
+| `data/malha*.geojson` | Vias de cada região simulada (`malha.geojson` é o Centro) |
+| `css/style.css` | Estilos e tokens de cor do projeto (por exemplo `--cor-bloqueio`) |
 
 ---
 
