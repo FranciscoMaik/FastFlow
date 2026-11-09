@@ -302,9 +302,14 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
   L.control.zoom({ position: "bottomright" }).addTo(mapa);
 
   const estilos = {
-    primary: { color: "#4778e8", weight: 5, opacity: 0.8, lineCap: "round", lineJoin: "round" },
-    alternative: { color: "#17a88b", weight: 6, opacity: 0.95, lineCap: "round", lineJoin: "round" },
-    "alternative-two": { color: "#a56add", weight: 5, opacity: 0.9, lineCap: "round", lineJoin: "round" }
+    primary: { color: "#4778e8", weight: 5, opacity: 1, lineCap: "round", lineJoin: "round" },
+    alternative: { color: "#17a88b", weight: 6, opacity: 1, lineCap: "round", lineJoin: "round" },
+    "alternative-two": { color: "#a56add", weight: 5, opacity: 1, lineCap: "round", lineJoin: "round" }
+  };
+  const classesRota = {
+    primary: "rota-contingencia rota-contingencia-primary",
+    alternative: "rota-contingencia rota-contingencia-alternative",
+    "alternative-two": "rota-contingencia rota-contingencia-alternative-two"
   };
   const nomesRotas = {
     primary: "rota principal",
@@ -312,9 +317,11 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     "alternative-two": "alternativa 2"
   };
   const linhas = {
-    primary: L.polyline([], estilos.primary).addTo(mapa),
-    alternative: L.polyline([], estilos.alternative).addTo(mapa),
-    "alternative-two": L.polyline([], estilos["alternative-two"]).addTo(mapa)
+    primary: L.polyline([], Object.assign({}, estilos.primary, { className: classesRota.primary })).addTo(mapa),
+    alternative: L.polyline([], Object.assign({}, estilos.alternative, { className: classesRota.alternative })).addTo(mapa),
+    "alternative-two": L.polyline([], Object.assign({}, estilos["alternative-two"], {
+      className: classesRota["alternative-two"]
+    })).addTo(mapa)
   };
   const limites = L.featureGroup(Object.keys(linhas).map(function (chave) {
     return linhas[chave];
@@ -376,6 +383,17 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     mapa.fitBounds(limites.getBounds(), { padding: [34, 34] });
   }
 
+  function atualizarAnimacaoRotas(tipoAtivo) {
+    Object.keys(linhas).forEach(function (chave) {
+      const elemento = linhas[chave].getElement();
+      if (!elemento) {
+        return;
+      }
+      elemento.classList.toggle("rota-contingencia-ativa", chave === tipoAtivo);
+    });
+    linhas[tipoAtivo].bringToFront();
+  }
+
   function selecionarRota(tipo) {
     if (!linhas[tipo]) {
       return;
@@ -389,10 +407,9 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
     });
 
     Object.keys(linhas).forEach(function (chave) {
-      linhas[chave].setStyle(chave === tipo
-        ? estilos[chave]
-        : { ...estilos[chave], opacity: 0.35 });
+      linhas[chave].setStyle(estilos[chave]);
     });
+    atualizarAnimacaoRotas(tipo);
 
     if (tipo === "primary") {
       tituloDirecionamento.textContent = "Rota principal selecionada";
@@ -493,6 +510,13 @@ import { ligarSeletorRegiao, lerRegiao } from "./regioes.js";
       tracados = dados;
       iniciar();
     });
+
+  function sincronizarPausaAnimacoes() {
+    document.body.classList.toggle("animacoes-pausadas", document.hidden);
+  }
+
+  document.addEventListener("visibilitychange", sincronizarPausaAnimacoes);
+  sincronizarPausaAnimacoes();
 
   document.getElementById("fit-map").addEventListener("click", enquadrarRotas);
 

@@ -5,6 +5,8 @@
   --line: #e6ebf2;
   --blue: #4778e8;
   --teal: #17a88b;
+  --purple: #a56add;
+  --contingencia-transicao: 0.28s ease;
 }
 
 body {
@@ -635,6 +637,66 @@ body {
 
 .leaflet-container {
   font-family: inherit;
+}
+
+/* Traçados de contingência no SVG do Leaflet (padrão marcha-bloqueio). */
+path.rota-contingencia {
+  stroke-opacity: 0.35;
+  transition:
+    stroke-opacity var(--contingencia-transicao),
+    stroke-width var(--contingencia-transicao);
+}
+
+path.rota-contingencia.rota-contingencia-ativa {
+  stroke-opacity: 1;
+  stroke-dasharray: 12 7;
+  animation:
+    marcha-contingencia 0.8s linear infinite,
+    pulso-contingencia 2s ease-in-out infinite;
+}
+
+path.rota-contingencia-primary.rota-contingencia-ativa {
+  stroke: var(--blue);
+}
+
+path.rota-contingencia-alternative.rota-contingencia-ativa {
+  stroke: var(--teal);
+}
+
+path.rota-contingencia-alternative-two.rota-contingencia-ativa {
+  stroke: var(--purple);
+}
+
+.animacoes-pausadas path.rota-contingencia.rota-contingencia-ativa {
+  animation-play-state: paused;
+}
+
+@keyframes marcha-contingencia {
+  to {
+    stroke-dashoffset: -19;
+  }
+}
+
+@keyframes pulso-contingencia {
+  0%,
+  100% {
+    stroke-width: 6;
+    stroke-opacity: 1;
+  }
+
+  50% {
+    stroke-width: 8;
+    stroke-opacity: 0.82;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  path.rota-contingencia.rota-contingencia-ativa {
+    animation: none;
+    stroke-dasharray: none;
+    stroke-width: 7;
+    stroke-opacity: 1;
+  }
 }
 
 .incident-map-icon {
