@@ -16,6 +16,9 @@ import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
 import { iniciarSeletorLocal } from "./seletorLocal.js";
 import { ligarPausa } from "./pausaSimulacao.js";
 import { confirmar, oferecerDesfazer } from "./confirmacao.js";
+import { criarStatusSimulacao } from "./statusSimulacao.js";
+import { ligarPainelAbas } from "./painelAbas.js";
+import { montarAtalhos } from "./atalhos.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
 const $ = (id) => document.getElementById(id);
@@ -27,7 +30,16 @@ function iniciar() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
 
-  const pausa = ligarPausa($("btnPausar"));
+  const status = criarStatusSimulacao($("badgeStatus"));
+  montarAtalhos($("atalhosSim"), "bloqueio");
+  ligarPainelAbas($("painelAbas"));
+
+  const pausa = ligarPausa($("btnPausar"), {
+    aoMudar(rodando) {
+      if (!$("carregando")?.hidden) return;
+      status.definir(rodando ? "executando" : "pausada");
+    },
+  });
   let montagemAtual = null;
 
   iniciarSeletorLocal({
@@ -37,6 +49,11 @@ function iniciar() {
     info: $("infoLocal"),
     carregando: $("carregando"),
     obterResumoAlteracoes: () => montagemAtual?.resumoAlteracoes() ?? null,
+    aoEstadoCarregamento(estado, detalhe) {
+      if (estado === "carregando") status.definir("carregando", detalhe);
+      else if (estado === "erro") status.definir("erro", detalhe);
+      else status.definir(pausa.estaRodando() ? "executando" : "pausada");
+    },
     montar: (local, geojson, { primeiraVez }) => {
       montagemAtual = montar(mapa, local, geojson, primeiraVez, pausa);
       return montagemAtual;
@@ -245,7 +262,7 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
   function removerBloqueio(id) {
     const r = controle.removerBloqueio(id);
     if (r.removido) {
-      mensagem(`Bloqueio removido. ${plural(r.rotasRecalculadas, "rota recalculada", "rotas recalculadas")}.`, "sucesso");
+      mensagem(`Bloqueio removido. ${plural(r.rotasRecalculadas, "veículo redirecionado", "veículos redirecionados")}.`, "sucesso");
     }
     seletor.sincronizar(controle.selecionado);
     redesenhar();
@@ -335,7 +352,7 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
       return;
     }
     mensagem(
-      `Bloqueio aplicado. ${plural(r.rotasRecalculadas, "veículo teve a rota recalculada", "veículos tiveram a rota recalculada")}.`,
+      `Bloqueio aplicado. ${plural(r.rotasRecalculadas, "veículo foi redirecionado", "veículos foram redirecionados")}.`,
       "sucesso"
     );
     seletor.sincronizar(id);

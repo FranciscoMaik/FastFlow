@@ -113,14 +113,6 @@ body {
   box-shadow: none;
 }
 
-.button-dispatch[aria-pressed="true"] {
-  background: #334155;
-}
-
-.button-dispatch[aria-pressed="true"]:hover {
-  background: #1e293b;
-}
-
 .select-wrap {
   margin-bottom: 15px;
 }
@@ -159,36 +151,11 @@ body {
   border-left: 1px dashed #b9c4d4;
 }
 
-.button {
-  min-height: 40px;
-  border: 0;
-  border-radius: 8px;
-  cursor: pointer;
-  font: inherit;
-  font-size: 0.77rem;
-  font-weight: 700;
-  transition: background 0.15s, transform 0.15s;
-}
-
-.button:focus-visible,
 .route-option:focus-visible,
-.map-control:focus-visible {
+.map-control:focus-visible,
+.botao:focus-visible {
   outline: 3px solid #93b1ff;
   outline-offset: 2px;
-}
-
-.button:active {
-  transform: translateY(1px);
-}
-
-.button-primary {
-  margin-top: 16px;
-  background: #edf2ff;
-  color: #315dc2;
-}
-
-.button-primary:hover {
-  background: #e2eaff;
 }
 
 .form-feedback {
@@ -633,21 +600,34 @@ body {
   font-size: 0.63rem;
 }
 
-.button-dispatch {
+.button-dispatch.botao {
+  flex: 0 0 auto;
+  min-height: 40px;
   padding: 0 16px;
   background: #4778e8;
+  border-color: transparent;
   color: #fff;
   white-space: nowrap;
+  font-size: 0.77rem;
 }
 
-.button-dispatch:hover {
+.button-dispatch.botao:hover:not(:disabled) {
   background: #3869d8;
 }
 
-.button-dispatch:disabled {
+.button-dispatch.botao:disabled {
   background: #e9f7f3;
   color: #21836f;
   cursor: default;
+  opacity: 1;
+}
+
+.button-dispatch.botao[aria-pressed="true"] {
+  background: #334155;
+}
+
+.button-dispatch.botao[aria-pressed="true"]:hover:not(:disabled) {
+  background: #1e293b;
 }
 
 .dispatch-feedback {

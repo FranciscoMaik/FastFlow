@@ -10,6 +10,7 @@ export async function iniciarSeletorLocal({
   carregando,
   montar,
   obterResumoAlteracoes = null,
+  aoEstadoCarregamento = null,
 } = {}) {
   let locais;
   let padrao;
@@ -43,6 +44,7 @@ export async function iniciarSeletorLocal({
     carregando.textContent = `Carregando malha viária de ${local.nome}…`;
     carregando.hidden = false;
     info.textContent = local.descricao ?? "";
+    aoEstadoCarregamento?.("carregando", local.nome);
 
     try {
       const tempoMinimo = new Promise((r) => setTimeout(r, primeiraVez ? 0 : 400));
@@ -58,10 +60,12 @@ export async function iniciarSeletorLocal({
       if (primeiraVez) mapa.fitBounds(local.limites);
       else mapa.flyToBounds(local.limites, { duration: 0.8 });
       carregando.hidden = true;
+      aoEstadoCarregamento?.("pronto", local.nome);
     } catch (erro) {
       if (meuPedido !== pedido) return;
       carregando.classList.add("erro");
       carregando.textContent = `${erro.message} Escolha outro local na lista.`;
+      aoEstadoCarregamento?.("erro", erro.message);
     } finally {
       if (meuPedido === pedido) {
         select.disabled = false;

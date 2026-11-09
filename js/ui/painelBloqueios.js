@@ -57,7 +57,9 @@ export function renderizarBloqueios(lista, contador, botaoRemoverTodos, vazio, b
       });
       remover.addEventListener("click", () => acoes.remover(b.id));
 
-      const rotas = b.rotasRecalculadas === 1 ? "1 rota recalculada" : `${b.rotasRecalculadas} rotas recalculadas`;
+      const rotas = b.rotasRecalculadas === 1
+        ? "1 veículo redirecionado"
+        : `${b.rotasRecalculadas} veículos redirecionados`;
       return el(
         "li",
         {},

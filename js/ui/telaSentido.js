@@ -8,6 +8,9 @@ import { criarSeletorVias } from "./seletorVias.js";
 import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
 import { iniciarSeletorLocal } from "./seletorLocal.js";
 import { ligarPausa } from "./pausaSimulacao.js";
+import { criarStatusSimulacao } from "./statusSimulacao.js";
+import { montarAtalhos } from "./atalhos.js";
+import { ligarPainelAbas } from "./painelAbas.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
 const $ = (id) => document.getElementById(id);
@@ -19,7 +22,16 @@ function iniciar() {
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
 
-  const pausa = ligarPausa($("btnPausar"));
+  const status = criarStatusSimulacao($("badgeStatus"));
+  montarAtalhos($("atalhosSim"), "sentido");
+  ligarPainelAbas($("painelAbas"));
+
+  const pausa = ligarPausa($("btnPausar"), {
+    aoMudar(rodando) {
+      if (!$("carregando")?.hidden) return;
+      status.definir(rodando ? "executando" : "pausada");
+    },
+  });
   let montagemAtual = null;
 
   iniciarSeletorLocal({
@@ -29,6 +41,11 @@ function iniciar() {
     info: $("infoLocal"),
     carregando: $("carregando"),
     obterResumoAlteracoes: () => montagemAtual?.resumoAlteracoes() ?? null,
+    aoEstadoCarregamento(estado, detalhe) {
+      if (estado === "carregando") status.definir("carregando", detalhe);
+      else if (estado === "erro") status.definir("erro", detalhe);
+      else status.definir(pausa.estaRodando() ? "executando" : "pausada");
+    },
     montar: (local, geojson, { primeiraVez }) => {
       montagemAtual = montar(mapa, local, geojson, primeiraVez, pausa);
       return montagemAtual;
@@ -89,20 +106,23 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
     $("btn-reverse").disabled = !trecho;
     if (!trecho) return;
     $("sel-name").textContent = trecho.nome;
-    $("sel-id").textContent = trecho.referencia ?? trecho.id;
+    $("sel-id").textContent = trecho.referencia ?? "Sem cruzamento cadastrado";
     $("sel-dir").textContent = trecho.sentidoRotulo;
     $("sel-count").textContent = String(trecho.veiculosNoTrecho);
   }
 
   function atualizarRegistro() {
+    const itens = controle.registro();
     const ul = $("log");
     ul.replaceChildren(
-      ...controle.registro().map((item) => {
+      ...itens.map((item) => {
         const li = document.createElement("li");
         li.textContent = item.texto;
         return li;
       })
     );
+    const vazio = $("log-vazio");
+    if (vazio) vazio.hidden = itens.length > 0;
   }
 
   function atualizarStats() {
@@ -113,8 +133,8 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
     $("st-evac").textContent = String(s.evacuados + s.retornos);
     $("st-desp").textContent = String(s.retidos);
     $("st-conn").textContent = s.malhaConectada
-      ? "Malha conectada"
-      : `Malha parcial (${s.nosNaMalha}/${s.nosTotal} nós)`;
+      ? "Rede viária íntegra"
+      : `Rede parcial (${s.nosNaMalha}/${s.nosTotal} nós)`;
     $("st-conn").dataset.ok = s.malhaConectada ? "1" : "0";
   }
 
@@ -219,6 +239,8 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
       $("sel-info").hidden = true;
       $("btn-reverse").disabled = true;
       $("log").replaceChildren();
+      const vazio = $("log-vazio");
+      if (vazio) vazio.hidden = false;
       for (const id of ["st-cars", "st-rev", "st-rer", "st-evac", "st-desp"]) $(id).textContent = "—";
     },
   };

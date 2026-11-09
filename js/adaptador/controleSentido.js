@@ -169,7 +169,13 @@ export class ControleSentido extends Emissor {
     const partes = [];
     if (e.evacuando) partes.push(`${e.evacuando} concluindo a travessia`);
     if (e.retornos) partes.push(`${e.retornos} retornaram`);
-    if (e.recalculadas) partes.push(`${e.recalculadas} rotas recalculadas`);
+    if (e.recalculadas) {
+      partes.push(
+        e.recalculadas === 1
+          ? "1 veículo redirecionado"
+          : `${e.recalculadas} veículos redirecionados`
+      );
+    }
     this.#registro.unshift({
       trechoId: e.trechoId,
       nome: trecho?.nome ?? e.trechoId,

@@ -6,16 +6,21 @@ export function ligarPausa(botao, { aoMudar } = {}) {
   function atualizar() {
     botao.textContent = rodando ? "Pausar" : "Continuar";
     botao.setAttribute("aria-pressed", String(!rodando));
+    aoMudar?.(rodando);
   }
 
   botao.addEventListener("click", () => {
     rodando = !rodando;
     atualizar();
-    aoMudar?.(rodando);
   });
 
-  atualizar();
+  botao.textContent = "Pausar";
+  botao.setAttribute("aria-pressed", "false");
   return {
     estaRodando: () => rodando,
+    definirRodando(valor) {
+      rodando = Boolean(valor);
+      atualizar();
+    },
   };
 }
