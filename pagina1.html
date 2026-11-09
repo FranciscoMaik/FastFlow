@@ -28,12 +28,15 @@
     </header>
 
     <aside class="sidebar sidebar-sentido" aria-label="Painel de inversão de sentido">
-      <section class="painel-secao">
-        <h2>Região</h2>
+      <section class="painel-secao" aria-labelledby="h-local">
+        <h2 id="h-local">Região simulada</h2>
         <label class="campo">
-          <span>Área simulada</span>
-          <select id="selRegiao"></select>
+          <span>Local</span>
+          <select id="selLocal" disabled>
+            <option value="">Carregando locais…</option>
+          </select>
         </label>
+        <p id="infoLocal" class="dica" aria-live="polite"></p>
       </section>
 
       <section class="painel-secao">
@@ -118,9 +121,9 @@
     </aside>
 
     <main class="main">
-      <div id="mapa" class="componente mapa-simulacao"></div>
+      <div id="mapa" class="componente mapa-simulacao" data-locais="data/locais.json"></div>
       <div class="hint-sentido">Clique numa via · R inverte · Espaço pausa · aproxime o zoom para ver setas em todas as vias</div>
-      <div id="carregando" class="carregando">Carregando malha viária…</div>
+      <div id="carregando" class="carregando" role="status" aria-live="polite">Carregando malha viária de Cajamar…</div>
     </main>
   </div>
 

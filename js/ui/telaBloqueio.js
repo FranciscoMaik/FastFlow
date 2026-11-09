@@ -1,52 +1,167 @@
 // Ponto de entrada da tela de simulação de bloqueio viário. Liga os componentes
 // de interface ao ControleBloqueio (adaptador); não acessa o motor diretamente.
 /* global L */
-import { carregarControle } from "../adaptador/controleBloqueio.js";
-import { ligarSeletorRegiao } from "../regioes.js";
+import { ControleBloqueio } from "../adaptador/controleBloqueio.js";
 import { criarCamadaVias } from "./camadaVias.js";
 import { criarCamadaVeiculos } from "./camadaVeiculos.js";
+import { criarCamadaDispositivos } from "./camadaDispositivos.js";
 import { criarSeletorVias } from "./seletorVias.js";
-import { renderizarBloqueios, renderizarEstatisticas, renderizarInfoTrecho } from "./painelBloqueios.js";
+import {
+  renderizarBloqueios,
+  renderizarDispositivos,
+  renderizarEstatisticas,
+  renderizarInfoTrecho,
+} from "./painelBloqueios.js";
 import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
+import { iniciarSeletorLocal } from "./seletorLocal.js";
 
+const CENTRO_CAJAMAR = [-23.355, -46.878];
 const $ = (id) => document.getElementById(id);
 
-async function iniciar() {
-  const regiao = ligarSeletorRegiao($("selRegiao"), {
-    aoTrocar() {
-      location.reload();
-    },
-  });
+let rodando = true;
 
-  const mapa = L.map("mapa", { zoomControl: true }).setView(regiao.centro, 15);
+function iniciar() {
+  const mapa = L.map("mapa", { zoomControl: true }).setView(CENTRO_CAJAMAR, 15);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
 
-  $("carregando").textContent = `Carregando malha viária de ${regiao.nome}…`;
+  $("btnPausar").addEventListener("click", (e) => {
+    rodando = !rodando;
+    e.target.textContent = rodando ? "Pausar" : "Continuar";
+    e.target.setAttribute("aria-pressed", String(!rodando));
+  });
 
-  let controle;
-  try {
-    controle = await carregarControle(regiao.malha, {
-      quantidadeVeiculos: Number($("selQuantidade").value),
-      fatorTempo: Number($("selVelocidade").value),
-    });
-  } catch (erro) {
-    $("carregando").textContent = `Erro ao carregar a malha viária: ${erro.message}`;
-    return;
+  iniciarSeletorLocal({
+    mapa,
+    urlLocais: $("mapa").dataset.locais,
+    select: $("selLocal"),
+    info: $("infoLocal"),
+    carregando: $("carregando"),
+    montar: (local, geojson, { primeiraVez }) => montar(mapa, local, geojson, primeiraVez),
+  });
+}
+
+function montar(mapa, local, geojson, primeiraVez) {
+  const eventos = new AbortController();
+  const { signal } = eventos;
+
+  const controle = new ControleBloqueio(geojson, {
+    quantidadeVeiculos: Number($("selQuantidade").value),
+    fatorTempo: Number($("selVelocidade").value),
+  });
+
+  let modoFerramenta = "navegar";
+
+  function definirModo(modo) {
+    modoFerramenta = modo;
+    $("btnModoNavegar").classList.toggle("ativo", modo === "navegar");
+    $("btnModoNavegar").setAttribute("aria-pressed", String(modo === "navegar"));
+    $("btnModoLombada").classList.toggle("ativo", modo === "lombada");
+    $("btnModoLombada").setAttribute("aria-pressed", String(modo === "lombada"));
+    $("btnModoSemaforo").classList.toggle("ativo", modo === "semaforo");
+    $("btnModoSemaforo").setAttribute("aria-pressed", String(modo === "semaforo"));
+
+    const mapaEl = $("mapa");
+    mapaEl.classList.toggle("cursor-insercao", modo !== "navegar");
+
+    const banner = $("bannerFerramenta");
+    if (modo === "navegar") {
+      banner.hidden = true;
+    } else {
+      banner.hidden = false;
+      $("textoBannerFerramenta").textContent =
+        modo === "lombada"
+          ? "Ferramenta Lombada: clique sobre uma via no mapa para posicionar. (ESC para cancelar)"
+          : "Ferramenta Semáforo: clique sobre uma via no mapa para posicionar. (ESC para cancelar)";
+    }
   }
-  $("carregando").hidden = true;
+
+  function mensagem(texto, tipo) {
+    const caixa = $("mensagem");
+    caixa.textContent = texto;
+    caixa.className = `mensagem ${tipo ?? ""}`;
+  }
+
+  function processarInsercao(latlng, trechoIdSugerido = null) {
+    let lat = latlng?.lat;
+    let lon = latlng?.lng;
+
+    if (lat == null && trechoIdSugerido) {
+      const t = controle.trecho(trechoIdSugerido);
+      if (t?.meio) {
+        lat = t.meio[0];
+        lon = t.meio[1];
+      }
+    }
+
+    if (lat == null || lon == null) return false;
+
+    if (modoFerramenta === "lombada") {
+      const res = controle.adicionarLombada({ lat, lon, trechoId: trechoIdSugerido });
+      if (res.permitido) {
+        mensagem(`Lombada posicionada com sucesso em ${res.dispositivo.nomeTrecho}.`, "sucesso");
+        camadaDispositivos.atualizar(controle.dispositivos());
+        camadaDispositivos.focar(res.dispositivo.id);
+        definirModo("navegar");
+        redesenhar();
+      } else {
+        mensagem(res.motivo, "erro");
+      }
+      return true;
+    }
+
+    if (modoFerramenta === "semaforo") {
+      const res = controle.adicionarSemaforo({ lat, lon, trechoId: trechoIdSugerido });
+      if (res.permitido) {
+        mensagem(`Semáforo posicionado com sucesso em ${res.dispositivo.nomeTrecho}.`, "sucesso");
+        camadaDispositivos.atualizar(controle.dispositivos());
+        camadaDispositivos.focar(res.dispositivo.id);
+        definirModo("navegar");
+        redesenhar();
+      } else {
+        mensagem(res.motivo, "erro");
+      }
+      return true;
+    }
+
+    return false;
+  }
 
   // ---------- Componentes ----------
   let destacados = [];
 
   const camadaVias = criarCamadaVias(mapa, controle.trechos(), {
-    aoClicar: (id) => controle.selecionar(id),
+    aoClicar: (id, latlng) => {
+      if (modoFerramenta !== "navegar") {
+        processarInsercao(latlng, id);
+        return;
+      }
+      controle.selecionar(id);
+    },
   });
-  mapa.fitBounds(regiao.area);
 
   const camadaVeiculos = criarCamadaVeiculos(mapa);
+
+  const camadaDispositivos = criarCamadaDispositivos(mapa, {
+    aoReposicionar(id, [lat, lon]) {
+      const res = controle.reposicionarDispositivo(id, { lat, lon });
+      redesenhar();
+      return res;
+    },
+    aoRemover: (id) => removerDispositivo(id),
+    aoConfigurarSemaforo: (id, tempos) => {
+      controle.configurarSemaforo(id, tempos);
+      redesenhar();
+    },
+    aoAlternarSemaforo: (id) => {
+      const res = controle.alternarSemaforo(id);
+      redesenhar();
+      return res.estado;
+    },
+    aoNotificar: (txt, tipo) => mensagem(txt, tipo),
+  });
 
   const seletor = criarSeletorVias(
     { selectLogradouro: $("selLogradouro"), selectTrecho: $("selTrecho") },
@@ -63,7 +178,8 @@ async function iniciar() {
         controle.selecionar(id);
         camadaVias.focar([id]);
       },
-    }
+    },
+    { signal }
   );
 
   const estatisticas = {
@@ -75,13 +191,6 @@ async function iniciar() {
     tempoMedio: $("estTempoMedio"),
   };
 
-  // ---------- Mensagens ----------
-  function mensagem(texto, tipo) {
-    const caixa = $("mensagem");
-    caixa.textContent = texto;
-    caixa.className = `mensagem ${tipo ?? ""}`;
-  }
-
   // ---------- Renderização ----------
   function atualizarInfo() {
     const trecho = controle.selecionado ? controle.trecho(controle.selecionado) : null;
@@ -92,15 +201,42 @@ async function iniciar() {
 
   function redesenhar() {
     const bloqueios = controle.bloqueios();
+    const dispositivos = controle.dispositivos();
+
     camadaVias.atualizar({ selecionados: destacados, bloqueados: bloqueios });
+    camadaDispositivos.atualizar(dispositivos);
     atualizarInfo();
-    renderizarBloqueios($("listaBloqueios"), $("contadorBloqueios"), $("btnRemoverTodos"), $("semBloqueios"), bloqueios, {
-      localizar(id) {
-        controle.selecionar(id);
-        camadaVias.focar([id]);
-      },
-      remover: removerBloqueio,
-    });
+
+    renderizarBloqueios(
+      $("listaBloqueios"),
+      $("contadorBloqueios"),
+      $("btnRemoverTodos"),
+      $("semBloqueios"),
+      bloqueios,
+      {
+        localizar(id) {
+          controle.selecionar(id);
+          camadaVias.focar([id]);
+        },
+        remover: removerBloqueio,
+      }
+    );
+
+    renderizarDispositivos(
+      $("listaDispositivos"),
+      $("contadorDispositivos"),
+      $("contadorLombadas"),
+      $("contadorSemaforos"),
+      $("btnRemoverTodosDispositivos"),
+      $("semDispositivos"),
+      dispositivos,
+      {
+        localizar(id) {
+          camadaDispositivos.focar(id);
+        },
+        remover: removerDispositivo,
+      }
+    );
   }
 
   function removerBloqueio(id) {
@@ -112,7 +248,43 @@ async function iniciar() {
     redesenhar();
   }
 
-  // ---------- Eventos ----------
+  function removerDispositivo(id) {
+    const d = controle.dispositivo(id);
+    const r = controle.removerDispositivo(id);
+    if (r.removido) {
+      const nome = d?.tipo === "lombada" ? "Lombada" : "Semáforo";
+      mensagem(`${nome} removido(a) com sucesso da via.`, "sucesso");
+    }
+    redesenhar();
+  }
+
+  mapa.on("click", (e) => {
+    if (modoFerramenta !== "navegar") {
+      processarInsercao(e.latlng);
+      return;
+    }
+
+    controle.selecionar(null);
+    destacados = [];
+    seletor.sincronizar(null);
+    redesenhar();
+  });
+
+  $("btnModoNavegar").addEventListener("click", () => definirModo("navegar"));
+  $("btnModoLombada").addEventListener("click", () => definirModo("lombada"));
+  $("btnModoSemaforo").addEventListener("click", () => definirModo("semaforo"));
+  $("btnCancelarFerramenta").addEventListener("click", () => definirModo("navegar"));
+
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") {
+      if (modoFerramenta !== "navegar") {
+        definirModo("navegar");
+      } else if (controle.selecionado) {
+        mapa.fire("click");
+      }
+    }
+  });
+
   controle.on("selecaoAlterada", (id) => {
     if (id) {
       destacados = [id];
@@ -122,16 +294,17 @@ async function iniciar() {
     redesenhar();
   });
 
-  mapa.on("click", () => {
+  function aoClicarMapa() {
     controle.selecionar(null);
     destacados = [];
     seletor.sincronizar(null);
     redesenhar();
-  });
+  }
+  mapa.on("click", aoClicarMapa);
 
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && controle.selecionado) mapa.fire("click");
-  });
+  controle.on("faseSemafóricaAlterada", () => {
+    camadaDispositivos.atualizar(controle.dispositivos());
+  }, { signal });
 
   $("btnBloquear").addEventListener("click", () => {
     const id = controle.selecionado;
@@ -146,30 +319,29 @@ async function iniciar() {
     );
     seletor.sincronizar(id);
     redesenhar();
-  });
+  }, { signal });
 
-  $("btnDesbloquear").addEventListener("click", () => removerBloqueio(controle.selecionado));
+  $("btnDesbloquear").addEventListener("click", () => removerBloqueio(controle.selecionado), { signal });
 
   $("btnRemoverTodos").addEventListener("click", () => {
     for (const b of controle.bloqueios()) controle.removerBloqueio(b.id);
     mensagem("Todos os bloqueios foram removidos.", "sucesso");
     seletor.sincronizar(controle.selecionado);
     redesenhar();
+  }, { signal });
+
+  $("btnRemoverTodosDispositivos").addEventListener("click", () => {
+    const r = controle.removerTodosDispositivos();
+    mensagem(`Todos os ${r.removidos} dispositivos de tráfego foram removidos.`, "sucesso");
+    redesenhar();
   });
 
-  $("selQuantidade").addEventListener("change", (e) => controle.definirQuantidadeVeiculos(Number(e.target.value)));
-  $("selVelocidade").addEventListener("change", (e) => controle.definirFatorTempo(Number(e.target.value)));
+  $("selQuantidade").addEventListener("change", (e) => controle.definirQuantidadeVeiculos(Number(e.target.value)), { signal });
+  $("selVelocidade").addEventListener("change", (e) => controle.definirFatorTempo(Number(e.target.value)), { signal });
 
-  let rodando = true;
-  $("btnPausar").addEventListener("click", (e) => {
-    rodando = !rodando;
-    e.target.textContent = rodando ? "Pausar" : "Continuar";
-    e.target.setAttribute("aria-pressed", String(!rodando));
-  });
-
-  // ---------- Laço da simulação ----------
   redesenhar();
-  criarLoopAnimacaoVeiculos({
+  if (!primeiraVez) mensagem(`Simulação reiniciada em ${local.nome}.`, "sucesso");
+  const loop = criarLoopAnimacaoVeiculos({
     controle,
     camadaVeiculos,
     estaRodando: () => rodando,
@@ -179,6 +351,26 @@ async function iniciar() {
       atualizarInfo();
     },
   });
+
+  return {
+    totalTrechos: controle.trechos().length,
+    desmontar() {
+      loop.parar();
+      eventos.abort();
+      mapa.off("click", aoClicarMapa);
+      mapa.stop();
+      controle.encerrar();
+      camadaVeiculos.remover();
+      camadaVias.remover();
+      seletor.limpar();
+      mensagem("");
+      renderizarInfoTrecho($("infoTrecho"), null);
+      $("btnBloquear").disabled = true;
+      $("btnDesbloquear").disabled = true;
+      renderizarBloqueios($("listaBloqueios"), $("contadorBloqueios"), $("btnRemoverTodos"), $("semBloqueios"), [], {});
+      for (const campo of Object.values(estatisticas)) campo.textContent = "—";
+    },
+  };
 }
 
 function plural(n, singular, varios) {

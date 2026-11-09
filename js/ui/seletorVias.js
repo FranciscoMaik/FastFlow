@@ -1,8 +1,10 @@
 // Seleção por lista: primeiro o logradouro, depois o trecho dele.
 
-export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros, obterTrecho, eventos) {
+export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros, obterTrecho, eventos, { signal } = {}) {
   const trechosPorNome = new Map(logradouros.map((l) => [l.nome, l.trechos]));
 
+  selectLogradouro.length = 1;
+  selectLogradouro.value = "";
   for (const { nome, trechos } of logradouros) {
     const opcao = new Option(`${nome} (${trechos.length})`, nome);
     selectLogradouro.add(opcao);
@@ -28,7 +30,7 @@ export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros
   selectLogradouro.addEventListener("change", () => {
     preencherTrechos(selectLogradouro.value);
     eventos.aoEscolherLogradouro(selectLogradouro.value || null);
-  });
+  }, { signal });
 
   selectTrecho.addEventListener("change", () => {
     if (selectTrecho.value) {
@@ -36,7 +38,9 @@ export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros
     } else {
       eventos.aoEscolherLogradouro(selectLogradouro.value || null);
     }
-  });
+  }, { signal });
+
+  preencherTrechos("");
 
   return {
     // Mantém a lista em sincronia quando o trecho é escolhido pelo mapa.
@@ -50,5 +54,11 @@ export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros
       selectTrecho.value = t?.temNome ? trechoId : "";
     },
     trechosDo: (nome) => trechosPorNome.get(nome) ?? [],
+    limpar() {
+      trechosPorNome.clear();
+      selectLogradouro.length = 1;
+      selectLogradouro.value = "";
+      preencherTrechos("");
+    },
   };
 }

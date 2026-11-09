@@ -158,6 +158,12 @@ export class ControleSentido extends Emissor {
     this.#simulacao.fatorTempo = fator;
   }
 
+  encerrar() {
+    this.#simulacao.encerrar();
+    this.#registro = [];
+    this.selecionado = null;
+  }
+
   #registrar(e) {
     const trecho = this.trecho(e.trechoId);
     const partes = [];
