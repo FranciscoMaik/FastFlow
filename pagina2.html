@@ -21,9 +21,9 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a href="pagina1.html">Inversão de Sentido</a>
-        <a class="active" href="pagina2.html" aria-current="page">Bloqueio Viário</a>
-        <a href="pagina3.html">Contingência</a>
+        <a href="pagina1.html" data-tooltip="Simula a inversão do sentido de vias e o impacto no fluxo de veículos.">Inversão de Sentido</a>
+        <a class="active" href="pagina2.html" aria-current="page" data-tooltip="Simula bloqueios e dispositivos de tráfego, como lombadas e semáforos.">Bloqueio Viário</a>
+        <a href="pagina3.html" data-tooltip="Compara rotas alternativas diante de uma ocorrência no trajeto.">Contingência</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
       <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
@@ -32,7 +32,7 @@
 
     <aside class="sidebar" aria-label="Painel de controle viário e tráfego">
       <section class="painel-secao" aria-labelledby="h-local">
-        <h2 id="h-local">Local</h2>
+        <h2 id="h-local">Local <span data-tooltip-icon="Escolha a região da malha viária que será usada nesta simulação."></span></h2>
         <label class="campo">
           <span>Área simulada</span>
           <select id="selLocal" disabled data-tooltip="Escolha a região cuja malha viária será carregada na simulação.">
@@ -45,17 +45,17 @@
       <div class="painel-abas" id="painelAbas">
         <div class="abas" role="tablist" aria-label="Seções do painel">
           <button type="button" class="aba ativo" role="tab" id="aba-vias" data-aba="vias"
-            aria-controls="painel-vias" aria-selected="true">Vias</button>
+            aria-controls="painel-vias" aria-selected="true" data-tooltip="Selecione trechos para bloquear, desbloquear ou consultar no mapa.">Vias</button>
           <button type="button" class="aba" role="tab" id="aba-dispositivos" data-aba="dispositivos"
-            aria-controls="painel-dispositivos" aria-selected="false" tabindex="-1">Dispositivos</button>
+            aria-controls="painel-dispositivos" aria-selected="false" tabindex="-1" data-tooltip="Gerencie lombadas e semáforos posicionados na malha.">Dispositivos</button>
           <button type="button" class="aba" role="tab" id="aba-indicadores" data-aba="indicadores"
-            aria-controls="painel-indicadores" aria-selected="false" tabindex="-1">Indicadores</button>
+            aria-controls="painel-indicadores" aria-selected="false" tabindex="-1" data-tooltip="Acompanhe o impacto dos bloqueios e o fluxo viário da rodada.">Indicadores</button>
         </div>
 
         <div class="painel-aba ativo" role="tabpanel" id="painel-vias" data-painel="vias"
           aria-labelledby="aba-vias">
           <section class="painel-secao">
-            <h2>Seleção de via</h2>
+            <h2>Seleção de via <span data-tooltip-icon="Busque um logradouro ou clique no mapa para marcar o trecho que deseja operar."></span></h2>
             <label class="campo">
               <span>Logradouro</span>
               <input id="filtroLogradouro" type="search" placeholder="Buscar por nome…" autocomplete="off"
@@ -75,7 +75,7 @@
           </section>
 
           <section class="painel-secao">
-            <h2>Ações de via</h2>
+            <h2>Ações de via <span data-tooltip-icon="Bloqueie ou libere o trecho selecionado e acompanhe o feedback da operação."></span></h2>
             <div class="acoes">
               <button id="btnBloquear" type="button" class="botao botao-bloquear" disabled data-tooltip="Fecha o trecho selecionado para novos percursos e recalcula as rotas afetadas.">Bloquear</button>
               <button id="btnDesbloquear" type="button" class="botao botao-secundario" disabled data-tooltip="Reabre o trecho e permite que ele volte a ser considerado no cálculo de rotas.">Desbloquear</button>
@@ -84,7 +84,7 @@
           </section>
 
           <section class="painel-secao">
-            <h2>Vias bloqueadas <span id="contadorBloqueios" class="contador">0</span></h2>
+            <h2>Vias bloqueadas <span data-tooltip-icon="Lista os trechos fechados nesta rodada e permite removê-los individualmente ou em lote."></span> <span id="contadorBloqueios" class="contador">0</span></h2>
             <ul id="listaBloqueios" class="lista-bloqueios"></ul>
             <p id="semBloqueios" class="vazio">Nenhuma via bloqueada — selecione um trecho e clique em Bloquear.</p>
             <button id="btnRemoverTodos" type="button" class="botao botao-secundario remover-todos" hidden>Remover
@@ -95,7 +95,7 @@
         <div class="painel-aba" role="tabpanel" id="painel-dispositivos" data-painel="dispositivos"
           aria-labelledby="aba-dispositivos" hidden>
           <section class="painel-secao">
-            <h2>Dispositivos de tráfego <span id="contadorDispositivos" class="contador">0</span></h2>
+            <h2>Dispositivos de tráfego <span data-tooltip-icon="Lista lombadas e semáforos ativos; use a barra do mapa para adicionar novos."></span> <span id="contadorDispositivos" class="contador">0</span></h2>
             <div class="sub-contadores">
               <span class="tag-contador">Lombadas: <b id="contadorLombadas">0</b></span>
               <span class="tag-contador">Semáforos: <b id="contadorSemaforos">0</b></span>
@@ -110,7 +110,7 @@
         <div class="painel-aba" role="tabpanel" id="painel-indicadores" data-painel="indicadores"
           aria-labelledby="aba-indicadores" hidden>
           <section class="painel-secao">
-            <h2>Impacto na simulação <span data-tooltip-icon="Indicadores atualizados durante a execução, como desvios, retenções e duração média das viagens."></span></h2>
+            <h2>Impacto na simulação <span data-tooltip-icon="Indicadores em tempo real: ativos, desviados, retidos, redirecionamentos e tempo médio de viagem."></span></h2>
             <dl class="estatisticas">
               <div>
                 <dt>Veículos ativos</dt>
@@ -140,7 +140,7 @@
           </section>
 
           <section class="painel-secao indicadores-analiticos" aria-labelledby="h-analiticos">
-            <h2 id="h-analiticos">Fluxo viário</h2>
+            <h2 id="h-analiticos">Fluxo viário <span data-tooltip-icon="Mostra congestão estimada e o tempo médio de locomoção na malha atual."></span></h2>
             <div class="cards-analiticos">
               <article class="card-analitico destaque">
                 <h3 class="card-analitico-titulo">Vias com trânsito intenso</h3>

@@ -43,7 +43,17 @@ body {
   letter-spacing: 0.11em;
 }
 
+.eyebrow:has(.tooltip-ajuda),
+.eyebrow:has([data-tooltip-icon]) {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .sidebar-heading h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin: 8px 0 5px;
   color: #172338;
   font-size: 1.1rem;
@@ -437,6 +447,9 @@ body {
 }
 
 .section-heading h2 {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
   margin-top: 5px;
   color: #1d2b40;
   font-size: 1rem;

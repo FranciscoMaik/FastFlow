@@ -21,9 +21,9 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a href="pagina1.html">Inversão de Sentido</a>
-        <a href="pagina2.html">Bloqueio Viário</a>
-        <a class="active" href="pagina3.html" aria-current="page">Contingência</a>
+        <a href="pagina1.html" data-tooltip="Simula a inversão do sentido de vias e o impacto no fluxo de veículos.">Inversão de Sentido</a>
+        <a href="pagina2.html" data-tooltip="Simula bloqueios e dispositivos de tráfego, como lombadas e semáforos.">Bloqueio Viário</a>
+        <a class="active" href="pagina3.html" aria-current="page" data-tooltip="Compara rotas alternativas diante de uma ocorrência no trajeto.">Contingência</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
       <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
@@ -33,7 +33,7 @@
     <aside class="sidebar">
       <div class="sidebar-heading">
         <span class="eyebrow">DIRECIONAMENTO</span>
-        <h2>Planejar rota</h2>
+        <h2>Planejar rota <span data-tooltip-icon="Escolha local e cenário para montar a comparação de rotas. Origem e destino vêm do cenário."></span></h2>
         <p>Escolha o local e o cenário. Origem e destino vêm do cenário e não recalculam a rota.</p>
       </div>
 
@@ -102,7 +102,7 @@
         <section class="map-card" aria-label="Mapa e alternativas de rota">
           <div class="map-toolbar">
             <div>
-              <span class="eyebrow">VISÃO DO TRAJETO</span>
+              <span class="eyebrow">VISÃO DO TRAJETO <span data-tooltip-icon="Mapa demonstrativo com a rota principal, os desvios e o bloqueio simulado do cenário."></span></span>
               <h2 id="map-route-title">Centro de Cajamar <span aria-hidden="true">→</span> Jordanésia</h2>
             </div>
             <button class="map-control" id="fit-map" type="button" aria-label="Enquadrar rotas no mapa" data-tooltip="Enquadra todas as alternativas na área visível do mapa.">
@@ -124,7 +124,7 @@
           <div class="section-heading">
             <div>
               <span class="eyebrow">OPÇÕES DE DESLOCAMENTO</span>
-              <h2 id="routes-title">Rotas disponíveis</h2>
+              <h2 id="routes-title">Rotas disponíveis <span data-tooltip-icon="Compare as alternativas de deslocamento e selecione qual rota será direcionada."></span></h2>
             </div>
             <span class="route-count">3 opções</span>
           </div>

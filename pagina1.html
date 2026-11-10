@@ -19,9 +19,9 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a class="active" href="pagina1.html" aria-current="page">Inversão de Sentido</a>
-        <a href="pagina2.html">Bloqueio Viário</a>
-        <a href="pagina3.html">Contingência</a>
+        <a class="active" href="pagina1.html" aria-current="page" data-tooltip="Simula a inversão do sentido de vias e o impacto no fluxo de veículos.">Inversão de Sentido</a>
+        <a href="pagina2.html" data-tooltip="Simula bloqueios e dispositivos de tráfego, como lombadas e semáforos.">Bloqueio Viário</a>
+        <a href="pagina3.html" data-tooltip="Compara rotas alternativas diante de uma ocorrência no trajeto.">Contingência</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
       <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
@@ -30,7 +30,7 @@
 
     <aside class="sidebar sidebar-sentido" aria-label="Painel de inversão de sentido">
       <section class="painel-secao" aria-labelledby="h-local">
-        <h2 id="h-local">Local</h2>
+        <h2 id="h-local">Local <span data-tooltip-icon="Escolha a região da malha viária que será usada nesta simulação."></span></h2>
         <label class="campo">
           <span>Área simulada</span>
           <select id="selLocal" disabled data-tooltip="Escolha a região cuja malha viária será carregada na simulação.">
@@ -43,17 +43,17 @@
       <div class="painel-abas" id="painelAbas">
         <div class="abas" role="tablist" aria-label="Seções do painel">
           <button type="button" class="aba ativo" role="tab" id="aba-vias" data-aba="vias"
-            aria-controls="painel-vias" aria-selected="true">Vias</button>
+            aria-controls="painel-vias" aria-selected="true" data-tooltip="Selecione trechos no mapa ou na lista para inverter o sentido.">Vias</button>
           <button type="button" class="aba" role="tab" id="aba-politica" data-aba="politica"
-            aria-controls="painel-politica" aria-selected="false" tabindex="-1">Política</button>
+            aria-controls="painel-politica" aria-selected="false" tabindex="-1" data-tooltip="Define como os veículos já na via reagem quando o sentido é invertido.">Política</button>
           <button type="button" class="aba" role="tab" id="aba-indicadores" data-aba="indicadores"
-            aria-controls="painel-indicadores" aria-selected="false" tabindex="-1">Indicadores</button>
+            aria-controls="painel-indicadores" aria-selected="false" tabindex="-1" data-tooltip="Acompanhe métricas da rodada, fluxo viário e o histórico de inversões.">Indicadores</button>
         </div>
 
         <div class="painel-aba ativo" role="tabpanel" id="painel-vias" data-painel="vias"
           aria-labelledby="aba-vias">
           <section class="painel-secao">
-            <h2>Seleção de via</h2>
+            <h2>Seleção de via <span data-tooltip-icon="Busque um logradouro ou clique no mapa para marcar o trecho que deseja operar."></span></h2>
             <label class="campo">
               <span>Logradouro</span>
               <input id="filtroLogradouro" type="search" placeholder="Buscar por nome…" autocomplete="off"
@@ -72,7 +72,7 @@
           </section>
 
           <section class="painel-secao" aria-labelledby="h-sel">
-            <h2 id="h-sel">Via selecionada</h2>
+            <h2 id="h-sel">Via selecionada <span data-tooltip-icon="Mostra o trecho atual, o sentido vigente e permite inverter ou limpar a seleção."></span></h2>
             <p class="empty" id="sel-empty">Nenhuma via selecionada. Clique em um trecho do mapa.</p>
             <div id="sel-info" hidden class="via-selecionada">
               <div class="via-selecionada-titulo">
@@ -101,7 +101,7 @@
         <div class="painel-aba" role="tabpanel" id="painel-politica" data-painel="politica"
           aria-labelledby="aba-politica" hidden>
           <section class="painel-secao" aria-labelledby="h-sim">
-            <h2 id="h-sim">Política de inversão</h2>
+            <h2 id="h-sim">Política de inversão <span data-tooltip-icon="Escolha se os veículos concluem a travessia ou retornam imediatamente após a inversão."></span></h2>
             <label class="campo" for="policy">
               <span>Veículos já na via ao inverter</span>
               <select id="policy" aria-describedby="dica-policy" data-tooltip="Define o que acontece com veículos que já estão em um trecho quando seu sentido é invertido.">
@@ -125,7 +125,7 @@
         <div class="painel-aba" role="tabpanel" id="painel-indicadores" data-painel="indicadores"
           aria-labelledby="aba-indicadores" hidden>
           <section class="painel-secao" aria-labelledby="h-st">
-            <h2 id="h-st">Indicadores <span data-tooltip-icon="A velocidade controla o ritmo do tempo simulado; a quantidade define a frota ativa."></span></h2>
+            <h2 id="h-st">Indicadores <span data-tooltip-icon="Resumo da rodada: veículos ativos, inversões, redirecionamentos, reações e retenções."></span></h2>
             <div class="stats-sentido">
               <div class="stat"><b id="st-cars">0</b><span>veículos</span></div>
               <div class="stat"><b id="st-rev">0</b><span>inversões</span></div>
@@ -137,7 +137,7 @@
           </section>
 
           <section class="painel-secao indicadores-analiticos" aria-labelledby="h-analiticos">
-            <h2 id="h-analiticos">Fluxo viário</h2>
+            <h2 id="h-analiticos">Fluxo viário <span data-tooltip-icon="Mostra congestão estimada e o tempo médio de locomoção na malha atual."></span></h2>
             <div class="cards-analiticos">
               <article class="card-analitico destaque">
                 <h3 class="card-analitico-titulo">Vias com trânsito intenso</h3>
@@ -153,7 +153,7 @@
           </section>
 
           <section class="painel-secao" aria-labelledby="h-log">
-            <h2 id="h-log">Registro</h2>
+            <h2 id="h-log">Registro <span data-tooltip-icon="Histórico das inversões feitas nesta rodada, com ordem e resultado de cada operação."></span></h2>
             <ul id="log" class="log-sentido" aria-live="polite"></ul>
             <p id="log-vazio" class="vazio">Nenhuma inversão registrada — selecione uma via e pressione R.</p>
           </section>

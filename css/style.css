@@ -372,7 +372,12 @@ body {
 .sidebar .painel-secao h2 {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+  justify-content: flex-start;
+}
+
+.sidebar .painel-secao h2 .contador {
+  margin-left: auto;
 }
 
 .contador {
