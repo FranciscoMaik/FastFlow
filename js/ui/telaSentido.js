@@ -1,38 +1,79 @@
 // Tela Página 1: simulação de inversão de sentido sobre o mapa Leaflet de Cajamar.
 /* global L */
-import { carregarControleSentido } from "../adaptador/controleSentido.js";
+import { ControleSentido } from "../adaptador/controleSentido.js";
 import { criarCamadaVias } from "./camadaVias.js";
 import { criarCamadaVeiculos } from "./camadaVeiculos.js";
 import { criarCamadaSetas } from "./camadaSetas.js";
 import { criarSeletorVias } from "./seletorVias.js";
 import { criarLoopAnimacaoVeiculos } from "./loopAnimacaoVeiculos.js";
+import { iniciarSeletorLocal } from "./seletorLocal.js";
+import { ligarPausa } from "./pausaSimulacao.js";
+import { criarStatusSimulacao } from "./statusSimulacao.js";
+import { montarAtalhos } from "./atalhos.js";
+import { ligarPainelAbas } from "./painelAbas.js";
+import { criarProjetorMetricas, criarHistoricoRodadas } from "../motor/metricasSimulacao.js";
+import { criarDrawerResultados, renderizarIndicadoresAnaliticos } from "./drawerResultados.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
-const AREA_SIMULADA = [
-  [-23.365, -46.89],
-  [-23.345, -46.866],
-];
 const $ = (id) => document.getElementById(id);
 
-async function iniciar() {
+function iniciar() {
   const mapa = L.map("mapa", { zoomControl: true }).setView(CENTRO_CAJAMAR, 15);
   L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
     maxZoom: 19,
     attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   }).addTo(mapa);
 
-  let controle;
-  try {
-    controle = await carregarControleSentido($("mapa").dataset.malha, {
-      quantidadeVeiculos: Number($("cars").value),
-      fatorTempo: Number($("speed").value),
-      politicaSentido: $("policy").value,
-    });
-  } catch (erro) {
-    $("carregando").textContent = `Erro ao carregar a malha viária: ${erro.message}`;
-    return;
-  }
-  $("carregando").hidden = true;
+  const status = criarStatusSimulacao($("badgeStatus"));
+  montarAtalhos($("atalhosSim"), "sentido");
+  ligarPainelAbas($("painelAbas"));
+
+  const historicoRodadas = criarHistoricoRodadas();
+  const drawer = criarDrawerResultados({
+    host: $("drawerResultados"),
+    titulo: "Relatório — Inversão de Sentido",
+  });
+
+  const pausa = ligarPausa($("btnPausar"), {
+    aoMudar(rodando) {
+      if (!$("carregando")?.hidden) return;
+      status.definir(rodando ? "executando" : "pausada");
+    },
+  });
+  let montagemAtual = null;
+
+  iniciarSeletorLocal({
+    mapa,
+    urlLocais: $("mapa").dataset.locais,
+    select: $("selLocal"),
+    info: $("infoLocal"),
+    carregando: $("carregando"),
+    obterResumoAlteracoes: () => montagemAtual?.resumoAlteracoes() ?? null,
+    aoEstadoCarregamento(estado, detalhe) {
+      if (estado === "carregando") status.definir("carregando", detalhe);
+      else if (estado === "erro") status.definir("erro", detalhe);
+      else status.definir(pausa.estaRodando() ? "executando" : "pausada");
+    },
+    montar: (local, geojson, { primeiraVez }) => {
+      montagemAtual = montar(mapa, local, geojson, primeiraVez, pausa, {
+        historicoRodadas,
+        drawer,
+        status,
+      });
+      return montagemAtual;
+    },
+  });
+}
+
+function montar(mapa, local, geojson, primeiraVez, pausa, { historicoRodadas, drawer, status }) {
+  const eventos = new AbortController();
+  const { signal } = eventos;
+
+  const controle = new ControleSentido(geojson, {
+    quantidadeVeiculos: Number($("selQuantidade").value),
+    fatorTempo: Number($("selVelocidade").value),
+    politicaSentido: $("policy").value,
+  });
 
   let destacados = [];
   const camadaVias = criarCamadaVias(mapa, controle.trechos(), {
@@ -40,10 +81,13 @@ async function iniciar() {
   });
   const camadaSetas = criarCamadaSetas(mapa);
   const camadaVeiculos = criarCamadaVeiculos(mapa);
-  mapa.fitBounds(AREA_SIMULADA);
 
   const seletor = criarSeletorVias(
-    { selectLogradouro: $("selLogradouro"), selectTrecho: $("selTrecho") },
+    {
+      selectLogradouro: $("selLogradouro"),
+      selectTrecho: $("selTrecho"),
+      filtroLogradouro: $("filtroLogradouro"),
+    },
     controle.logradouros(),
     (id) => controle.trecho(id),
     {
@@ -57,7 +101,8 @@ async function iniciar() {
         controle.selecionar(id);
         camadaVias.focar([id]);
       },
-    }
+    },
+    { signal }
   );
 
   function mensagem(texto, tipo) {
@@ -73,20 +118,40 @@ async function iniciar() {
     $("btn-reverse").disabled = !trecho;
     if (!trecho) return;
     $("sel-name").textContent = trecho.nome;
-    $("sel-id").textContent = trecho.referencia ?? trecho.id;
+    $("sel-id").textContent = trecho.referencia?.trim() || "Sem cruzamento cadastrado";
     $("sel-dir").textContent = trecho.sentidoRotulo;
     $("sel-count").textContent = String(trecho.veiculosNoTrecho);
   }
 
   function atualizarRegistro() {
+    const itens = controle.registro();
     const ul = $("log");
     ul.replaceChildren(
-      ...controle.registro().map((item) => {
+      ...itens.map((item) => {
         const li = document.createElement("li");
         li.textContent = item.texto;
         return li;
       })
     );
+    const vazio = $("log-vazio");
+    if (vazio) vazio.hidden = itens.length > 0;
+  }
+
+  const camposAnaliticos = {
+    congestao: $("st-congestao"),
+    percentual: $("st-congestao-pct"),
+    tempo: $("st-tempo-medio"),
+  };
+
+  const projetor = criarProjetorMetricas();
+  let metricasAtuais = null;
+
+  function atualizarMetricasAnaliticas() {
+    metricasAtuais = projetor.atualizar({
+      estatisticas: controle.estatisticas(),
+      totalTrechos: controle.trechos().length,
+    });
+    renderizarIndicadoresAnaliticos(camposAnaliticos, metricasAtuais);
   }
 
   function atualizarStats() {
@@ -97,9 +162,31 @@ async function iniciar() {
     $("st-evac").textContent = String(s.evacuados + s.retornos);
     $("st-desp").textContent = String(s.retidos);
     $("st-conn").textContent = s.malhaConectada
-      ? "Malha conectada"
-      : `Malha parcial (${s.nosNaMalha}/${s.nosTotal} nós)`;
+      ? "Rede viária íntegra"
+      : `Rede parcial (${s.nosNaMalha}/${s.nosTotal} nós)`;
     $("st-conn").dataset.ok = s.malhaConectada ? "1" : "0";
+    atualizarMetricasAnaliticas();
+  }
+
+  function encerrarEVerRelatorio() {
+    if (!metricasAtuais) atualizarMetricasAnaliticas();
+    pausa.definirRodando(false);
+    status.definir("pausada");
+
+    const rodada = historicoRodadas.adicionar(metricasAtuais, {
+      local: local.nome ?? local.descricao ?? "Área simulada",
+      modo: "sentido",
+    });
+
+    drawer.abrir({
+      rodada,
+      historico: historicoRodadas.listar(),
+      comparacao: historicoRodadas.compararUltimas(),
+      modo: "sentido",
+      subtitulo: `${rodada.local} · ${rodada.rotulo}`,
+    });
+
+    mensagem(`Rodada ${rodada.id} encerrada — relatório disponível.`, "sucesso");
   }
 
   function redesenhar() {
@@ -133,15 +220,17 @@ async function iniciar() {
     redesenhar();
   });
 
-  mapa.on("click", () => {
+  function aoClicarMapa() {
     controle.selecionar(null);
     destacados = [];
     seletor.sincronizar(null);
     redesenhar();
-  });
+  }
+  mapa.on("click", aoClicarMapa);
 
   document.addEventListener("keydown", (e) => {
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (drawer.estaAberto()) return;
     if (e.key === "r" || e.key === "R") {
       e.preventDefault();
       inverter();
@@ -149,42 +238,67 @@ async function iniciar() {
       mapa.fire("click");
     } else if (e.key === " " && e.target.tagName !== "BUTTON") {
       e.preventDefault();
-      $("btn-play").click();
+      $("btnPausar").click();
     }
-  });
+  }, { signal });
 
-  $("btn-reverse").addEventListener("click", inverter);
-  $("btn-clear").addEventListener("click", () => mapa.fire("click"));
+  $("btn-reverse").addEventListener("click", inverter, { signal });
+  $("btn-clear").addEventListener("click", () => mapa.fire("click"), { signal });
 
-  let rodando = true;
-  $("btn-play").addEventListener("click", (e) => {
-    rodando = !rodando;
-    e.target.textContent = rodando ? "Pausar" : "Retomar";
-    e.target.setAttribute("aria-pressed", String(!rodando));
-  });
-
-  $("speed").addEventListener("input", () => {
-    const v = Number($("speed").value);
-    $("speed-out").textContent = `${v}×`;
-    controle.definirFatorTempo(v);
-  });
-  $("cars").addEventListener("input", () => {
-    $("cars-out").textContent = $("cars").value;
-    controle.definirQuantidadeVeiculos(Number($("cars").value));
-  });
-  $("policy").addEventListener("change", () => controle.definirPolitica($("policy").value));
+  $("selVelocidade").addEventListener("change", (e) => {
+    controle.definirFatorTempo(Number(e.target.value));
+  }, { signal });
+  $("selQuantidade").addEventListener("change", (e) => {
+    controle.definirQuantidadeVeiculos(Number(e.target.value));
+  }, { signal });
+  $("policy").addEventListener("change", () => controle.definirPolitica($("policy").value), { signal });
+  $("btnRelatorio").addEventListener("click", encerrarEVerRelatorio, { signal });
 
   redesenhar();
+  atualizarRegistro();
   atualizarStats();
-  criarLoopAnimacaoVeiculos({
+  if (!primeiraVez) mensagem(`Simulação reiniciada em ${local.nome}.`, "sucesso");
+  const loop = criarLoopAnimacaoVeiculos({
     controle,
     camadaVeiculos,
-    estaRodando: () => rodando,
+    estaRodando: () => pausa.estaRodando(),
     aoAtualizar() {
       atualizarStats();
       atualizarInfo();
     },
   });
+
+  return {
+    totalTrechos: controle.trechos().length,
+    resumoAlteracoes() {
+      const inversoes = controle.estatisticas().inversoes;
+      if (!inversoes) return null;
+      return inversoes === 1
+        ? "Há 1 inversão de sentido nesta sessão."
+        : `Há ${inversoes} inversões de sentido nesta sessão.`;
+    },
+    desmontar() {
+      loop.parar();
+      eventos.abort();
+      mapa.off("click", aoClicarMapa);
+      mapa.stop();
+      controle.encerrar();
+      camadaVeiculos.remover();
+      camadaSetas.remover();
+      camadaVias.remover();
+      seletor.limpar();
+      mensagem("");
+      $("sel-empty").hidden = false;
+      $("sel-info").hidden = true;
+      $("btn-reverse").disabled = true;
+      $("log").replaceChildren();
+      const vazio = $("log-vazio");
+      if (vazio) vazio.hidden = false;
+      for (const id of ["st-cars", "st-rev", "st-rer", "st-evac", "st-desp"]) $(id).textContent = "—";
+      renderizarIndicadoresAnaliticos(camposAnaliticos, null);
+      projetor.reiniciar();
+    },
+  };
 }
 
 iniciar();

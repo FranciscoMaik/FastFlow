@@ -106,6 +106,51 @@ export function alcancaveis(grafo, origens, { ignorar, reverso = false } = {}) {
   return visitados;
 }
 
+// A aresta existe no sentido de circulação atual do trecho? (Ignora bloqueios:
+// interditar uma via não transforma o cruzamento anterior numa "saída" da área.)
+function existeNoSentido(grafo, arestaId) {
+  const aresta = grafo.arestas.get(arestaId);
+  const trecho = grafo.trechos.get(aresta.trechoId);
+  const ida = arestaId.endsWith(">");
+  const volta = arestaId.endsWith("<");
+  if (!trecho || (!ida && !volta)) return Number.isFinite(aresta.pesoOriginal ?? aresta.peso);
+  return trecho.sentido === 0 || (trecho.sentido === 1 && ida) || (trecho.sentido === -1 && volta);
+}
+
+// "Portões" da malha: pontas por onde o tráfego entra ou sai da área simulada.
+// São as vias cortadas pelo limite do mapa (uma rodovia que entra por um lado e sai
+// pelo outro) e as pontas de rua. Topologicamente:
+//   - fonte: só saem arestas (início de uma pista que vem de fora);
+//   - sumidouro: só chegam arestas (fim de uma pista que vai para fora);
+//   - ponta: o nó tem um único vizinho (via de mão dupla cortada ou rua sem saída).
+// Retorna as arestas que partem de um portão (`arestasEntrada`), os nós onde uma
+// viagem pode terminar saindo da área (`nosSaida`), e à parte as fontes e os
+// sumidouros (pistas de mão única cortadas pela borda).
+export function portoesDaMalha(grafo) {
+  const arestasEntrada = [];
+  const nosSaida = [];
+  const fontes = [];
+  const sumidouros = [];
+  for (const no of grafo.nos.keys()) {
+    const sai = grafo.saidas.get(no).filter((id) => existeNoSentido(grafo, id));
+    const chega = grafo.entradas.get(no).filter((id) => existeNoSentido(grafo, id));
+    const vizinhos = new Set([
+      ...sai.map((id) => grafo.arestas.get(id).para),
+      ...chega.map((id) => grafo.arestas.get(id).de),
+    ]);
+    vizinhos.delete(no);
+    if (vizinhos.size === 0) continue;
+    const fonte = chega.length === 0;
+    const sumidouro = sai.length === 0;
+    if (!fonte && !sumidouro && vizinhos.size !== 1) continue;
+    for (const id of sai) arestasEntrada.push(grafo.arestas.get(id));
+    if (chega.length > 0) nosSaida.push(no);
+    if (fonte) fontes.push(no);
+    if (sumidouro) sumidouros.push(no);
+  }
+  return { arestasEntrada, nosSaida, fontes, sumidouros };
+}
+
 // Maior componente fortemente conexa (Kosaraju, iterativo): o conjunto de nós
 // em que qualquer um alcança qualquer outro. É a "malha principal" da simulação.
 export function maiorComponenteForte(grafo, { ignorar } = {}) {

@@ -134,14 +134,21 @@ export function criarCamadaSetas(mapa) {
     }
   }
 
-  mapa.on("zoomend", () => {
+  function aoZoom() {
     if (ultimo.trechos.length) redesenhar(ultimo.trechos, ultimo.selecionado);
-  });
+  }
+  mapa.on("zoomend", aoZoom);
 
   return {
     atualizar(trechos, { selecionado = null } = {}) {
       ultimo = { trechos, selecionado };
       redesenhar(trechos, selecionado);
+    },
+
+    remover() {
+      mapa.off("zoomend", aoZoom);
+      mapa.removeLayer(grupo);
+      ultimo = { trechos: [], selecionado: null };
     },
   };
 }

@@ -21,53 +21,49 @@
       <span class="topbar-context">Central de operações</span>
       <div class="topbar-status"><span class="status-dot"></span> Modo demonstrativo</div>
       <nav aria-label="Navegação principal">
-        <a href="pagina1.html">Inversão de Sentido</a>
-        <a href="pagina2.html">Bloqueio Viário</a>
-        <a class="active" href="pagina3.html" aria-current="page">Contingência</a>
+        <a href="pagina1.html" data-tooltip="Simula a inversão do sentido de vias e o impacto no fluxo de veículos.">Inversão de Sentido</a>
+        <a href="pagina2.html" data-tooltip="Simula bloqueios e dispositivos de tráfego, como lombadas e semáforos.">Bloqueio Viário</a>
+        <a class="active" href="pagina3.html" aria-current="page" data-tooltip="Compara rotas alternativas diante de uma ocorrência no trajeto.">Contingência</a>
       </nav>
       <span id="session-feedback" class="session-feedback" role="status" aria-live="polite"></span>
+      <a class="topbar-ajuda" href="GUIA-DE-USO.md" target="_blank" rel="noopener noreferrer">Ajuda</a>
       <button class="botao-sair" type="button" data-logout>Sair</button>
     </header>
 
     <aside class="sidebar">
       <div class="sidebar-heading">
         <span class="eyebrow">DIRECIONAMENTO</span>
-        <h2>Planejar rota</h2>
-        <p>Defina o trajeto e escolha uma alternativa operacional.</p>
+        <h2>Planejar rota <span data-tooltip-icon="Escolha local e cenário para montar a comparação de rotas. Origem e destino vêm do cenário."></span></h2>
+        <p>Escolha o local e o cenário. Origem e destino vêm do cenário e não recalculam a rota.</p>
       </div>
 
       <form class="route-form" id="route-form">
-        <label for="scenario-select">Cenário de simulação</label>
+        <label for="selLocal">Local</label>
         <div class="input-wrap select-wrap">
-          <select id="scenario-select" name="scenario" data-tooltip="Carrega um exemplo de origem, destino e alternativas de rota.">
-            <option value="cajamar-centro">Centro de Cajamar → Jordanésia</option>
-            <option value="polvilho-distrito">Polvilho → Distrito Industrial</option>
-            <option value="ponunduva-cajamar">Ponunduva → Centro de Cajamar</option>
-            <option value="jordanesia-polvilho">Jordanésia → Polvilho</option>
-            <option value="centro-parque">Centro de Cajamar → Parque Maria Aparecida</option>
-            <option value="jordanesia-empresarial">Jordanésia → Parque Empresarial</option>
-            <option value="polvilho-centro">Polvilho → Centro de Cajamar</option>
-            <option value="ponunduva-jordanesia">Ponunduva → Jordanésia</option>
+          <select id="selLocal" name="local" data-locais="data/locais.json" disabled data-tooltip="Escolha a região usada no cenário de contingência.">
+            <option value="">Carregando locais…</option>
           </select>
         </div>
 
-        <label for="origin">Ponto de partida</label>
+        <label for="scenario-select">Cenário de simulação</label>
+        <div class="input-wrap select-wrap">
+          <select id="scenario-select" name="scenario" data-tooltip="Carrega um exemplo de origem, destino e alternativas de rota."></select>
+        </div>
+
+        <label for="origin">Ponto de partida do cenário</label>
         <div class="input-wrap">
           <span class="input-marker origin-marker" aria-hidden="true"></span>
-          <input id="origin" name="origin" type="text" value="Centro de Cajamar" required data-tooltip="Ponto inicial usado para comparar as alternativas de deslocamento.">
+          <input id="origin" name="origin" type="text" value="Centro de Cajamar" readonly tabindex="-1" data-tooltip="Ponto inicial usado para comparar as alternativas de deslocamento.">
         </div>
 
         <div class="route-connector" aria-hidden="true"></div>
 
-        <label for="destination">Destino</label>
+        <label for="destination">Destino do cenário</label>
         <div class="input-wrap">
           <span class="input-marker destination-marker" aria-hidden="true"></span>
-          <input id="destination" name="destination" type="text" value="Jordanésia" required data-tooltip="Destino final usado no cálculo das rotas.">
+          <input id="destination" name="destination" type="text" value="Jordanésia" readonly tabindex="-1" data-tooltip="Destino final usado no cálculo das rotas.">
         </div>
 
-        <button class="button button-primary update-route" type="submit" data-tooltip="Atualiza as rotas do mapa com a origem e o destino informados.">
-          Atualizar cenário
-        </button>
         <p class="form-feedback" id="form-feedback" aria-live="polite"></p>
       </form>
 
@@ -106,7 +102,7 @@
         <section class="map-card" aria-label="Mapa e alternativas de rota">
           <div class="map-toolbar">
             <div>
-              <span class="eyebrow">VISÃO DO TRAJETO</span>
+              <span class="eyebrow">VISÃO DO TRAJETO <span data-tooltip-icon="Mapa demonstrativo com a rota principal, os desvios e o bloqueio simulado do cenário."></span></span>
               <h2 id="map-route-title">Centro de Cajamar <span aria-hidden="true">→</span> Jordanésia</h2>
             </div>
             <button class="map-control" id="fit-map" type="button" aria-label="Enquadrar rotas no mapa" data-tooltip="Enquadra todas as alternativas na área visível do mapa.">
@@ -128,7 +124,7 @@
           <div class="section-heading">
             <div>
               <span class="eyebrow">OPÇÕES DE DESLOCAMENTO</span>
-              <h2 id="routes-title">Rotas disponíveis</h2>
+              <h2 id="routes-title">Rotas disponíveis <span data-tooltip-icon="Compare as alternativas de deslocamento e selecione qual rota será direcionada."></span></h2>
             </div>
             <span class="route-count">3 opções</span>
           </div>
@@ -167,7 +163,7 @@
               <span class="dispatch-icon" aria-hidden="true">↗</span>
               <span><strong id="dispatch-title">Desvio selecionado</strong><small id="dispatch-description">A equipe seguirá pela rota de contingência.</small></span>
             </div>
-            <button class="button button-dispatch" id="dispatch-button" type="button" data-tooltip="Confirma o direcionamento pela alternativa selecionada.">Ativar direcionamento</button>
+            <button class="botao botao-primario button-dispatch" id="dispatch-button" type="button" aria-pressed="false" data-tooltip="Confirma o direcionamento pela alternativa selecionada.">Ativar direcionamento</button>
           </div>
           <p class="dispatch-feedback" id="dispatch-feedback" role="status" aria-live="polite"></p>
         </section>
@@ -177,7 +173,7 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/contingencia.js"></script>
+  <script type="module" src="js/contingencia.js"></script>
   <script type="module" src="js/ui/tooltip.js"></script>
 </body>
 </html>
