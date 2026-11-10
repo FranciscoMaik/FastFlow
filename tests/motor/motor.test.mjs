@@ -144,6 +144,97 @@ test("inverter sentido em mão única cria aresta oposta e alterna 1↔-1", () =
   assert.equal(g.estaAcessivel("X<"), true);
 });
 
+test("nova inversão libera veículos que ficaram retidos", () => {
+  const g = criarMalha();
+  let semente = 11;
+  const aleatorio = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);
+  const sim = new Simulacao(g, { aleatorio });
+  sim.definirQuantidade(1);
+  const v = sim.veiculos[0];
+  // Simula o estado pós-#reter: rota truncada, parado, sem futuras.
+  Object.assign(v, {
+    rota: ["DE>"],
+    indice: 0,
+    progresso: 100,
+    destino: "F",
+    status: "retido",
+    velocidade: 0,
+    evacuando: false,
+  });
+
+  g.inverterSentido("AB"); // qualquer inversão dispara #aoAlterarSentido
+
+  assert.notEqual(v.status, "retido", "retido deve ser liberado quando a malha muda");
+  assert.ok(v.rota.length >= 1);
+
+  const progressoAntes = v.progresso;
+  for (let i = 0; i < 40; i++) sim.avancar(0.2);
+  assert.ok(
+    v.status !== "retido" && (v.progresso !== progressoAntes || v.rota[v.indice] !== "DE>" || v.indice > 0),
+    "após liberar, o veículo precisa voltar a circular"
+  );
+});
+
+test("retido em aresta fechada faz U-turn quando a oposta está aberta", () => {
+  const g = criarMalha();
+  let semente = 13;
+  const aleatorio = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);
+  const sim = new Simulacao(g, { aleatorio, politicaSentido: "complete" });
+  sim.definirQuantidade(1);
+  const v = sim.veiculos[0];
+
+  // Fecha AB> (sentido só volta): veículo retido no meio de AB>, contra a seta.
+  g.inverterSentido("AB"); // 0 → 1
+  g.inverterSentido("AB"); // 1 → -1 (só AB<)
+  assert.equal(g.estaAcessivel("AB>"), false);
+  assert.equal(g.estaAcessivel("AB<"), true);
+
+  Object.assign(v, {
+    rota: ["AB>"],
+    indice: 0,
+    progresso: 40,
+    destino: "C",
+    status: "retido",
+    velocidade: 0,
+    evacuando: false,
+  });
+
+  sim.avancar(0.05); // um tick: libera via U-turn para AB<
+  assert.notEqual(v.status, "retido", "deve sair do estado retido");
+  assert.equal(v.rota[0], "AB<", "deve entrar na aresta oposta aberta");
+  assert.ok(v.velocidade > 0, "deve recuperar velocidade");
+});
+
+test("reabrir o sentido da via libera retido parado nela", () => {
+  const g = criarMalha();
+  let semente = 17;
+  const aleatorio = () => ((semente = (semente * 16807) % 2147483647) / 2147483647);
+  const sim = new Simulacao(g, { aleatorio, politicaSentido: "complete" });
+  sim.definirQuantidade(1);
+  const v = sim.veiculos[0];
+
+  g.inverterSentido("AB"); // 0 → 1
+  g.inverterSentido("AB"); // 1 → -1 fecha AB>
+  Object.assign(v, {
+    rota: ["AB>"],
+    indice: 0,
+    progresso: 55,
+    destino: "C",
+    status: "retido",
+    velocidade: 0,
+    evacuando: false,
+  });
+
+  g.inverterSentido("AB"); // -1 → 0 reabre AB>
+  assert.equal(g.estaAcessivel("AB>"), true);
+  assert.notEqual(v.status, "retido", "inversão que reabre a via deve liberar o retido");
+
+  const progressoAntes = v.progresso;
+  for (let i = 0; i < 30; i++) sim.avancar(0.2);
+  assert.ok(v.status !== "retido", "não pode voltar a retido com a via aberta");
+  assert.ok(v.progresso !== progressoAntes || v.rota[v.indice] !== "AB>", "precisa voltar a se mover");
+});
+
 test("política complete: veículo na via invertida evacua e conclui a travessia", () => {
   const g = criarMalha();
   let semente = 3;
@@ -193,4 +284,23 @@ test("simulação recalcula a rota de quem passaria pelo trecho bloqueado", () =
       assert.ok(g.estaAcessivel(id), `veículo ${v.id} com rota passando por ${id}`);
     }
   }
+});
+
+test("encerrar a simulação remove os veículos, para de gerar novos e desliga os eventos do grafo", () => {
+  const g = criarMalha();
+  const sim = new Simulacao(g);
+  sim.definirQuantidade(20);
+  assert.equal(sim.veiculos.length, 20);
+
+  let recalculos = 0;
+  sim.on("rotasRecalculadas", () => recalculos++);
+  sim.encerrar();
+
+  assert.equal(sim.veiculos.length, 0);
+  for (let i = 0; i < 50; i++) sim.avancar(0.1);
+  assert.equal(sim.veiculos.length, 0, "não pode surgir veículo depois de encerrar");
+
+  g.bloquearTrecho("AB");
+  g.inverterSentido("AB");
+  assert.equal(recalculos, 0, "simulação encerrada não reage mais ao grafo");
 });
