@@ -19,6 +19,8 @@ import { confirmar, oferecerDesfazer } from "./confirmacao.js";
 import { criarStatusSimulacao } from "./statusSimulacao.js";
 import { ligarPainelAbas } from "./painelAbas.js";
 import { montarAtalhos } from "./atalhos.js";
+import { criarProjetorMetricas, criarHistoricoRodadas } from "../motor/metricasSimulacao.js";
+import { criarDrawerResultados, renderizarIndicadoresAnaliticos } from "./drawerResultados.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
 const $ = (id) => document.getElementById(id);
@@ -33,6 +35,12 @@ function iniciar() {
   const status = criarStatusSimulacao($("badgeStatus"));
   montarAtalhos($("atalhosSim"), "bloqueio");
   ligarPainelAbas($("painelAbas"));
+
+  const historicoRodadas = criarHistoricoRodadas();
+  const drawer = criarDrawerResultados({
+    host: $("drawerResultados"),
+    titulo: "Relatório — Bloqueio Viário",
+  });
 
   const pausa = ligarPausa($("btnPausar"), {
     aoMudar(rodando) {
@@ -55,13 +63,17 @@ function iniciar() {
       else status.definir(pausa.estaRodando() ? "executando" : "pausada");
     },
     montar: (local, geojson, { primeiraVez }) => {
-      montagemAtual = montar(mapa, local, geojson, primeiraVez, pausa);
+      montagemAtual = montar(mapa, local, geojson, primeiraVez, pausa, {
+        historicoRodadas,
+        drawer,
+        status,
+      });
       return montagemAtual;
     },
   });
 }
 
-function montar(mapa, local, geojson, primeiraVez, pausa) {
+function montar(mapa, local, geojson, primeiraVez, pausa, { historicoRodadas, drawer, status }) {
   const eventos = new AbortController();
   const { signal } = eventos;
 
@@ -212,6 +224,44 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
     tempoMedio: $("estTempoMedio"),
   };
 
+  const camposAnaliticos = {
+    congestao: $("estCongestao"),
+    percentual: $("estCongestaoPct"),
+    tempo: $("estTempoLocomocao"),
+  };
+
+  const projetor = criarProjetorMetricas();
+  let metricasAtuais = null;
+
+  function atualizarMetricasAnaliticas() {
+    metricasAtuais = projetor.atualizar({
+      estatisticas: controle.estatisticas(),
+      totalTrechos: controle.trechos().length,
+    });
+    renderizarIndicadoresAnaliticos(camposAnaliticos, metricasAtuais);
+  }
+
+  function encerrarEVerRelatorio() {
+    if (!metricasAtuais) atualizarMetricasAnaliticas();
+    pausa.definirRodando(false);
+    status.definir("pausada");
+
+    const rodada = historicoRodadas.adicionar(metricasAtuais, {
+      local: local.nome ?? local.descricao ?? "Área simulada",
+      modo: "bloqueio",
+    });
+
+    drawer.abrir({
+      rodada,
+      historico: historicoRodadas.listar(),
+      comparacao: historicoRodadas.compararUltimas(),
+      modo: "bloqueio",
+      subtitulo: `${rodada.local} · ${rodada.rotulo}`,
+    });
+
+    mensagem(`Rodada ${rodada.id} encerrada — relatório disponível.`, "sucesso");
+  }
+
   function atualizarInfo() {
     const trecho = controle.selecionado ? controle.trecho(controle.selecionado) : null;
     renderizarInfoTrecho($("infoTrecho"), trecho);
@@ -323,6 +373,7 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Escape") {
+      if (drawer.estaAberto()) return;
       if (modoFerramenta !== "navegar") {
         definirModo("navegar");
       } else if (controle.selecionado) {
@@ -421,8 +472,10 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
 
   $("selQuantidade").addEventListener("change", (e) => controle.definirQuantidadeVeiculos(Number(e.target.value)), { signal });
   $("selVelocidade").addEventListener("change", (e) => controle.definirFatorTempo(Number(e.target.value)), { signal });
+  $("btnRelatorio").addEventListener("click", encerrarEVerRelatorio, { signal });
 
   redesenhar();
+  atualizarMetricasAnaliticas();
   if (!primeiraVez) mensagem(`Simulação reiniciada em ${local.nome}.`, "sucesso");
   const loop = criarLoopAnimacaoVeiculos({
     controle,
@@ -431,6 +484,7 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
     intervaloAtualizacaoMs: 500,
     aoAtualizar() {
       renderizarEstatisticas(estatisticas, controle.estatisticas());
+      atualizarMetricasAnaliticas();
       atualizarInfo();
     },
   });
@@ -472,6 +526,8 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
         {}
       );
       for (const campo of Object.values(estatisticas)) campo.textContent = "—";
+      renderizarIndicadoresAnaliticos(camposAnaliticos, null);
+      projetor.reiniciar();
     },
   };
 }

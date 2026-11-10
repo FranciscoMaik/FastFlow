@@ -11,6 +11,8 @@ import { ligarPausa } from "./pausaSimulacao.js";
 import { criarStatusSimulacao } from "./statusSimulacao.js";
 import { montarAtalhos } from "./atalhos.js";
 import { ligarPainelAbas } from "./painelAbas.js";
+import { criarProjetorMetricas, criarHistoricoRodadas } from "../motor/metricasSimulacao.js";
+import { criarDrawerResultados, renderizarIndicadoresAnaliticos } from "./drawerResultados.js";
 
 const CENTRO_CAJAMAR = [-23.355, -46.878];
 const $ = (id) => document.getElementById(id);
@@ -25,6 +27,12 @@ function iniciar() {
   const status = criarStatusSimulacao($("badgeStatus"));
   montarAtalhos($("atalhosSim"), "sentido");
   ligarPainelAbas($("painelAbas"));
+
+  const historicoRodadas = criarHistoricoRodadas();
+  const drawer = criarDrawerResultados({
+    host: $("drawerResultados"),
+    titulo: "Relatório — Inversão de Sentido",
+  });
 
   const pausa = ligarPausa($("btnPausar"), {
     aoMudar(rodando) {
@@ -47,13 +55,17 @@ function iniciar() {
       else status.definir(pausa.estaRodando() ? "executando" : "pausada");
     },
     montar: (local, geojson, { primeiraVez }) => {
-      montagemAtual = montar(mapa, local, geojson, primeiraVez, pausa);
+      montagemAtual = montar(mapa, local, geojson, primeiraVez, pausa, {
+        historicoRodadas,
+        drawer,
+        status,
+      });
       return montagemAtual;
     },
   });
 }
 
-function montar(mapa, local, geojson, primeiraVez, pausa) {
+function montar(mapa, local, geojson, primeiraVez, pausa, { historicoRodadas, drawer, status }) {
   const eventos = new AbortController();
   const { signal } = eventos;
 
@@ -125,6 +137,23 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
     if (vazio) vazio.hidden = itens.length > 0;
   }
 
+  const camposAnaliticos = {
+    congestao: $("st-congestao"),
+    percentual: $("st-congestao-pct"),
+    tempo: $("st-tempo-medio"),
+  };
+
+  const projetor = criarProjetorMetricas();
+  let metricasAtuais = null;
+
+  function atualizarMetricasAnaliticas() {
+    metricasAtuais = projetor.atualizar({
+      estatisticas: controle.estatisticas(),
+      totalTrechos: controle.trechos().length,
+    });
+    renderizarIndicadoresAnaliticos(camposAnaliticos, metricasAtuais);
+  }
+
   function atualizarStats() {
     const s = controle.estatisticas();
     $("st-cars").textContent = String(s.ativos);
@@ -136,6 +165,28 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
       ? "Rede viária íntegra"
       : `Rede parcial (${s.nosNaMalha}/${s.nosTotal} nós)`;
     $("st-conn").dataset.ok = s.malhaConectada ? "1" : "0";
+    atualizarMetricasAnaliticas();
+  }
+
+  function encerrarEVerRelatorio() {
+    if (!metricasAtuais) atualizarMetricasAnaliticas();
+    pausa.definirRodando(false);
+    status.definir("pausada");
+
+    const rodada = historicoRodadas.adicionar(metricasAtuais, {
+      local: local.nome ?? local.descricao ?? "Área simulada",
+      modo: "sentido",
+    });
+
+    drawer.abrir({
+      rodada,
+      historico: historicoRodadas.listar(),
+      comparacao: historicoRodadas.compararUltimas(),
+      modo: "sentido",
+      subtitulo: `${rodada.local} · ${rodada.rotulo}`,
+    });
+
+    mensagem(`Rodada ${rodada.id} encerrada — relatório disponível.`, "sucesso");
   }
 
   function redesenhar() {
@@ -179,6 +230,7 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
 
   document.addEventListener("keydown", (e) => {
     if (/^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName)) return;
+    if (drawer.estaAberto()) return;
     if (e.key === "r" || e.key === "R") {
       e.preventDefault();
       inverter();
@@ -200,6 +252,7 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
     controle.definirQuantidadeVeiculos(Number(e.target.value));
   }, { signal });
   $("policy").addEventListener("change", () => controle.definirPolitica($("policy").value), { signal });
+  $("btnRelatorio").addEventListener("click", encerrarEVerRelatorio, { signal });
 
   redesenhar();
   atualizarRegistro();
@@ -242,6 +295,8 @@ function montar(mapa, local, geojson, primeiraVez, pausa) {
       const vazio = $("log-vazio");
       if (vazio) vazio.hidden = false;
       for (const id of ["st-cars", "st-rev", "st-rer", "st-evac", "st-desp"]) $(id).textContent = "—";
+      renderizarIndicadoresAnaliticos(camposAnaliticos, null);
+      projetor.reiniciar();
     },
   };
 }

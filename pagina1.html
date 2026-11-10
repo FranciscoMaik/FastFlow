@@ -136,6 +136,22 @@
             <span id="st-conn" class="badge-conn" data-ok="1">Rede viária íntegra</span>
           </section>
 
+          <section class="painel-secao indicadores-analiticos" aria-labelledby="h-analiticos">
+            <h2 id="h-analiticos">Fluxo viário</h2>
+            <div class="cards-analiticos">
+              <article class="card-analitico destaque">
+                <h3 class="card-analitico-titulo">Vias com trânsito intenso</h3>
+                <p class="card-analitico-valor" id="st-congestao">—</p>
+                <p class="card-analitico-detalhe" id="st-congestao-pct"></p>
+              </article>
+              <article class="card-analitico destaque">
+                <h3 class="card-analitico-titulo">Tempo médio de locomoção</h3>
+                <p class="card-analitico-valor" id="st-tempo-medio">—</p>
+                <p class="card-analitico-detalhe">Unidade: minutos</p>
+              </article>
+            </div>
+          </section>
+
           <section class="painel-secao" aria-labelledby="h-log">
             <h2 id="h-log">Registro</h2>
             <ul id="log" class="log-sentido" aria-live="polite"></ul>
@@ -152,6 +168,7 @@
 
       <div class="barra-simulacao" role="group" aria-label="Controles da simulação">
         <button id="btnPausar" type="button" class="botao botao-secundario" aria-pressed="false">Pausar</button>
+        <button id="btnRelatorio" type="button" class="botao botao-relatorio" title="Encerra a rodada e abre o relatório">Encerrar e ver relatório</button>
         <label class="campo">
           <span>Veículos</span>
           <select id="selQuantidade">
@@ -170,6 +187,8 @@
           </select>
         </label>
       </div>
+
+      <div id="drawerResultados" class="drawer-resultados-host"></div>
 
       <div class="hint-sentido">Clique numa via · R inverte · Espaço pausa · aproxime o zoom para ver setas e veículos em detalhe</div>
       <div id="carregando" class="carregando" role="status" aria-live="polite">Carregando malha viária de Cajamar…</div>
