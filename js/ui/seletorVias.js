@@ -1,11 +1,17 @@
 // Seleção por lista: primeiro o logradouro, depois o trecho dele.
 
 export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros, obterTrecho, eventos) {
-  const trechosPorNome = new Map(logradouros.map((l) => [l.nome, l.trechos]));
+  let trechosPorNome = new Map();
 
-  for (const { nome, trechos } of logradouros) {
-    const opcao = new Option(`${nome} (${trechos.length})`, nome);
-    selectLogradouro.add(opcao);
+  function atualizarLogradouros(lista) {
+    const nomeAtual = selectLogradouro.value;
+    trechosPorNome = new Map(lista.map((l) => [l.nome, l.trechos]));
+    selectLogradouro.replaceChildren(new Option("Selecione um logradouro…", ""));
+    for (const { nome, trechos } of lista) {
+      selectLogradouro.add(new Option(`${nome} (${trechos.length})`, nome));
+    }
+    selectLogradouro.value = trechosPorNome.has(nomeAtual) ? nomeAtual : "";
+    preencherTrechos(selectLogradouro.value);
   }
 
   function preencherTrechos(nome) {
@@ -25,6 +31,8 @@ export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros
     });
   }
 
+  atualizarLogradouros(logradouros);
+
   selectLogradouro.addEventListener("change", () => {
     preencherTrechos(selectLogradouro.value);
     eventos.aoEscolherLogradouro(selectLogradouro.value || null);
@@ -39,6 +47,7 @@ export function criarSeletorVias({ selectLogradouro, selectTrecho }, logradouros
   });
 
   return {
+    atualizarLogradouros,
     // Mantém a lista em sincronia quando o trecho é escolhido pelo mapa.
     sincronizar(trechoId) {
       const t = trechoId ? obterTrecho(trechoId) : null;

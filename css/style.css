@@ -443,6 +443,11 @@ body {
   background: var(--cor-bloqueio-suave);
 }
 
+.info-trecho.inelegivel {
+  border-left-color: #64748b;
+  background: #f1f5f9;
+}
+
 .info-trecho strong {
   display: block;
   color: var(--cor-texto);
@@ -469,6 +474,11 @@ body {
 
 .status-via.bloqueado {
   color: var(--cor-bloqueio-forte);
+}
+
+.status-via.inelegivel,
+.motivo-inelegibilidade {
+  color: #475569;
 }
 
 /* ---------- Botões ---------- */
@@ -730,6 +740,18 @@ path.via.hover {
 path.via.selecionada {
   stroke: var(--cor-via-selecionada);
   stroke-opacity: 1;
+  stroke-width: 9px;
+}
+
+path.via.inelegivel {
+  stroke: #94a3b8;
+  stroke-opacity: 0.65;
+  stroke-dasharray: 3 6;
+  cursor: not-allowed;
+}
+
+path.via.inelegivel.selecionada {
+  stroke: #64748b;
   stroke-width: 9px;
 }
 

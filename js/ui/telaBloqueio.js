@@ -80,7 +80,7 @@ async function iniciar() {
   function atualizarInfo() {
     const trecho = controle.selecionado ? controle.trecho(controle.selecionado) : null;
     renderizarInfoTrecho($("infoTrecho"), trecho);
-    $("btnBloquear").disabled = !trecho || trecho.bloqueado;
+    $("btnBloquear").disabled = !trecho || trecho.bloqueado || !trecho.bloqueavel;
     $("btnDesbloquear").disabled = !trecho || !trecho.bloqueado;
   }
 
@@ -112,7 +112,21 @@ async function iniciar() {
       destacados = [id];
       seletor.sincronizar(id);
     }
-    mensagem("");
+    const trecho = id ? controle.trecho(id) : null;
+    mensagem(
+      trecho && !trecho.bloqueavel && !trecho.bloqueado
+        ? `Interdição indisponível: ${trecho.motivoBloqueio}`
+        : "",
+      trecho && !trecho.bloqueavel && !trecho.bloqueado ? "erro" : ""
+    );
+    redesenhar();
+  });
+
+  controle.on("eligibilidadeAlterada", () => {
+    const trechos = controle.trechos();
+    camadaVias.atualizarDados(trechos);
+    seletor.atualizarLogradouros(controle.logradouros());
+    seletor.sincronizar(controle.selecionado);
     redesenhar();
   });
 

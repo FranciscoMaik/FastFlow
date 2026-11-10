@@ -4,6 +4,19 @@
 import { Grafo } from "../motor/grafo.js";
 
 const RAIO_TERRA = 6371000;
+const SITUACOES_INATIVAS = new Set([
+  "false",
+  "0",
+  "no",
+  "inactive",
+  "disabled",
+  "disused",
+  "abandoned",
+  "construction",
+  "proposed",
+  "closed",
+]);
+const TIPOS_VIA_INATIVA = new Set(["construction", "proposed", "abandoned", "disused", "razed", "demolished"]);
 
 export function distanciaMetros([lat1, lon1], [lat2, lon2]) {
   const rad = Math.PI / 180;
@@ -37,6 +50,18 @@ export function pontoNaGeometria({ pontos, acumulado }, distancia) {
   return pontos[pontos.length - 1];
 }
 
+function viaOperacional(properties) {
+  const valores = [properties.ativo, properties.operacional, properties.status];
+  const tipo = String(properties.tipo ?? "").toLowerCase();
+  return (
+    !valores.some((valor) => valor === false || (valor != null && SITUACOES_INATIVAS.has(String(valor).toLowerCase()))) &&
+    !TIPOS_VIA_INATIVA.has(tipo) &&
+    !["no", "private"].includes(String(properties.access ?? "").toLowerCase()) &&
+    !["no", "private"].includes(String(properties.motor_vehicle ?? "").toLowerCase()) &&
+    !["no", "private"].includes(String(properties.vehicle ?? "").toLowerCase())
+  );
+}
+
 export function construirGrafo(geojson) {
   const grafo = new Grafo();
   const vias = geojson.features.filter((f) => f.geometry?.type === "LineString");
@@ -66,6 +91,7 @@ export function construirGrafo(geojson) {
   let contador = 0;
   for (const via of vias) {
     const { nome, tipo, sentidoUnico, velocidade } = via.properties;
+    const operacional = viaOperacional(via.properties);
     const coords = via.geometry.coordinates;
     let inicio = 0;
     for (let i = 1; i < coords.length; i++) {
@@ -80,7 +106,7 @@ export function construirGrafo(geojson) {
       const de = no(fatia[0]);
       const para = no(fatia[fatia.length - 1]);
       const velocidadeMs = velocidade / 3.6;
-      const peso = geo.comprimento / velocidadeMs;
+      const peso = operacional ? geo.comprimento / velocidadeMs : Infinity;
       const arestas = [];
       const criar = (sufixo, origem, destino, g) => {
         const id = `${trechoId}${sufixo}`;
@@ -100,6 +126,7 @@ export function construirGrafo(geojson) {
         permiteDuplo: sentidoUnico === 0,
         nome: nome ?? null,
         tipo,
+        operacional,
         sentidoUnico: sentidoUnico !== 0,
         comprimento: geo.comprimento,
         pontos,

@@ -92,6 +92,10 @@ Esta tela serve para ver o mapa e a sua posição.
 
 Ao abrir, aparece por alguns instantes a mensagem *"Carregando malha viária de Cajamar…"*. Em seguida o mapa mostra as ruas da região, e os veículos começam a se mover sozinhos.
 
+A lista de seleção apresenta apenas trechos estruturais ativos, com alternativa de circulação na malha. Ruas locais, trechos terminais/sem desvio e vias desativadas não podem receber bloqueios. Ao clicar em uma dessas vias no mapa, o painel e a dica do mapa explicam o motivo; o botão **Bloquear** permanece desabilitado. Trechos já bloqueados continuam disponíveis para seleção e desbloqueio.
+
+Como critério de homologação, são aceitos `trunk`, `primary`, `secondary`, `tertiary` e suas variantes `_link`, desde que o grafo ativo ofereça alternativa para cada sentido de tráfego. Vias sem acesso veicular ou com estado `ativo`/`operacional` falso também são retiradas da simulação.
+
 ### 5.1 Partes da tela
 
 ```
@@ -215,17 +219,19 @@ Ao remover, a via volta a ficar cinza. Os veículos procuram de novo o caminho m
 
 ## 7. Por que um bloqueio pode ser recusado
 
-O FastFlow **não deixa veículos presos**. Antes de bloquear, ele testa o bloqueio sem aplicá-lo e confere se cada veículo continuaria tendo um caminho para voltar à malha viária principal.
+O FastFlow **não deixa veículos presos**. Antes de bloquear, verifica a topologia ativa e confirma que cada sentido operacional do trecho tem uma rota alternativa entre seus nós adjacentes. Também confere se cada veículo continuaria tendo um caminho para voltar à malha viária principal. A análise topológica é refeita ao carregar a malha e após cada bloqueio/desbloqueio; ela não roda no laço de animação.
 
 O bloqueio é recusado quando:
 
-1. **Há veículos dentro do próprio trecho que ficariam sem saída.**
+1. **O trecho é terminal ou não tem uma rota alternativa** depois da interdição.
+2. **A via não é estrutural ou está inoperante.** Vias locais e vias sem funcionamento não aparecem como opções na lista.
+3. **Há veículos dentro do próprio trecho que ficariam sem saída.**
    *Exemplo:* uma rua sem saída com um carro indo para o fim dela. Se o único acesso fosse bloqueado, o carro ficaria preso.
 
-2. **O bloqueio isolaria uma região onde há veículos.**
+4. **O bloqueio isolaria uma região onde há veículos.**
    *Exemplo:* um trecho de mão única que é a única saída de um bairro. Bloqueá-lo deixaria quem está no bairro sem como sair.
 
-3. **O trecho já está bloqueado.**
+5. **O trecho já está bloqueado.**
 
 **O que fazer quando o bloqueio é recusado:**
 - escolher outro trecho próximo;

@@ -3,7 +3,8 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { Grafo } from "../../js/motor/grafo.js";
 import { menorCaminho, maiorComponenteForte } from "../../js/motor/roteamento.js";
-import { validarBloqueio } from "../../js/motor/validacao.js";
+import { analisarElegibilidade, validarBloqueio } from "../../js/motor/validacao.js";
+import { construirGrafo } from "../../js/adaptador/carregarMalha.js";
 import { Simulacao } from "../../js/motor/simulacao.js";
 
 // Malha de teste (todas as vias de mão dupla, 100 m, 10 m/s):
@@ -84,12 +85,12 @@ test("validação recusa bloqueio que prende veículo no beco sem saída", () =>
   assert.equal(g.trechos.get("EF").bloqueado, false, "validação não pode alterar o grafo");
 });
 
-test("validação aceita bloqueio quando o veículo no trecho tem saída", () => {
+test("validação recusa trecho terminal mesmo quando o veículo presente tem saída", () => {
   const g = criarMalha();
   // Veículo saindo de F em direção a E: ao chegar em E ainda tem a malha toda.
   const resultado = validarBloqueio(g, "EF", [{ id: 1, arestaId: "EF<", no: "E" }]);
-  assert.equal(resultado.permitido, true);
-  assert.equal(resultado.veiculosNoTrecho, 1);
+  assert.equal(resultado.permitido, false);
+  assert.match(resultado.motivo, /sem rota de escape/);
 });
 
 test("validação recusa trecho já bloqueado ou inexistente", () => {
@@ -97,6 +98,70 @@ test("validação recusa trecho já bloqueado ou inexistente", () => {
   g.bloquearTrecho("AB");
   assert.equal(validarBloqueio(g, "AB", []).permitido, false);
   assert.equal(validarBloqueio(g, "XX", []).permitido, false);
+});
+
+test("elegibilidade topológica recusa becos sem saída e aceita trechos com desvio", () => {
+  const g = criarMalha();
+  const elegibilidade = analisarElegibilidade(g);
+  assert.equal(elegibilidade.get("AB").permitido, true);
+  assert.equal(elegibilidade.get("EF").permitido, false);
+  assert.match(elegibilidade.get("EF").motivo, /sem rota de escape/);
+  assert.equal(validarBloqueio(g, "EF", [], elegibilidade).permitido, false);
+});
+
+test("vias locais e marcadas como inoperantes não podem ser bloqueadas", () => {
+  const g = criarMalha();
+  g.trechos.get("AB").meta.tipo = "residential";
+  g.trechos.get("BC").meta.operacional = false;
+  const elegibilidade = analisarElegibilidade(g);
+  assert.match(elegibilidade.get("AB").motivo, /Via local/);
+  assert.match(elegibilidade.get("BC").motivo, /inoperante/);
+});
+
+test("via de mão única exige rota alternativa no sentido operacional", () => {
+  const g = new Grafo();
+  const adicionar = (id, de, para) => {
+    g.adicionarAresta({ id: `${id}>`, de, para, peso: 1, trechoId: id });
+    g.adicionarTrecho({ id, arestas: [`${id}>`], tipo: "primary" });
+  };
+  adicionar("direta", "A", "B");
+  adicionar("desvio1", "A", "C");
+  adicionar("desvio2", "C", "B");
+  assert.equal(analisarElegibilidade(g).get("direta").permitido, true);
+
+  const terminal = new Grafo();
+  terminal.adicionarAresta({ id: "XY>", de: "X", para: "Y", peso: 1, trechoId: "XY" });
+  terminal.adicionarTrecho({ id: "XY", arestas: ["XY>"], tipo: "primary" });
+  assert.equal(analisarElegibilidade(terminal).get("XY").permitido, false);
+});
+
+test("bloqueio existente remove o desvio e invalida elegibilidade em tempo de operação", () => {
+  const g = criarMalha();
+  assert.equal(analisarElegibilidade(g).get("AB").permitido, true);
+  g.bloquearTrecho("DE");
+  assert.equal(analisarElegibilidade(g).get("AB").permitido, false);
+});
+
+test("malha marca como inoperante segmento desativado recebido no GeoJSON", () => {
+  const g = construirGrafo({
+    type: "FeatureCollection",
+    features: [
+      {
+        type: "Feature",
+        properties: { nome: "Via fechada", tipo: "primary", sentidoUnico: 0, velocidade: 30, ativo: false },
+        geometry: { type: "LineString", coordinates: [[-46.8, -23.3], [-46.81, -23.31]] },
+      },
+      {
+        type: "Feature",
+        properties: { nome: "Via em obras", tipo: "primary", sentidoUnico: 0, velocidade: 30, status: "construction" },
+        geometry: { type: "LineString", coordinates: [[-46.9, -23.4], [-46.91, -23.41]] },
+      },
+    ],
+  });
+  const trechos = [...g.trechos.values()];
+  assert.deepEqual(trechos.map((trecho) => trecho.meta.operacional), [false, false]);
+  assert.ok(trechos.every((trecho) => trecho.arestas.every((id) => !g.estaAcessivel(id))));
+  assert.ok(trechos.every((trecho) => /inoperante/.test(analisarElegibilidade(g).get(trecho.id).motivo)));
 });
 
 test("inverter sentido em mão dupla cicla 0→1→-1→0 e emite evento", () => {
