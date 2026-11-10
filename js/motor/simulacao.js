@@ -2,11 +2,57 @@
 // um destino; ao chegar, sorteia outro. Respeita lombadas, semáforos, filas e
 // inversões de sentido.
 import { Emissor } from "./eventos.js";
-import { maiorComponenteForte, menorCaminho } from "./roteamento.js";
+import { alcancaveis, maiorComponenteForte, menorCaminho, portoesDaMalha } from "./roteamento.js";
 import { GerenciadorDispositivos } from "./dispositivos.js";
 
 const VIAGENS_NA_MEDIA = 50;
 const TENTATIVAS_DE_SORTEIO = 12;
+
+// Distribuição das viagens:
+// - parte dos veículos entra pelos portões (bordas da área), como o tráfego de
+//   passagem de uma rodovia; o restante nasce nas vias internas;
+// - parte das viagens internas termina saindo da área por um portão.
+// Portões de vias de maior hierarquia recebem mais tráfego. A fração que usa a
+// borda cresce com o peso total dos portões e chega ao máximo com o equivalente
+// a uma pista de rodovia (PESO_REFERENCIA_PORTOES): uma região só de ruas
+// locais quase não tem tráfego de passagem.
+const FRACAO_MAXIMA_ENTRADA_PELA_BORDA = 0.35;
+const FRACAO_MAXIMA_SAIDA_PELA_BORDA = 0.3;
+const PESO_REFERENCIA_PORTOES = 8;
+// Vias a partir deste peso contam como "principais": suas pontas viram portões
+// (becos residenciais continuam sendo destinos internos comuns) e a chance de
+// nascer nelas é proporcional à extensão.
+const PESO_MINIMO_PONTA = 1;
+const COMPRIMENTO_REFERENCIA = 100; // m: extensão de um trecho urbano típico
+const PESO_HIERARQUIA = {
+  motorway: 8, trunk: 6, primary: 4, secondary: 3, tertiary: 2,
+  motorway_link: 2, trunk_link: 2, primary_link: 1.5, secondary_link: 1.2, tertiary_link: 1,
+  unclassified: 0.6, residential: 0.25, living_street: 0.1,
+};
+
+// Sorteio ponderado (soma acumulada + busca binária): O(log n) por sorteio.
+function criarSorteio(itens, peso) {
+  const acumulado = [];
+  let total = 0;
+  for (const item of itens) {
+    total += Math.max(0, peso(item));
+    acumulado.push(total);
+  }
+  return {
+    vazio: total <= 0,
+    sortear(aleatorio) {
+      const alvo = aleatorio() * total;
+      let baixo = 0;
+      let alto = acumulado.length - 1;
+      while (baixo < alto) {
+        const meio = (baixo + alto) >> 1;
+        if (acumulado[meio] > alvo) alto = meio;
+        else baixo = meio + 1;
+      }
+      return itens[baixo];
+    },
+  };
+}
 
 const ACELERACAO_MAX = 2.5; // m/s²
 const DESACELERACAO_CONFORTAVEL = 3.2; // m/s²
@@ -281,7 +327,13 @@ export class Simulacao extends Emissor {
   #novaViagem(veiculo, noAtual) {
     const arestaAtual = veiculo.rota[veiculo.indice];
     for (let i = 0; i < TENTATIVAS_DE_SORTEIO; i++) {
-      const destino = this.#sortearNo();
+      const destino = this.#sortearDestino(noAtual);
+      if (destino == null) break;
+      if (destino === noAtual) {
+        // Já está num portão de saída: a viagem termina ao fim desta aresta.
+        Object.assign(veiculo, { destino, rota: [arestaAtual], indice: 0, inicio: this.tempo, status: "circulando" });
+        return true;
+      }
       const caminho = menorCaminho(this.grafo, noAtual, destino);
       if (caminho && caminho.length > 0) {
         Object.assign(veiculo, {
@@ -416,41 +468,131 @@ export class Simulacao extends Emissor {
     return this.#novaViagem(veiculo, oposta.para);
   }
 
+  // Recalcula as malhas usadas no sorteio de origens e destinos. Chamado no início
+  // e sempre que a topologia muda (bloqueio, liberação ou inversão de sentido).
   #atualizarMalhaPrincipal() {
     const principal = maiorComponenteForte(this.grafo);
     this.malhaPrincipal = [...principal];
     this.arestasPrincipais = [...this.grafo.arestas.values()].filter(
       (a) => this.grafo.estaAcessivel(a.id) && principal.has(a.de) && principal.has(a.para)
     );
+    // Vias internas. Locais (residencial etc.): mesma chance por trecho, como antes,
+    // para não alterar o fluxo que já funcionava. Principais (terciária para cima,
+    // alças e rodovias): chance proporcional à extensão — uma estrada de 3 km
+    // recebe tantos veículos quanto 30 trechos de 100 m.
+    this.sorteioInterno = criarSorteio(this.arestasPrincipais, (a) =>
+      this.#pesoHierarquia(a.trechoId) >= PESO_MINIMO_PONTA
+        ? Math.max(1, a.comprimento / COMPRIMENTO_REFERENCIA)
+        : 1
+    );
+
+    // Portões: entradas e saídas pela borda (rodovias cortadas pelo limite do mapa
+    // etc.). Só os que estão FORA da malha principal: as vias da malha principal já
+    // recebem tráfego normalmente e continuam exatamente como antes.
+    const portoes = portoesDaMalha(this.grafo);
+    const fontes = new Set(portoes.fontes);
+    const sumidouros = new Set(portoes.sumidouros);
+    const entradas = portoes.arestasEntrada.filter(
+      (a) => this.grafo.estaAcessivel(a.id) && !principal.has(a.de) &&
+        (fontes.has(a.de) || this.#pesoHierarquia(a.trechoId) >= PESO_MINIMO_PONTA)
+    );
+    this.sorteioEntrada = criarSorteio(entradas, (a) => this.#pesoHierarquia(a.trechoId));
+    this.pesoSaida = new Map();
+    for (const no of portoes.nosSaida) {
+      if (principal.has(no)) continue;
+      const peso = Math.max(0, ...this.grafo.entradas.get(no).map((id) => this.#pesoHierarquia(this.grafo.arestas.get(id).trechoId)));
+      if (sumidouros.has(no) || peso >= PESO_MINIMO_PONTA) this.pesoSaida.set(no, peso);
+    }
+    this.nosSaida = [...this.pesoSaida.keys()];
+    const fracao = (soma, maxima) => maxima * Math.min(1, soma / PESO_REFERENCIA_PORTOES);
+    this.fracaoEntradaPelaBorda = fracao(entradas.reduce((s, a) => s + this.#pesoHierarquia(a.trechoId), 0), FRACAO_MAXIMA_ENTRADA_PELA_BORDA);
+    this.fracaoSaidaPelaBorda = fracao([...this.pesoSaida.values()].reduce((s, p) => s + p, 0), FRACAO_MAXIMA_SAIDA_PELA_BORDA);
+    this.destinosPorNo = new Map(); // cache: nó → destinos alcançáveis a partir dele
   }
 
-  #sortearNo() {
+  #pesoHierarquia(trechoId) {
+    return PESO_HIERARQUIA[this.grafo.trechos.get(trechoId)?.meta?.tipo] ?? 0.5;
+  }
+
+  // Destinos possíveis a partir de um nó: a malha principal (se alcançável) e os
+  // portões de saída alcançáveis. Um veículo numa rodovia isolada, por exemplo,
+  // só pode seguir até a saída dela — nunca é mandado para um ponto inalcançável.
+  #destinosDe(no) {
+    let destinos = this.destinosPorNo.get(no);
+    if (!destinos) {
+      const alcance = alcancaveis(this.grafo, [no]);
+      const internos = this.malhaPrincipal.some((n) => alcance.has(n));
+      const saidas = this.nosSaida.filter((n) => alcance.has(n) && (n !== no || this.#ehSumidouro(n)));
+      destinos = {
+        internos,
+        sorteioSaida: criarSorteio(saidas, (n) => this.pesoSaida.get(n)),
+      };
+      this.destinosPorNo.set(no, destinos);
+    }
+    return destinos;
+  }
+
+  #ehSumidouro(no) {
+    return this.grafo.saidas.get(no).every((id) => !this.grafo.estaAcessivel(id));
+  }
+
+  #sortearDestino(noAtual) {
+    const { internos, sorteioSaida } = this.#destinosDe(noAtual);
+    const sairPelaBorda = !sorteioSaida.vazio && (!internos || this.aleatorio() < this.fracaoSaidaPelaBorda);
+    if (sairPelaBorda) return sorteioSaida.sortear(this.aleatorio);
+    if (!internos) return null;
     return this.malhaPrincipal[Math.floor(this.aleatorio() * this.malhaPrincipal.length)];
   }
 
-  #criarVeiculo({ naEntrada = false } = {}) {
-    if (this.arestasPrincipais.length === 0) return null;
-    for (let tentativa = 0; tentativa < TENTATIVAS_DE_SORTEIO; tentativa++) {
-      const inicial =
-        this.arestasPrincipais[Math.floor(this.aleatorio() * this.arestasPrincipais.length)];
-      const progresso = naEntrada ? 0 : this.aleatorio() * inicial.comprimento;
-      if (
-        naEntrada &&
-        this.veiculos.some(
-          (veiculo) =>
-            veiculo.rota[veiculo.indice] === inicial.id &&
-            veiculo.progresso < DISTANCIA_SEGURANCA_FILA
-        )
-      ) {
+  // Inserção segura: ninguém nasce a menos da distância de segurança de outro
+  // veículo na mesma aresta, e a velocidade inicial respeita o limite da via e a
+  // distância de frenagem até o veículo da frente.
+  #velocidadeInicialSegura(aresta, progresso) {
+    let folgaFrente = Infinity;
+    for (const v of this.veiculos) {
+      if (v.rota[v.indice + 1] === aresta.id) {
+        // Vem pela aresta anterior e vai entrar nesta: precisa de espaço para frear,
+        // pois só "enxerga" este veículo depois de cruzar o cruzamento.
+        const atual = this.grafo.arestas.get(v.rota[v.indice]);
+        const atras = atual.comprimento - v.progresso + progresso;
+        const frenagem = (v.velocidade * v.velocidade) / (2 * DESACELERACAO_CONFORTAVEL);
+        if (atras < DISTANCIA_SEGURANCA_FILA + frenagem) return null;
         continue;
       }
+      if (v.rota[v.indice] !== aresta.id) continue;
+      const distancia = v.progresso - progresso;
+      if (Math.abs(distancia) < DISTANCIA_SEGURANCA_FILA) return null;
+      if (distancia > 0 && distancia < folgaFrente) folgaFrente = distancia;
+    }
+    const livre = Math.max(0, folgaFrente - DISTANCIA_SEGURANCA_FILA);
+    return Math.min(aresta.velocidade, Math.sqrt(2 * DESACELERACAO_CONFORTAVEL * livre));
+  }
+
+  #sortearOrigem() {
+    const pelaBorda = !this.sorteioEntrada.vazio &&
+      (this.sorteioInterno.vazio || this.aleatorio() < this.fracaoEntradaPelaBorda);
+    if (pelaBorda) return { aresta: this.sorteioEntrada.sortear(this.aleatorio), pelaBorda: true };
+    if (this.sorteioInterno.vazio) return null;
+    return { aresta: this.sorteioInterno.sortear(this.aleatorio), pelaBorda: false };
+  }
+
+  #criarVeiculo({ naEntrada = false } = {}) {
+    for (let tentativa = 0; tentativa < TENTATIVAS_DE_SORTEIO; tentativa++) {
+      const origem = this.#sortearOrigem();
+      if (!origem) return null;
+      const inicial = origem.aresta;
+      // Inserido durante a simulação: começa no início da aresta (quem vem pela
+      // borda "entra" no mapa). No preenchimento inicial, já está espalhado nela.
+      const progresso = naEntrada ? 0 : this.aleatorio() * inicial.comprimento;
+      const velocidade = this.#velocidadeInicialSegura(inicial, progresso);
+      if (velocidade == null) continue;
       const veiculo = {
         id: this.proximoId++,
         destino: null,
         rota: [inicial.id],
         indice: 0,
         progresso,
-        velocidade: inicial.velocidade,
+        velocidade,
         inicio: this.tempo,
         status: "circulando",
         evacuando: false,

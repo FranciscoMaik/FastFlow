@@ -196,6 +196,15 @@ A tela permite avaliar intervenções físicas e semafóricas na malha viária e
 
 - Selecione a via e clique em **Desbloquear**, ou clique em **Remover** na lista de vias bloqueadas.
 
+### 7.1 Rodovias e tráfego de passagem
+
+Em **Jordanésia** e **Polvilho**, a **Rodovia Comunicador Silvio Santos (SP-330)** e suas alças de acesso fazem parte da simulação. Em Jordanésia, a **Rodovia Edgard Máximo Zambotto (SP-354)** também.
+
+- Uma rodovia atravessa a região: os veículos **entram pela borda do mapa** de um lado e **saem pela borda** do outro (tráfego de passagem). Parte dos veículos dos bairros também usa as alças para entrar na rodovia e deixar a região.
+- Vias de maior hierarquia (rodovias, avenidas) recebem mais tráfego que ruas residenciais.
+- A quantidade escolhida em **Veículos** continua valendo: quem sai pela borda é reposto por um novo veículo. Como a malha dessas regiões ficou maior com a rodovia, aumente a quantidade (100 ou 150) para ver os bairros e a rodovia bem movimentados ao mesmo tempo.
+- **Bloquear a rodovia** é permitido mesmo com veículos nela: quem já passou da última alça antes da interdição **forma fila** (pontos vermelhos, "retidos"), e quem chega depois desvia pelas alças. Ao desbloquear, a fila se desfaz. Nas vias dos bairros a regra continua a mesma: um bloqueio que deixaria algum veículo sem saída é recusado.
+
 ---
 
 ## 8. Controles da simulação
@@ -217,7 +226,7 @@ node --test
 ```
 
 **Cadastrar uma nova região simulada:**
-1. Baixe as vias da nova área pela Overpass API. A consulta modelo está no início de `scripts/gerar-malha.mjs`; troque as coordenadas.
+1. Baixe as vias da nova área pela Overpass API. A consulta modelo está no início de `scripts/gerar-malha.mjs`; troque as coordenadas. Mantenha `motorway`, `motorway_link`, `trunk_link` e as demais classes da consulta: sem as alças (`*_link`), as rodovias ficam desligadas das ruas.
 2. Converta para o formato do aplicativo:
    ```bash
    node scripts/gerar-malha.mjs resposta-overpass.json > data/malha-nova-regiao.geojson
