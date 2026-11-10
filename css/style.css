@@ -2093,3 +2093,236 @@ path.veiculo.evacuando {
   font-size: 0.72rem;
   font-weight: 700;
 }
+
+/* ---------- Cards analíticos / drawer de resultados ---------- */
+.cards-analiticos {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 8px;
+  margin: 0 8px;
+}
+
+.card-analitico {
+  padding: 10px 12px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+}
+
+.card-analitico.destaque {
+  border-color: var(--cor-primaria-suave);
+  background: linear-gradient(180deg, var(--cor-primaria-suave) 0%, var(--cor-superficie) 70%);
+}
+
+.card-analitico-titulo {
+  margin: 0 0 4px;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--cor-texto-suave);
+}
+
+.card-analitico-valor {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--cor-texto-forte);
+  line-height: 1.2;
+}
+
+.card-analitico-detalhe {
+  margin: 4px 0 0;
+  font-size: 0.7rem;
+  color: var(--cor-texto-suave);
+}
+
+.indicadores-analiticos {
+  margin-top: 12px;
+}
+
+.barra-simulacao .botao-relatorio {
+  background: var(--cor-primaria);
+  color: var(--cor-branco);
+  border: 1px solid var(--cor-primaria-forte);
+}
+
+.barra-simulacao .botao-relatorio:hover {
+  background: var(--cor-primaria-forte);
+}
+
+.drawer-resultados-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 2400;
+  background: rgba(15, 23, 42, 0.35);
+}
+
+.drawer-resultados {
+  position: fixed;
+  top: 0;
+  right: 0;
+  z-index: 2500;
+  display: flex;
+  flex-direction: column;
+  width: min(400px, 100vw);
+  height: 100vh;
+  background: var(--cor-superficie);
+  border-left: 1px solid var(--cor-borda);
+  box-shadow: -8px 0 28px rgba(15, 23, 42, 0.18);
+  animation: drawer-entrar 0.2s ease-out;
+}
+
+/* display:flex acima sobrescreve o [hidden] do UA — forçar ocultação */
+.drawer-resultados[hidden],
+.drawer-resultados-fundo[hidden] {
+  display: none !important;
+}
+
+@keyframes drawer-entrar {
+  from {
+    transform: translateX(16px);
+    opacity: 0.6;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+.drawer-resultados-cabecalho {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 18px 18px 14px;
+  border-bottom: 1px solid var(--cor-borda);
+}
+
+.drawer-resultados-eyebrow {
+  margin: 0 0 2px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--cor-primaria-forte);
+}
+
+.drawer-resultados-cabecalho h2 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: var(--cor-texto);
+}
+
+.drawer-resultados-subtitulo {
+  margin: 4px 0 0;
+  font-size: 0.78rem;
+  color: var(--cor-texto-suave);
+}
+
+.drawer-resultados-corpo {
+  flex: 1;
+  overflow: auto;
+  padding: 8px 10px 24px;
+}
+
+.drawer-secao {
+  margin-top: 14px;
+}
+
+.drawer-secao > h3 {
+  margin: 0 8px 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--cor-texto-forte);
+}
+
+.estatisticas-drawer {
+  margin-top: 0;
+}
+
+.lista-comparacao {
+  list-style: none;
+  margin: 0 8px;
+  padding: 0;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  overflow: hidden;
+}
+
+.lista-comparacao li {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 10px;
+  border-bottom: 1px solid var(--cor-borda);
+  font-size: 0.8rem;
+}
+
+.lista-comparacao li:last-child {
+  border-bottom: 0;
+}
+
+.comp-rotulo {
+  color: var(--cor-texto-suave);
+}
+
+.comp-delta {
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+.comp-delta.melhor {
+  color: var(--cor-sucesso-forte);
+}
+
+.comp-delta.pior {
+  color: var(--cor-bloqueio-forte);
+}
+
+.comp-delta.neutro {
+  color: var(--cor-texto-suave);
+}
+
+.lista-historico-rodadas {
+  list-style: none;
+  margin: 0 8px;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.lista-historico-rodadas li {
+  padding: 8px 10px;
+  border: 1px solid var(--cor-borda);
+  border-radius: var(--raio);
+  background: var(--cor-fundo);
+}
+
+.hist-cabecalho {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+}
+
+.hist-cabecalho time {
+  color: var(--cor-texto-suave);
+  font-variant-numeric: tabular-nums;
+}
+
+.hist-detalhe,
+.hist-local {
+  margin-top: 4px;
+  font-size: 0.72rem;
+  color: var(--cor-texto-suave);
+}
+
+body.drawer-resultados-aberto {
+  overflow: hidden;
+}
+
+@media (max-width: 480px) {
+  .drawer-resultados {
+    width: 100vw;
+  }
+}

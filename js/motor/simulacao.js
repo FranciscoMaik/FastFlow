@@ -91,6 +91,9 @@ export class Simulacao extends Emissor {
       }
     }
     this.dispositivos.avancar(dt);
+    // Retidos tentam sair a cada tick: cobre o caso em que uma inversão
+    // reabre a malha e o veículo estava parado numa aresta já fechada.
+    this.#liberarRetidosPendentes();
     this.#atualizarVeiculos(dt);
     this.emitir("tick", { tempo: this.tempo });
   }
@@ -277,19 +280,30 @@ export class Simulacao extends Emissor {
     if (this.duracoes.length > VIAGENS_NA_MEDIA) this.duracoes.shift();
   }
 
-  // Coloca o veículo (parado no fim da aresta atual) em uma nova viagem.
+  // Coloca o veículo em uma nova viagem a partir de `noAtual`.
+  // Se já concluiu a aresta atual (ou ela está fechada), descarta essa aresta
+  // e entra direto no novo caminho — evita ficar preso numa via inacessível.
   #novaViagem(veiculo, noAtual) {
-    const arestaAtual = veiculo.rota[veiculo.indice];
+    const arestaAtualId = veiculo.rota[veiculo.indice];
+    const arestaAtual = this.grafo.arestas.get(arestaAtualId);
+    const noFim = !arestaAtual || veiculo.progresso >= arestaAtual.comprimento - 0.5;
+    const descartarAtual = noFim || !this.grafo.estaAcessivel(arestaAtualId);
+
     for (let i = 0; i < TENTATIVAS_DE_SORTEIO; i++) {
       const destino = this.#sortearNo();
+      if (destino === noAtual) continue;
       const caminho = menorCaminho(this.grafo, noAtual, destino);
       if (caminho && caminho.length > 0) {
+        const primeira = this.grafo.arestas.get(caminho[0]);
         Object.assign(veiculo, {
           destino,
-          rota: [arestaAtual, ...caminho],
+          rota: descartarAtual ? caminho : [arestaAtualId, ...caminho],
           indice: 0,
+          progresso: descartarAtual ? 0 : veiculo.progresso,
           inicio: this.tempo,
           status: veiculo.status === "retido" ? "desviado" : "circulando",
+          evacuando: false,
+          velocidade: Math.max(veiculo.velocidade || 0, (primeira?.velocidade ?? 10) * 0.5),
         });
         return true;
       }
@@ -301,13 +315,29 @@ export class Simulacao extends Emissor {
   // Recalcula a rota a partir do fim da aresta atual. Se o destino ficou
   // inalcançável, escolhe outro. Retorna false se o veículo ficou retido.
   #recalcular(veiculo) {
-    const arestaAtual = veiculo.rota[veiculo.indice];
-    const noAtual = this.grafo.arestas.get(arestaAtual).para;
+    const arestaAtualId = veiculo.rota[veiculo.indice];
+    const arestaAtual = this.grafo.arestas.get(arestaAtualId);
+    if (!arestaAtual) return false;
+    const noAtual = arestaAtual.para;
+    const noFim = veiculo.progresso >= arestaAtual.comprimento - 0.5;
+    const arestaInacessivel = !this.grafo.estaAcessivel(arestaAtualId);
+
+    // No fim de via fechada: não reinsere a aresta inacessível na rota.
+    if (arestaInacessivel && noFim) {
+      return this.#novaViagem(veiculo, noAtual);
+    }
+
     const caminho = menorCaminho(this.grafo, noAtual, veiculo.destino);
     if (caminho && caminho.length > 0) {
-      veiculo.rota = [arestaAtual, ...caminho];
+      veiculo.rota = arestaInacessivel && noFim ? caminho : [arestaAtualId, ...caminho];
       veiculo.indice = 0;
+      if (arestaInacessivel && noFim) veiculo.progresso = 0;
       if (veiculo.status === "retido") veiculo.status = "desviado";
+      veiculo.evacuando = false;
+      veiculo.velocidade = Math.max(
+        veiculo.velocidade || 0,
+        (this.grafo.arestas.get(veiculo.rota[0])?.velocidade ?? arestaAtual.velocidade) * 0.5
+      );
       return true;
     }
     return this.#novaViagem(veiculo, noAtual);
@@ -318,6 +348,35 @@ export class Simulacao extends Emissor {
     veiculo.rota = [veiculo.rota[veiculo.indice]];
     veiculo.indice = 0;
     veiculo.velocidade = 0;
+    veiculo.evacuando = false;
+  }
+
+  /**
+   * Tenta tirar um retido da imobilidade: U-turn se a aresta atual está fechada,
+   * senão recalcula/nova viagem. Usado na inversão e a cada tick.
+   */
+  #tentarLiberarRetido(veiculo) {
+    if (veiculo.status !== "retido") return false;
+    const arestaId = veiculo.rota[veiculo.indice];
+    const aresta = this.grafo.arestas.get(arestaId);
+    if (!aresta) return false;
+
+    if (!this.grafo.estaAcessivel(arestaId)) {
+      if (this.#fazerUturn(veiculo, aresta.trechoId)) return true;
+      // Sem oposta aberta: evacua até o fim da via para tentar de novo no nó.
+      veiculo.evacuando = true;
+      veiculo.status = "desviado";
+      veiculo.velocidade = Math.max(veiculo.velocidade || 0, aresta.velocidade * 0.5);
+      return true;
+    }
+
+    return this.#recalcular(veiculo);
+  }
+
+  #liberarRetidosPendentes() {
+    for (const veiculo of this.veiculos) {
+      if (veiculo.status === "retido") this.#tentarLiberarRetido(veiculo);
+    }
   }
 
   #aoAlterarBloqueio({ trechoId, bloqueado }) {
@@ -358,10 +417,27 @@ export class Simulacao extends Emissor {
     for (const veiculo of this.veiculos) {
       const arestaAtualId = veiculo.rota[veiculo.indice];
       const arestaAtual = this.grafo.arestas.get(arestaAtualId);
-      const noTrecho = arestaAtual.trechoId === trechoId;
-      const sentidoFechouAresta = noTrecho && !this.grafo.estaAcessivel(arestaAtualId);
+      if (!arestaAtual) continue;
 
-      if (sentidoFechouAresta) {
+      const noTrecho = arestaAtual.trechoId === trechoId;
+      const arestaInacessivel = !this.grafo.estaAcessivel(arestaAtualId);
+      const estavaRetido = veiculo.status === "retido";
+
+      // Retido em qualquer via: tenta U-turn / nova rota com a malha já atualizada.
+      if (estavaRetido) {
+        const arestaAntes = arestaAtualId;
+        if (this.#tentarLiberarRetido(veiculo) && veiculo.status !== "retido") {
+          recalculadas += 1;
+          const arestaDepois = veiculo.rota[veiculo.indice];
+          if (arestaDepois !== arestaAntes && arestaDepois?.startsWith(`${arestaAtual.trechoId}`)) {
+            retornos += 1;
+          }
+        }
+        continue;
+      }
+
+      // Via atual fechada pela inversão: U-turn (política uturn) ou evacuação (complete).
+      if (arestaInacessivel && noTrecho) {
         if (this.politicaSentido === "uturn") {
           if (this.#fazerUturn(veiculo, trechoId)) {
             retornos += 1;
@@ -374,16 +450,21 @@ export class Simulacao extends Emissor {
         veiculo.rota = [arestaAtualId];
         veiculo.indice = 0;
         veiculo.status = "desviado";
+        veiculo.velocidade = Math.max(veiculo.velocidade || 0, arestaAtual.velocidade * 0.5);
         evacuando += 1;
         continue;
       }
 
       const futuras = veiculo.rota.slice(veiculo.indice + 1);
-      const precisa = futuras.some((id) => !this.grafo.estaAcessivel(id));
-      if (!precisa) continue;
+      const futurasInacessiveis = futuras.some((id) => !this.grafo.estaAcessivel(id));
+      if (!futurasInacessiveis) continue;
+
+      const antes = futuras.join();
       this.#recalcular(veiculo);
       if (veiculo.status !== "retido") veiculo.status = "desviado";
-      recalculadas += 1;
+      if (veiculo.rota.slice(veiculo.indice + 1).join() !== antes) {
+        recalculadas += 1;
+      }
     }
 
     this.evacuados += evacuando;

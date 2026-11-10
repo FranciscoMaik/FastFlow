@@ -138,6 +138,22 @@
               </div>
             </dl>
           </section>
+
+          <section class="painel-secao indicadores-analiticos" aria-labelledby="h-analiticos">
+            <h2 id="h-analiticos">Fluxo viário</h2>
+            <div class="cards-analiticos">
+              <article class="card-analitico destaque">
+                <h3 class="card-analitico-titulo">Vias com trânsito intenso</h3>
+                <p class="card-analitico-valor" id="estCongestao">—</p>
+                <p class="card-analitico-detalhe" id="estCongestaoPct"></p>
+              </article>
+              <article class="card-analitico destaque">
+                <h3 class="card-analitico-titulo">Tempo médio de locomoção</h3>
+                <p class="card-analitico-valor" id="estTempoLocomocao">—</p>
+                <p class="card-analitico-detalhe">Unidade: minutos</p>
+              </article>
+            </div>
+          </section>
         </div>
       </div>
     </aside>
@@ -166,6 +182,7 @@
         <div class="divisor-barra" aria-hidden="true"></div>
 
         <button id="btnPausar" type="button" class="botao botao-secundario" aria-pressed="false">Pausar</button>
+        <button id="btnRelatorio" type="button" class="botao botao-relatorio" title="Encerra a rodada e abre o relatório">Encerrar e ver relatório</button>
         <label class="campo">
           <span>Veículos</span>
           <select id="selQuantidade">
@@ -184,6 +201,8 @@
           </select>
         </label>
       </div>
+
+      <div id="drawerResultados" class="drawer-resultados-host"></div>
 
       <div id="bannerFerramenta" class="banner-ferramenta" hidden role="status" aria-live="polite">
         <span id="textoBannerFerramenta">Clique sobre um trecho de via para posicionar.</span>
