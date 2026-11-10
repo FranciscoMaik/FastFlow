@@ -225,6 +225,8 @@ Para rodar todos os testes automatizados do motor, lombadas, semáforos e rotas:
 node --test
 ```
 
+**Vídeo explicativo dos tooltips:** [assistir à demonstração acessível em MP4](./videos/tooltip-acessivel.mp4). O vídeo tem legendas incorporadas e apresenta os gatilhos, o reposicionamento, os atributos de acessibilidade e os testes executados.
+
 **Cadastrar uma nova região simulada:**
 1. Baixe as vias da nova área pela Overpass API. A consulta modelo está no início de `scripts/gerar-malha.mjs`; troque as coordenadas. Mantenha `motorway`, `motorway_link`, `trunk_link` e as demais classes da consulta: sem as alças (`*_link`), as rodovias ficam desligadas das ruas.
 2. Converta para o formato do aplicativo:

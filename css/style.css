@@ -33,6 +33,67 @@
   --raio: 6px;
   --transicao: 0.15s;
   --sombra: 0 4px 16px rgba(15, 23, 42, 0.12);
+  --tooltip-fundo: #101a2b;
+  --tooltip-texto: #fff;
+  --tooltip-sombra: 0 8px 24px rgba(15, 23, 42, 0.2);
+}
+
+.tooltip-flutuante {
+  position: fixed;
+  z-index: 2000;
+  width: max-content;
+  max-width: min(280px, calc(100vw - 24px));
+  padding: 8px 10px;
+  border: 1px solid #ffffff26;
+  border-radius: 6px;
+  background: var(--tooltip-fundo);
+  box-shadow: var(--tooltip-sombra);
+  color: var(--tooltip-texto);
+  font: 500 0.75rem/1.45 var(--fonte);
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 120ms ease, visibility 120ms ease;
+}
+
+.tooltip-flutuante[data-visible="true"] {
+  opacity: 1;
+  visibility: visible;
+}
+
+.tooltip-ajuda {
+  display: inline-grid;
+  width: 20px;
+  height: 20px;
+  flex: 0 0 auto;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--cor-texto-suave);
+  cursor: help;
+  vertical-align: middle;
+}
+
+.tooltip-ajuda:hover,
+.tooltip-ajuda:focus-visible {
+  color: var(--cor-primaria-forte);
+}
+
+.tooltip-ajuda:focus-visible {
+  outline: 2px solid var(--cor-primaria);
+  outline-offset: 2px;
+}
+
+.tooltip-ajuda svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.5;
 }
 
 * {
@@ -311,7 +372,12 @@ body {
 .sidebar .painel-secao h2 {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  gap: 6px;
+  justify-content: flex-start;
+}
+
+.sidebar .painel-secao h2 .contador {
+  margin-left: auto;
 }
 
 .contador {
