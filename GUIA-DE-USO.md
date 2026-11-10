@@ -56,6 +56,9 @@ Todas as telas têm a mesma organização:
 - **Menu superior:** troca de tela. A tela aberta fica destacada em azul.
 - **Painel lateral (esquerda):** opções e informações da tela.
 - **Área central:** o mapa.
+- **Ajuda contextual:** passe o mouse ou leve o foco do teclado a um campo com ajuda. No celular, toque no campo ou no ícone de interrogação. O texto explica o controle sem interromper a ação.
+
+Os tooltips aparecem junto ao elemento, reposicionam-se quando necessário e não contêm links nem botões. Para habilitar a ajuda em outro elemento da interface, adicione um atributo `data-tooltip="Texto informativo"`; o componente `js/ui/tooltip.js` cuida do posicionamento, dos atrasos e da associação acessível. Para exibir o ícone padrão, use um elemento com `data-tooltip-icon="Texto informativo"`.
 
 ---
 
@@ -309,6 +312,8 @@ Depois abra `http://localhost:8000/pagina2.html`.
 ```bash
 node --test
 ```
+
+**Vídeo explicativo dos tooltips:** [assistir à demonstração acessível em MP4](./videos/tooltip-acessivel.mp4). O vídeo tem legendas incorporadas e apresenta os gatilhos, o reposicionamento, os atributos de acessibilidade e os testes executados.
 
 **Trocar a região simulada:**
 1. Baixe as vias da nova área pela Overpass API. A consulta modelo está no início de `scripts/gerar-malha.mjs`; troque as coordenadas.

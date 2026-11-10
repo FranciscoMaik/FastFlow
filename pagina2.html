@@ -32,13 +32,13 @@
         <h2>Seleção de via</h2>
         <label class="campo">
           <span>Logradouro</span>
-          <select id="selLogradouro">
+          <select id="selLogradouro" data-tooltip="Escolha uma rua para listar seus trechos disponíveis.">
             <option value="">Selecione um logradouro…</option>
           </select>
         </label>
         <label class="campo">
           <span>Trecho</span>
-          <select id="selTrecho" disabled>
+          <select id="selTrecho" disabled data-tooltip="Selecione o segmento da via que deseja bloquear ou consultar.">
             <option value="">Escolha um logradouro</option>
           </select>
         </label>
@@ -49,8 +49,8 @@
       <section class="painel-secao">
         <h2>Ações</h2>
         <div class="acoes">
-          <button id="btnBloquear" type="button" class="botao botao-bloquear" disabled>Bloquear</button>
-          <button id="btnDesbloquear" type="button" class="botao botao-secundario" disabled>Desbloquear</button>
+          <button id="btnBloquear" type="button" class="botao botao-bloquear" disabled data-tooltip="Fecha o trecho selecionado para novos percursos e recalcula as rotas afetadas.">Bloquear</button>
+          <button id="btnDesbloquear" type="button" class="botao botao-secundario" disabled data-tooltip="Reabre o trecho e permite que ele volte a ser considerado no cálculo de rotas.">Desbloquear</button>
         </div>
         <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
       </section>
@@ -63,7 +63,7 @@
       </section>
 
       <section class="painel-secao">
-        <h2>Impacto na simulação</h2>
+        <h2>Impacto na simulação <span data-tooltip-icon="Indicadores atualizados durante a execução, como desvios, retenções e duração média das viagens."></span></h2>
         <dl class="estatisticas">
           <div><dt>Veículos ativos</dt><dd id="estAtivos">—</dd></div>
           <div><dt>Desviados</dt><dd id="estDesviados">—</dd></div>
@@ -82,7 +82,7 @@
         <button id="btnPausar" type="button" class="botao botao-secundario" aria-pressed="false">Pausar</button>
         <label class="campo">
           <span>Veículos</span>
-          <select id="selQuantidade">
+          <select id="selQuantidade" data-tooltip="Altera o total desejado de veículos ativos na simulação.">
             <option value="30">30</option>
             <option value="60" selected>60</option>
             <option value="100">100</option>
@@ -91,7 +91,7 @@
         </label>
         <label class="campo">
           <span>Velocidade</span>
-          <select id="selVelocidade">
+          <select id="selVelocidade" data-tooltip="Multiplica a passagem do tempo simulado.">
             <option value="1">1×</option>
             <option value="4" selected>4×</option>
             <option value="8">8×</option>
@@ -116,6 +116,7 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/main.js"></script>
   <script type="module" src="js/ui/telaBloqueio.js"></script>
+  <script type="module" src="js/ui/tooltip.js"></script>
   <script>
     // Módulos ES e fetch não funcionam com duplo clique no arquivo (file://).
     if (location.protocol === "file:") {

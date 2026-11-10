@@ -39,7 +39,7 @@
       <form class="route-form" id="route-form">
         <label for="scenario-select">Cenário de simulação</label>
         <div class="input-wrap select-wrap">
-          <select id="scenario-select" name="scenario">
+          <select id="scenario-select" name="scenario" data-tooltip="Carrega um exemplo de origem, destino e alternativas de rota.">
             <option value="cajamar-centro">Centro de Cajamar → Jordanésia</option>
             <option value="polvilho-distrito">Polvilho → Distrito Industrial</option>
             <option value="ponunduva-cajamar">Ponunduva → Centro de Cajamar</option>
@@ -54,7 +54,7 @@
         <label for="origin">Ponto de partida</label>
         <div class="input-wrap">
           <span class="input-marker origin-marker" aria-hidden="true"></span>
-          <input id="origin" name="origin" type="text" value="Centro de Cajamar" required>
+          <input id="origin" name="origin" type="text" value="Centro de Cajamar" required data-tooltip="Ponto inicial usado para comparar as alternativas de deslocamento.">
         </div>
 
         <div class="route-connector" aria-hidden="true"></div>
@@ -62,10 +62,10 @@
         <label for="destination">Destino</label>
         <div class="input-wrap">
           <span class="input-marker destination-marker" aria-hidden="true"></span>
-          <input id="destination" name="destination" type="text" value="Jordanésia" required>
+          <input id="destination" name="destination" type="text" value="Jordanésia" required data-tooltip="Destino final usado no cálculo das rotas.">
         </div>
 
-        <button class="button button-primary update-route" type="submit">
+        <button class="button button-primary update-route" type="submit" data-tooltip="Atualiza as rotas do mapa com a origem e o destino informados.">
           Atualizar cenário
         </button>
         <p class="form-feedback" id="form-feedback" aria-live="polite"></p>
@@ -75,6 +75,7 @@
         <div class="incident-heading">
           <span class="incident-icon" aria-hidden="true">!</span>
           <span class="eyebrow">OCORRÊNCIA SIMULADA</span>
+          <span data-tooltip-icon="Trecho indisponível no cenário demonstrativo; o desvio recomendado evita essa ocorrência."></span>
         </div>
         <h3 id="incident-title">Bloqueio viário</h3>
         <p>Av. Dr. Antônio João Abdalla · Cajamar</p>
@@ -108,7 +109,7 @@
               <span class="eyebrow">VISÃO DO TRAJETO</span>
               <h2 id="map-route-title">Centro de Cajamar <span aria-hidden="true">→</span> Jordanésia</h2>
             </div>
-            <button class="map-control" id="fit-map" type="button" aria-label="Enquadrar rotas no mapa" title="Enquadrar rotas">
+            <button class="map-control" id="fit-map" type="button" aria-label="Enquadrar rotas no mapa" data-tooltip="Enquadra todas as alternativas na área visível do mapa.">
               <svg viewBox="0 0 24 24" aria-hidden="true">
                 <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M8 8h8v8H8z"/>
               </svg>
@@ -133,7 +134,7 @@
           </div>
 
           <div class="route-options">
-            <button class="route-option" type="button" data-route="primary" aria-pressed="false">
+            <button class="route-option" type="button" data-route="primary" aria-pressed="false" data-tooltip="Exibe a rota principal, que passa pelo trecho bloqueado no cenário.">
               <span class="route-option-top">
                 <span class="route-name"><i class="route-swatch swatch-primary"></i> <span data-route-name>Rota principal</span></span>
                 <span class="route-tag tag-neutral" data-route-tag>Interrompida</span>
@@ -142,7 +143,7 @@
               <span class="route-description" data-route-description>Passa pelo trecho com bloqueio simulado.</span>
             </button>
 
-            <button class="route-option selected" type="button" data-route="alternative" aria-pressed="true">
+            <button class="route-option selected" type="button" data-route="alternative" aria-pressed="true" data-tooltip="Exibe o desvio recomendado para evitar o bloqueio simulado.">
               <span class="route-option-top">
                 <span class="route-name"><i class="route-swatch swatch-alternative"></i> <span data-route-name>Desvio sugerido</span></span>
                 <span class="route-tag tag-recommended" data-route-tag>Recomendada</span>
@@ -151,7 +152,7 @@
               <span class="route-description" data-route-description>Via Av. Brigadeiro Luís Antônio · evita o bloqueio.</span>
             </button>
 
-            <button class="route-option" type="button" data-route="alternative-two" aria-pressed="false">
+            <button class="route-option" type="button" data-route="alternative-two" aria-pressed="false" data-tooltip="Exibe uma segunda alternativa de deslocamento para comparação.">
               <span class="route-option-top">
                 <span class="route-name"><i class="route-swatch swatch-third"></i> <span data-route-name>Alternativa 2</span></span>
                 <span class="route-tag tag-neutral" data-route-tag>Mais distante</span>
@@ -166,7 +167,7 @@
               <span class="dispatch-icon" aria-hidden="true">↗</span>
               <span><strong id="dispatch-title">Desvio selecionado</strong><small id="dispatch-description">A equipe seguirá pela rota de contingência.</small></span>
             </div>
-            <button class="button button-dispatch" id="dispatch-button" type="button">Ativar direcionamento</button>
+            <button class="button button-dispatch" id="dispatch-button" type="button" data-tooltip="Confirma o direcionamento pela alternativa selecionada.">Ativar direcionamento</button>
           </div>
           <p class="dispatch-feedback" id="dispatch-feedback" role="status" aria-live="polite"></p>
         </section>
@@ -177,5 +178,6 @@
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/contingencia.js"></script>
+  <script type="module" src="js/ui/tooltip.js"></script>
 </body>
 </html>

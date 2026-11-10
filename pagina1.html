@@ -32,13 +32,13 @@
         <h2>Seleção de via</h2>
         <label class="campo">
           <span>Logradouro</span>
-          <select id="selLogradouro">
+          <select id="selLogradouro" data-tooltip="Escolha uma rua para listar seus trechos disponíveis.">
             <option value="">Selecione um logradouro…</option>
           </select>
         </label>
         <label class="campo">
           <span>Trecho</span>
-          <select id="selTrecho" disabled>
+          <select id="selTrecho" disabled data-tooltip="Selecione o segmento específico da via que deseja consultar ou inverter.">
             <option value="">Escolha um logradouro</option>
           </select>
         </label>
@@ -56,29 +56,29 @@
             <div><dt>Veículos na via</dt><dd id="sel-count">0</dd></div>
           </dl>
           <div class="acoes">
-            <button class="botao botao-bloquear" id="btn-reverse" type="button" disabled>⇄ Inverter sentido (R)</button>
-            <button class="botao botao-secundario" id="btn-clear" type="button">Limpar seleção</button>
+            <button class="botao botao-bloquear" id="btn-reverse" type="button" disabled data-tooltip="Altera o sentido operacional do trecho selecionado. Os veículos já na via seguem a política escolhida.">⇄ Inverter sentido (R)</button>
+            <button class="botao botao-secundario" id="btn-clear" type="button" data-tooltip="Remove a seleção atual sem alterar a malha.">Limpar seleção</button>
           </div>
         </div>
         <div id="mensagem" class="mensagem" role="status" aria-live="polite"></div>
       </section>
 
       <section class="painel-secao" aria-labelledby="h-sim">
-        <h2 id="h-sim">Simulação</h2>
+        <h2 id="h-sim">Simulação <span data-tooltip-icon="A velocidade controla o ritmo do tempo simulado; a quantidade define a frota ativa."></span></h2>
         <div class="acoes">
-          <button class="botao botao-secundario" id="btn-play" type="button" aria-pressed="false">Pausar</button>
+          <button class="botao botao-secundario" id="btn-play" type="button" aria-pressed="false" data-tooltip="Pausa ou retoma o avanço dos veículos na simulação.">Pausar</button>
         </div>
         <label class="campo campo-range" for="speed">
           <span>Velocidade <output id="speed-out">1×</output></span>
-          <input id="speed" type="range" min="1" max="8" step="1" value="1">
+          <input id="speed" type="range" min="1" max="8" step="1" value="1" data-tooltip="Multiplica o ritmo do tempo simulado, sem mudar a velocidade máxima definida para as vias.">
         </label>
         <label class="campo campo-range" for="cars">
           <span>Veículos <output id="cars-out">50</output></span>
-          <input id="cars" type="range" min="10" max="150" step="10" value="50">
+          <input id="cars" type="range" min="10" max="150" step="10" value="50" data-tooltip="Define a quantidade desejada de veículos ativos na malha.">
         </label>
         <label class="campo" for="policy">
           <span>Veículos já na via ao inverter</span>
-          <select id="policy">
+          <select id="policy" data-tooltip="Define o que acontece com veículos que já estão em um trecho quando seu sentido é invertido.">
             <option value="complete">Concluem a travessia com segurança</option>
             <option value="uturn">Retornam pelo novo sentido</option>
           </select>
@@ -120,6 +120,7 @@
     integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="js/main.js"></script>
   <script type="module" src="js/ui/telaSentido.js"></script>
+  <script type="module" src="js/ui/tooltip.js"></script>
   <script>
     if (location.protocol === "file:") {
       document.getElementById("carregando").textContent =
