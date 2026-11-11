@@ -2,7 +2,7 @@
 // escuta os eventos daqui; ela nunca mexe no grafo ou na simulação diretamente.
 import { Emissor } from "../motor/eventos.js";
 import { Simulacao } from "../motor/simulacao.js";
-import { validarBloqueio } from "../motor/validacao.js";
+import { analisarElegibilidade, validarBloqueio } from "../motor/validacao.js";
 import { construirGrafo, pontoNaGeometria } from "./carregarMalha.js";
 import { projetarPontoNaMalha } from "../motor/geometriaSnap.js";
 
@@ -15,6 +15,7 @@ export async function carregarControle(urlMalha, opcoes) {
 export class ControleBloqueio extends Emissor {
   #grafo;
   #simulacao;
+  #elegibilidade;
   #bloqueios = new Map(); // trechoId -> { horario, rotasRecalculadas }
   #ultimoRecalculo = 0;
   selecionado = null;
@@ -25,6 +26,7 @@ export class ControleBloqueio extends Emissor {
   ) {
     super();
     this.#grafo = construirGrafo(geojson);
+    this.#elegibilidade = analisarElegibilidade(this.#grafo);
     this.#simulacao = new Simulacao(this.#grafo, { fatorTempo, aleatorio, intervaloSpawn });
     this.#simulacao.definirQuantidade(quantidadeVeiculos);
 
@@ -54,11 +56,14 @@ export class ControleBloqueio extends Emissor {
       temNome: Boolean(t.meta.nome),
       referencia: t.meta.referencia,
       tipo: t.meta.tipo,
+      operacional: t.meta.operacional !== false,
       sentidoUnico: t.meta.sentidoUnico,
       comprimento: t.meta.comprimento,
       pontos: t.meta.pontos,
       meio: t.meta.meio,
       bloqueado: t.bloqueado,
+      bloqueavel: this.#elegibilidade.get(id)?.permitido ?? false,
+      motivoBloqueio: this.#elegibilidade.get(id)?.motivo ?? "Elegibilidade indisponível.",
       veiculosNoTrecho,
     };
   }
@@ -71,7 +76,7 @@ export class ControleBloqueio extends Emissor {
   logradouros() {
     const mapa = new Map();
     for (const t of this.#grafo.trechos.values()) {
-      if (!t.meta.nome) continue;
+      if (!t.meta.nome || (!t.bloqueado && !this.#elegibilidade.get(t.id)?.permitido)) continue;
       if (!mapa.has(t.meta.nome)) mapa.set(t.meta.nome, []);
       mapa.get(t.meta.nome).push(t.id);
     }
@@ -207,12 +212,18 @@ export class ControleBloqueio extends Emissor {
   }
 
   solicitarBloqueio(id) {
-    const resultado = validarBloqueio(this.#grafo, id, this.#simulacao.posicoesDeSaida());
+    const resultado = validarBloqueio(
+      this.#grafo,
+      id,
+      this.#simulacao.posicoesDeSaida(),
+      this.#elegibilidade
+    );
     if (!resultado.permitido) return resultado;
 
     this.#ultimoRecalculo = 0;
     this.#grafo.bloquearTrecho(id); // dispara o recálculo síncrono das rotas
     this.#bloqueios.set(id, { horario: new Date(), rotasRecalculadas: this.#ultimoRecalculo });
+    this.#reavaliarElegibilidade();
     this.emitir("bloqueiosAlterados", this.bloqueios());
     return { permitido: true, rotasRecalculadas: this.#ultimoRecalculo, veiculosNoTrecho: resultado.veiculosNoTrecho };
   }
@@ -222,6 +233,7 @@ export class ControleBloqueio extends Emissor {
     this.#ultimoRecalculo = 0;
     this.#grafo.desbloquearTrecho(id);
     this.#bloqueios.delete(id);
+    this.#reavaliarElegibilidade();
     this.emitir("bloqueiosAlterados", this.bloqueios());
     return { removido: true, rotasRecalculadas: this.#ultimoRecalculo };
   }
@@ -238,6 +250,11 @@ export class ControleBloqueio extends Emissor {
 
   definirFatorTempo(fator) {
     this.#simulacao.fatorTempo = fator;
+  }
+
+  #reavaliarElegibilidade() {
+    this.#elegibilidade = analisarElegibilidade(this.#grafo);
+    this.emitir("eligibilidadeAlterada");
   }
 
   encerrar() {

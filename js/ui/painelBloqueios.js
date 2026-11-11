@@ -18,21 +18,28 @@ export function renderizarInfoTrecho(container, trecho) {
   container.replaceChildren();
   if (!trecho) return;
   container.classList.toggle("bloqueado", trecho.bloqueado);
+  container.classList.toggle("inelegivel", !trecho.bloqueavel && !trecho.bloqueado);
 
   const linha = (rotuloCampo, valor, classe = "") =>
     [el("dt", { textContent: rotuloCampo }), el("dd", { textContent: valor, className: classe })];
 
+  const campos = [
+    ...linha(
+      "Status",
+      trecho.bloqueado ? "Bloqueado" : trecho.bloqueavel ? "Livre para bloqueio" : "Bloqueio indisponível",
+      `status-via${trecho.bloqueado ? " bloqueado" : trecho.bloqueavel ? "" : " inelegivel"}`
+    ),
+    ...linha("Extensão", metros(trecho.comprimento)),
+    ...linha("Sentido", trecho.sentidoUnico ? "Mão única" : "Mão dupla"),
+    ...linha("Veículos agora", String(trecho.veiculosNoTrecho)),
+  ];
+  if (!trecho.bloqueavel && !trecho.bloqueado) {
+    campos.push(...linha("Motivo", trecho.motivoBloqueio, "motivo-inelegibilidade"));
+  }
   container.append(
     el("strong", { textContent: trecho.nome }),
     el("div", { className: "referencia", textContent: trecho.referencia ?? "Sem referência de cruzamento" }),
-    el(
-      "dl",
-      {},
-      ...linha("Status", trecho.bloqueado ? "Bloqueado" : "Livre", `status-via${trecho.bloqueado ? " bloqueado" : ""}`),
-      ...linha("Extensão", metros(trecho.comprimento)),
-      ...linha("Sentido", trecho.sentidoUnico ? "Mão única" : "Mão dupla"),
-      ...linha("Veículos agora", String(trecho.veiculosNoTrecho))
-    )
+    el("dl", {}, ...campos)
   );
 }
 

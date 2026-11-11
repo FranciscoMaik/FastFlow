@@ -11,8 +11,8 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/contingencia.css">
 </head>
-<body>
-  <div class="layout">
+<body class="pagina-contingencia">
+  <div class="layout layout-contingencia">
     <header class="topbar">
       <a class="brand" href="pagina1.html" aria-label="FastFlow, início">
         <span class="brand-mark" aria-hidden="true">F</span>
@@ -89,86 +89,79 @@
     </aside>
 
     <main class="main">
-      <div class="dashboard">
-        <section class="page-heading">
-          <div>
-            <div class="breadcrumb">Operações <span>/</span> Direcionamento</div>
-            <h1>Rota de contingência</h1>
-            <p>Redirecione equipes diante de interrupções no trajeto principal.</p>
-          </div>
-          <span class="demo-badge"><span></span> Cenário demonstrativo</span>
-        </section>
+      <div id="mapa" class="componente mapa-contingencia" role="img" aria-label="Mapa demonstrativo com três rotas na região de Cajamar"></div>
 
-        <section class="map-card" aria-label="Mapa e alternativas de rota">
-          <div class="map-toolbar">
-            <div>
-              <span class="eyebrow">VISÃO DO TRAJETO <span data-tooltip-icon="Mapa demonstrativo com a rota principal, os desvios e o bloqueio simulado do cenário."></span></span>
-              <h2 id="map-route-title">Centro de Cajamar <span aria-hidden="true">→</span> Jordanésia</h2>
-            </div>
-            <button class="map-control" id="fit-map" type="button" aria-label="Enquadrar rotas no mapa" data-tooltip="Enquadra todas as alternativas na área visível do mapa.">
-              <svg viewBox="0 0 24 24" aria-hidden="true">
-                <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M8 8h8v8H8z"/>
-              </svg>
-            </button>
-          </div>
-          <div id="mapa" class="map-view" role="img" aria-label="Mapa demonstrativo com três rotas na região de Cajamar"></div>
-          <div class="map-legend" aria-label="Legenda do mapa">
-            <span><i class="legend-line legend-primary"></i> Rota principal</span>
-            <span><i class="legend-line legend-alternative"></i> Desvio sugerido</span>
-            <span><i class="legend-line legend-third"></i> Alternativa 2</span>
-            <span><i class="legend-block"></i> Bloqueio simulado</span>
-          </div>
-        </section>
+      <div class="mapa-overlay mapa-overlay-topo">
+        <div class="mapa-titulo-bloco">
+          <span class="eyebrow">VISÃO DO TRAJETO <span data-tooltip-icon="Mapa demonstrativo com a rota principal, os desvios e o bloqueio simulado do cenário."></span></span>
+          <h1 id="map-route-title">Centro de Cajamar <span aria-hidden="true">→</span> Jordanésia</h1>
+        </div>
+        <button class="map-control" id="fit-map" type="button" aria-label="Enquadrar rotas no mapa" data-tooltip="Enquadra todas as alternativas na área visível do mapa.">
+          <svg viewBox="0 0 24 24" aria-hidden="true">
+            <path d="M8 3H5a2 2 0 0 0-2 2v3m13-5h3a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3M8 8h8v8H8z"/>
+          </svg>
+        </button>
+      </div>
 
-        <section class="route-section" aria-labelledby="routes-title">
-          <div class="section-heading">
-            <div>
-              <span class="eyebrow">OPÇÕES DE DESLOCAMENTO</span>
-              <h2 id="routes-title">Rotas disponíveis <span data-tooltip-icon="Compare as alternativas de deslocamento e selecione qual rota será direcionada."></span></h2>
-            </div>
-            <span class="route-count">3 opções</span>
-          </div>
-
-          <div class="route-options">
-            <button class="route-option" type="button" data-route="primary" aria-pressed="false" data-tooltip="Exibe a rota principal, que passa pelo trecho bloqueado no cenário.">
-              <span class="route-option-top">
-                <span class="route-name"><i class="route-swatch swatch-primary"></i> <span data-route-name>Rota principal</span></span>
-                <span class="route-tag tag-neutral" data-route-tag>Interrompida</span>
-              </span>
-              <span class="route-metrics"><strong data-route-time>24 min</strong><span>·</span><span data-route-distance>8,4 km</span><span class="delay" data-route-delay></span></span>
-              <span class="route-description" data-route-description>Passa pelo trecho com bloqueio simulado.</span>
-            </button>
-
-            <button class="route-option selected" type="button" data-route="alternative" aria-pressed="true" data-tooltip="Exibe o desvio recomendado para evitar o bloqueio simulado.">
-              <span class="route-option-top">
-                <span class="route-name"><i class="route-swatch swatch-alternative"></i> <span data-route-name>Desvio sugerido</span></span>
-                <span class="route-tag tag-recommended" data-route-tag>Recomendada</span>
-              </span>
-              <span class="route-metrics"><strong data-route-time>32 min</strong><span>·</span><span data-route-distance>10,2 km</span><span class="delay" data-route-delay>+8 min</span></span>
-              <span class="route-description" data-route-description>Via Av. Brigadeiro Luís Antônio · evita o bloqueio.</span>
-            </button>
-
-            <button class="route-option" type="button" data-route="alternative-two" aria-pressed="false" data-tooltip="Exibe uma segunda alternativa de deslocamento para comparação.">
-              <span class="route-option-top">
-                <span class="route-name"><i class="route-swatch swatch-third"></i> <span data-route-name>Alternativa 2</span></span>
-                <span class="route-tag tag-neutral" data-route-tag>Mais distante</span>
-              </span>
-              <span class="route-metrics"><strong data-route-time>36 min</strong><span>·</span><span data-route-distance>11,6 km</span><span class="delay" data-route-delay>+12 min</span></span>
-              <span class="route-description" data-route-description>Via Rua Vergueiro · desvio ampliado para contingência.</span>
-            </button>
-          </div>
-
-          <div class="dispatch-bar">
-            <div class="dispatch-copy">
-              <span class="dispatch-icon" aria-hidden="true">↗</span>
-              <span><strong id="dispatch-title">Desvio selecionado</strong><small id="dispatch-description">A equipe seguirá pela rota de contingência.</small></span>
-            </div>
-            <button class="botao botao-primario button-dispatch" id="dispatch-button" type="button" aria-pressed="false" data-tooltip="Confirma o direcionamento pela alternativa selecionada.">Ativar direcionamento</button>
-          </div>
-          <p class="dispatch-feedback" id="dispatch-feedback" role="status" aria-live="polite"></p>
-        </section>
+      <div class="map-legend" aria-label="Legenda do mapa">
+        <span><i class="legend-line legend-primary"></i> Rota principal</span>
+        <span><i class="legend-line legend-alternative"></i> Desvio sugerido</span>
+        <span><i class="legend-line legend-third"></i> Alternativa 2</span>
+        <span><i class="legend-block"></i> Bloqueio simulado</span>
       </div>
     </main>
+
+    <aside class="drawer-rotas" aria-labelledby="routes-title">
+      <div class="drawer-rotas-cabecalho">
+        <div>
+          <span class="eyebrow">OPÇÕES DE DESLOCAMENTO</span>
+          <h2 id="routes-title">Rotas disponíveis <span data-tooltip-icon="Compare as alternativas de deslocamento e selecione qual rota será direcionada."></span></h2>
+        </div>
+        <span class="route-count">3 opções</span>
+      </div>
+
+      <div class="drawer-rotas-corpo">
+        <div class="route-options">
+          <button class="route-option" type="button" data-route="primary" aria-pressed="false" data-tooltip="Exibe a rota principal, que passa pelo trecho bloqueado no cenário.">
+            <span class="route-option-top">
+              <span class="route-name"><i class="route-swatch swatch-primary"></i> <span data-route-name>Rota principal</span></span>
+              <span class="route-tag tag-neutral" data-route-tag>Interrompida</span>
+            </span>
+            <span class="route-metrics"><strong data-route-time>24 min</strong><span>·</span><span data-route-distance>8,4 km</span><span class="delay" data-route-delay></span></span>
+            <span class="route-description" data-route-description>Passa pelo trecho com bloqueio simulado.</span>
+          </button>
+
+          <button class="route-option selected" type="button" data-route="alternative" aria-pressed="true" data-tooltip="Exibe o desvio recomendado para evitar o bloqueio simulado.">
+            <span class="route-option-top">
+              <span class="route-name"><i class="route-swatch swatch-alternative"></i> <span data-route-name>Desvio sugerido</span></span>
+              <span class="route-tag tag-recommended" data-route-tag>Recomendada</span>
+            </span>
+            <span class="route-metrics"><strong data-route-time>32 min</strong><span>·</span><span data-route-distance>10,2 km</span><span class="delay" data-route-delay>+8 min</span></span>
+            <span class="route-description" data-route-description>Via Av. Brigadeiro Luís Antônio · evita o bloqueio.</span>
+          </button>
+
+          <button class="route-option" type="button" data-route="alternative-two" aria-pressed="false" data-tooltip="Exibe uma segunda alternativa de deslocamento para comparação.">
+            <span class="route-option-top">
+              <span class="route-name"><i class="route-swatch swatch-third"></i> <span data-route-name>Alternativa 2</span></span>
+              <span class="route-tag tag-neutral" data-route-tag>Mais distante</span>
+            </span>
+            <span class="route-metrics"><strong data-route-time>36 min</strong><span>·</span><span data-route-distance>11,6 km</span><span class="delay" data-route-delay>+12 min</span></span>
+            <span class="route-description" data-route-description>Via Rua Vergueiro · desvio ampliado para contingência.</span>
+          </button>
+        </div>
+      </div>
+
+      <div class="drawer-rotas-rodape">
+        <div class="dispatch-bar">
+          <div class="dispatch-copy">
+            <span class="dispatch-icon" aria-hidden="true">↗</span>
+            <span><strong id="dispatch-title">Desvio selecionado</strong><small id="dispatch-description">A equipe seguirá pela rota de contingência.</small></span>
+          </div>
+          <button class="botao botao-primario button-dispatch" id="dispatch-button" type="button" aria-pressed="false" data-tooltip="Confirma o direcionamento pela alternativa selecionada.">Ativar direcionamento</button>
+        </div>
+        <p class="dispatch-feedback" id="dispatch-feedback" role="status" aria-live="polite"></p>
+      </div>
+    </aside>
   </div>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"

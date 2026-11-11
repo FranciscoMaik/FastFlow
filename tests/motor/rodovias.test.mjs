@@ -36,10 +36,11 @@ function maoUnica(g, id, a, b, { comprimento = 100, velocidade = 10, tipo = "res
 //           D ─── C
 function malhaComRodovia() {
   const g = new Grafo();
-  maoDupla(g, "AB", "A", "B");
-  maoDupla(g, "BC", "B", "C");
-  maoDupla(g, "CD", "C", "D");
-  maoDupla(g, "DA", "D", "A");
+  const bairro = { tipo: "tertiary" };
+  maoDupla(g, "AB", "A", "B", bairro);
+  maoDupla(g, "BC", "B", "C", bairro);
+  maoDupla(g, "CD", "C", "D", bairro);
+  maoDupla(g, "DA", "D", "A", bairro);
   const rodovia = { comprimento: 500, velocidade: 25, tipo: "motorway" };
   maoUnica(g, "R1", "G1", "H1", rodovia);
   maoUnica(g, "R2", "H1", "H2", rodovia);

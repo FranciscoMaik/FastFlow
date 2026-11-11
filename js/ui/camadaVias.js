@@ -6,6 +6,7 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
   const grupo = L.featureGroup().addTo(mapa);
   const destaques = L.layerGroup().addTo(mapa);
   const linhas = new Map();
+  const dados = new Map(trechos.map((trecho) => [trecho.id, trecho]));
   const sinalizacoes = new Map(); // trechoId -> { contorno, icone }
 
   for (const trecho of trechos) {
@@ -14,7 +15,7 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
       weight: 6,
       bubblingMouseEvents: false,
     });
-    linha.bindTooltip(rotulo(trecho), { sticky: true, direction: "top", opacity: 0.95 });
+    linha.bindTooltip(textoTooltip(trecho), { sticky: true, direction: "top", opacity: 0.95 });
     linha.on("click", (e) => aoClicar(trecho.id, e?.latlng));
     linha.addTo(grupo);
     linhas.set(trecho.id, linha);
@@ -34,9 +35,12 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
       const alt = new Set(alterados);
 
       for (const [id, linha] of linhas) {
+        const trecho = dados.get(id);
         classe(id, "selecionada", sel.has(id));
         classe(id, "bloqueada", bloq.has(id));
+        classe(id, "inelegivel", !trecho.bloqueavel && !trecho.bloqueado);
         classe(id, "sentido-alterado", alt.has(id));
+        linha.setTooltipContent(textoTooltip(trecho));
         if (sel.has(id) || bloq.has(id) || alt.has(id)) linha.bringToFront();
       }
 
@@ -71,6 +75,10 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
       for (const id of sel) linhas.get(id)?.bringToFront();
     },
 
+    atualizarDados(novosTrechos) {
+      for (const trecho of novosTrechos) dados.set(trecho.id, trecho);
+    },
+
     remover() {
       mapa.removeLayer(grupo);
       mapa.removeLayer(destaques);
@@ -85,6 +93,13 @@ export function criarCamadaVias(mapa, trechos, { aoClicar }) {
       mapa.flyToBounds(limites, { maxZoom: 18, padding: [60, 60], duration: 0.6 });
     },
   };
+}
+
+function textoTooltip(trecho) {
+  const titulo = rotulo(trecho);
+  return trecho.bloqueavel || trecho.bloqueado
+    ? titulo
+    : `${titulo} · Bloqueio indisponível: ${trecho.motivoBloqueio}`;
 }
 
 export function rotulo(trecho) {

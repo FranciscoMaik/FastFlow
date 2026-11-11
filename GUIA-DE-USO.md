@@ -91,6 +91,10 @@ Esta tela serve para ver o mapa e a sua posição.
 
 Ao abrir, aparece por alguns instantes a mensagem *"Carregando malha viária…"* com o nome do local escolhido. Em seguida o mapa mostra as ruas da área, e os veículos começam a se mover sozinhos. Use o seletor **Local** no painel para alternar entre Centro, Jordanésia, Polvilho e Ponunduva.
 
+A lista de seleção apresenta apenas trechos estruturais ativos, com alternativa de circulação na malha. Ruas locais, trechos terminais/sem desvio e vias desativadas não podem receber bloqueios. Ao clicar em uma dessas vias no mapa, o painel e a dica do mapa explicam o motivo; o botão **Bloquear** permanece desabilitado. Trechos já bloqueados continuam disponíveis para seleção e desbloqueio.
+
+Como critério de homologação, são aceitos `motorway`, `trunk`, `primary`, `secondary`, `tertiary` e suas variantes `_link`, desde que o grafo ativo ofereça alternativa para cada sentido de tráfego. Vias sem acesso veicular ou com estado `ativo`/`operacional` falso também são retiradas da simulação.
+
 ### 5.1 Partes da tela
 
 ```
@@ -188,13 +192,15 @@ A tela permite avaliar intervenções físicas e semafóricas na malha viária e
 ### Passo 2: Bloquear a via
 
 1. Clique no botão **Bloquear**.
-2. A via passa a piscar em vermelho e um ícone de interdição é posicionado no meio do trecho.
-3. Os veículos que pretendiam usar essa via recalculam o caminho na hora e desviam (pontos laranja).
-4. O tempo médio de viagem passa a refletir a perda de fluidez.
+2. O sistema verifica o bloqueio antes de aplicar:
+   - **Aceito:** mensagem verde (ex.: *"Bloqueio aplicado. 10 veículos tiveram a rota recalculada."*), a via fica vermelha com ícone de interdição, os veículos afetados recalculam a rota (pontos laranja) e o trecho entra em **Vias bloqueadas**.
+   - **Recusado:** mensagem vermelha com o motivo. Isso **não é um erro** — é a regra de segurança da seção 7.2.
+3. O tempo médio de viagem passa a refletir a perda de fluidez.
 
 ### Passo 3: Remover o bloqueio
 
 - Selecione a via e clique em **Desbloquear**, ou clique em **Remover** na lista de vias bloqueadas.
+- Com dois ou mais bloqueios, use **Remover todos**.
 
 ### 7.1 Rodovias e tráfego de passagem
 
@@ -204,6 +210,27 @@ Em **Jordanésia** e **Polvilho**, a **Rodovia Comunicador Silvio Santos (SP-330
 - Vias de maior hierarquia (rodovias, avenidas) recebem mais tráfego que ruas residenciais.
 - A quantidade escolhida em **Veículos** continua valendo: quem sai pela borda é reposto por um novo veículo. Como a malha dessas regiões ficou maior com a rodovia, aumente a quantidade (100 ou 150) para ver os bairros e a rodovia bem movimentados ao mesmo tempo.
 - **Bloquear a rodovia** é permitido mesmo com veículos nela: quem já passou da última alça antes da interdição **forma fila** (pontos vermelhos, "retidos"), e quem chega depois desvia pelas alças. Ao desbloquear, a fila se desfaz. Nas vias dos bairros a regra continua a mesma: um bloqueio que deixaria algum veículo sem saída é recusado.
+
+### 7.2 Por que um bloqueio pode ser recusado
+
+O FastFlow **não deixa veículos presos**. Antes de bloquear, verifica a topologia ativa e confirma que cada sentido operacional do trecho tem uma rota alternativa entre seus nós adjacentes. Também confere se cada veículo continuaria tendo um caminho para voltar à malha viária principal. A análise topológica é refeita ao carregar a malha e após cada bloqueio/desbloqueio; ela não roda no laço de animação.
+
+O bloqueio é recusado quando:
+
+1. **O trecho é terminal ou não tem uma rota alternativa** depois da interdição.
+2. **A via não é estrutural ou está inoperante.** Vias locais e vias sem funcionamento não aparecem como opções na lista.
+3. **Há veículos dentro do próprio trecho que ficariam sem saída.**
+   *Exemplo:* uma rua sem saída com um carro indo para o fim dela. Se o único acesso fosse bloqueado, o carro ficaria preso.
+4. **O bloqueio isolaria uma região onde há veículos.**
+   *Exemplo:* um trecho de mão única que é a única saída de um bairro. Bloqueá-lo deixaria quem está no bairro sem como sair.
+5. **O trecho já está bloqueado.**
+
+**O que fazer quando o bloqueio é recusado:**
+- escolher outro trecho próximo;
+- esperar alguns segundos e tentar de novo, porque os veículos podem ter saído da área;
+- diminuir a quantidade de veículos na barra de controles.
+
+**Vídeo:** [demonstração da validação de bloqueios](./videos/fastflow-validacao-bloqueios.mp4).
 
 ---
 

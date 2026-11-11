@@ -2,37 +2,38 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
 
 (function () {
   const cenarios = {
+    // Extremidades ancoradas em avenidas/estradas arteriais para o OSRM não
+    // puxar a rota principal (e o bloqueio) para becos ou ruas sem saída.
     "cajamar-centro": {
       origem: "Centro de Cajamar",
       destino: "Jordanésia",
       regioes: ["centro", "jordanesia"],
       ocorrencia: "Bloqueio viário",
       localOcorrencia: "Av. Dr. Antônio João Abdalla · Cajamar",
-      bloqueio: [-23.356, -46.875],
+      bloqueio: [-23.349504, -46.872853],
       rotas: {
         primary: {
           pontos: [
-            [-23.365, -46.883], [-23.360, -46.879], [-23.356, -46.875],
-            [-23.353, -46.872], [-23.350, -46.869]
+            [-23.36166, -46.87303], [-23.355, -46.865], [-23.34822, -46.84846]
           ],
-          tempo: "12 min", distancia: "4,2 km", atraso: "",
-          descricao: "Segue pela Av. Dr. Antônio João Abdalla e passa pelo bloqueio."
+          tempo: "12 min", distancia: "5,6 km", atraso: "",
+          descricao: "Segue pelas avenidas do centro em direção a Jordanésia e passa pelo bloqueio."
         },
         alternative: {
           pontos: [
-            [-23.365, -46.883], [-23.361, -46.887], [-23.355, -46.886],
-            [-23.350, -46.880], [-23.350, -46.869]
+            [-23.36166, -46.87303], [-23.358, -46.880], [-23.350, -46.875],
+            [-23.34822, -46.84846]
           ],
-          tempo: "16 min", distancia: "5,8 km", atraso: "+4 min",
+          tempo: "16 min", distancia: "7,2 km", atraso: "+4 min",
           descricao: "Desvio pela região central de Cajamar · evita o bloqueio."
         },
         "alternative-two": {
           pontos: [
-            [-23.365, -46.883], [-23.369, -46.876], [-23.365, -46.868],
-            [-23.358, -46.864], [-23.350, -46.869]
+            [-23.36166, -46.87303], [-23.368, -46.870], [-23.360, -46.855],
+            [-23.34822, -46.84846]
           ],
-          tempo: "19 min", distancia: "7,1 km", atraso: "+7 min",
-          descricao: "Desvio ampliado por vias locais de Cajamar."
+          tempo: "19 min", distancia: "8,5 km", atraso: "+7 min",
+          descricao: "Desvio ampliado pelo entorno do centro de Cajamar."
         }
       }
     },
@@ -41,29 +42,28 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       destino: "Distrito Industrial de Cajamar",
       regioes: ["polvilho"],
       ocorrencia: "Interdição simulada",
-      localOcorrencia: "Estrada de Cajamar · acesso ao Distrito Industrial",
-      bloqueio: [-23.397, -46.872],
+      localOcorrencia: "Rua José Marques Ribeiro · Polvilho",
+      bloqueio: [-23.383015, -46.860805],
       rotas: {
         primary: {
           pontos: [
-            [-23.421, -46.855], [-23.414, -46.860], [-23.407, -46.866],
-            [-23.397, -46.872], [-23.380, -46.884]
+            [-23.40640, -46.86399], [-23.400, -46.868], [-23.380, -46.884]
           ],
           tempo: "18 min", distancia: "8,6 km", atraso: "",
-          descricao: "Segue pela Estrada de Cajamar e passa pela interdição."
+          descricao: "Segue pela Av. Tenente Marques e passa pela interdição."
         },
         alternative: {
           pontos: [
-            [-23.421, -46.855], [-23.414, -46.848], [-23.405, -46.850],
-            [-23.391, -46.860], [-23.380, -46.884]
+            [-23.40640, -46.86399], [-23.410, -46.850], [-23.395, -46.855],
+            [-23.380, -46.884]
           ],
           tempo: "24 min", distancia: "10,9 km", atraso: "+6 min",
-          descricao: "Desvio por vias locais de Polvilho · evita a interdição."
+          descricao: "Desvio por vias de Polvilho · evita a interdição."
         },
         "alternative-two": {
           pontos: [
-            [-23.421, -46.855], [-23.429, -46.864], [-23.420, -46.878],
-            [-23.404, -46.883], [-23.380, -46.884]
+            [-23.40640, -46.86399], [-23.420, -46.870], [-23.405, -46.885],
+            [-23.380, -46.884]
           ],
           tempo: "29 min", distancia: "13,2 km", atraso: "+11 min",
           descricao: "Desvio ampliado pelo entorno de Polvilho e Cajamar."
@@ -75,31 +75,30 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       destino: "Centro de Cajamar",
       regioes: ["ponunduva", "centro"],
       ocorrencia: "Obra simulada",
-      localOcorrencia: "Estrada de Ponunduva · Cajamar",
-      bloqueio: [-23.344, -46.913],
+      localOcorrencia: "Estrada João Félix Domingues · Ponunduva",
+      bloqueio: [-23.311616, -46.897799],
       rotas: {
         primary: {
           pontos: [
-            [-23.337, -46.929], [-23.341, -46.921], [-23.344, -46.913],
-            [-23.348, -46.900], [-23.357, -46.879]
+            [-23.33240, -46.92864], [-23.340, -46.905], [-23.36166, -46.87303]
           ],
-          tempo: "21 min", distancia: "9,4 km", atraso: "",
-          descricao: "Segue pela Estrada de Ponunduva e passa pela obra simulada."
+          tempo: "21 min", distancia: "12,9 km", atraso: "",
+          descricao: "Segue pela Estrada Francisco Missé e passa pela obra simulada."
         },
         alternative: {
           pontos: [
-            [-23.337, -46.929], [-23.331, -46.918], [-23.334, -46.902],
-            [-23.342, -46.890], [-23.357, -46.879]
+            [-23.33240, -46.92864], [-23.325, -46.910], [-23.345, -46.890],
+            [-23.36166, -46.87303]
           ],
-          tempo: "27 min", distancia: "11,8 km", atraso: "+6 min",
+          tempo: "27 min", distancia: "14,5 km", atraso: "+6 min",
           descricao: "Desvio por vias alternativas da região de Ponunduva."
         },
         "alternative-two": {
           pontos: [
-            [-23.337, -46.929], [-23.347, -46.935], [-23.357, -46.925],
-            [-23.363, -46.906], [-23.357, -46.879]
+            [-23.33240, -46.92864], [-23.345, -46.935], [-23.360, -46.910],
+            [-23.36166, -46.87303]
           ],
-          tempo: "32 min", distancia: "14,1 km", atraso: "+11 min",
+          tempo: "32 min", distancia: "16,0 km", atraso: "+11 min",
           descricao: "Desvio ampliado pelo entorno rural de Cajamar."
         }
       }
@@ -109,29 +108,28 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       destino: "Polvilho, Cajamar",
       regioes: ["jordanesia", "polvilho"],
       ocorrencia: "Bloqueio simulado",
-      localOcorrencia: "Av. Tenente Marques · Cajamar",
-      bloqueio: [-23.389, -46.861],
+      localOcorrencia: "Av. Pref. Juvenal Ferreira dos Santos · Cajamar",
+      bloqueio: [-23.372503, -46.851875],
       rotas: {
         primary: {
           pontos: [
-            [-23.350, -46.869], [-23.362, -46.866], [-23.376, -46.863],
-            [-23.389, -46.861], [-23.421, -46.855]
+            [-23.34822, -46.84846], [-23.370, -46.855], [-23.40640, -46.86399]
           ],
-          tempo: "19 min", distancia: "8,9 km", atraso: "",
-          descricao: "Passa pelo bloqueio simulado na Av. Tenente Marques."
+          tempo: "19 min", distancia: "8,7 km", atraso: "",
+          descricao: "Passa pelo bloqueio simulado no corredor Jordanésia–Polvilho."
         },
         alternative: {
           pontos: [
-            [-23.350, -46.869], [-23.357, -46.878], [-23.373, -46.880],
-            [-23.394, -46.875], [-23.421, -46.855]
+            [-23.34822, -46.84846], [-23.355, -46.865], [-23.385, -46.875],
+            [-23.40640, -46.86399]
           ],
           tempo: "25 min", distancia: "11,3 km", atraso: "+6 min",
           descricao: "Desvio por vias de Jordanésia · evita o bloqueio."
         },
         "alternative-two": {
           pontos: [
-            [-23.350, -46.869], [-23.343, -46.861], [-23.353, -46.848],
-            [-23.374, -46.847], [-23.398, -46.850], [-23.421, -46.855]
+            [-23.34822, -46.84846], [-23.340, -46.840], [-23.365, -46.835],
+            [-23.390, -46.845], [-23.40640, -46.86399]
           ],
           tempo: "30 min", distancia: "13,6 km", atraso: "+11 min",
           descricao: "Desvio ampliado pelo entorno de Cajamar."
@@ -143,31 +141,30 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       destino: "Parque Maria Aparecida, Cajamar",
       regioes: ["centro"],
       ocorrencia: "Bloqueio simulado",
-      localOcorrencia: "Av. Professor Walter Ribas de Andrade · Cajamar",
-      bloqueio: [-23.354, -46.879],
+      localOcorrencia: "Av. Dr. Antônio João Abdalla · Cajamar",
+      bloqueio: [-23.350574, -46.876746],
       rotas: {
         primary: {
           pontos: [
-            [-23.357, -46.879], [-23.354, -46.879], [-23.350, -46.878],
-            [-23.346, -46.875], [-23.342, -46.871]
+            [-23.36166, -46.87303], [-23.352, -46.862], [-23.34660, -46.85440]
           ],
-          tempo: "11 min", distancia: "3,8 km", atraso: "",
-          descricao: "Passa pelo bloqueio simulado na Av. Professor Walter Ribas de Andrade."
+          tempo: "11 min", distancia: "4,6 km", atraso: "",
+          descricao: "Passa pelo bloqueio simulado na Av. Dr. Antônio João Abdalla."
         },
         alternative: {
           pontos: [
-            [-23.357, -46.879], [-23.360, -46.874], [-23.354, -46.868],
-            [-23.346, -46.867], [-23.342, -46.871]
+            [-23.36166, -46.87303], [-23.358, -46.865], [-23.350, -46.860],
+            [-23.34660, -46.85440]
           ],
-          tempo: "15 min", distancia: "5,2 km", atraso: "+4 min",
-          descricao: "Desvio por vias locais do centro de Cajamar."
+          tempo: "15 min", distancia: "5,8 km", atraso: "+4 min",
+          descricao: "Desvio por vias do centro de Cajamar."
         },
         "alternative-two": {
           pontos: [
-            [-23.357, -46.879], [-23.363, -46.880], [-23.362, -46.869],
-            [-23.352, -46.863], [-23.342, -46.871]
+            [-23.36166, -46.87303], [-23.368, -46.870], [-23.360, -46.855],
+            [-23.34660, -46.85440]
           ],
-          tempo: "19 min", distancia: "6,7 km", atraso: "+8 min",
+          tempo: "19 min", distancia: "7,0 km", atraso: "+8 min",
           descricao: "Desvio ampliado pelo entorno do Parque Maria Aparecida."
         }
       }
@@ -177,31 +174,30 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       destino: "Parque Empresarial de Cajamar",
       regioes: ["jordanesia"],
       ocorrencia: "Obra simulada",
-      localOcorrencia: "Estrada de Jordanésia · acesso empresarial",
-      bloqueio: [-23.368, -46.858],
+      localOcorrencia: "Av. Dr. Antônio João Abdala · Jordanésia",
+      bloqueio: [-23.336964, -46.845669],
       rotas: {
         primary: {
           pontos: [
-            [-23.350, -46.869], [-23.357, -46.865], [-23.368, -46.858],
-            [-23.378, -46.850], [-23.387, -46.842]
+            [-23.34822, -46.84846], [-23.345, -46.842], [-23.34100, -46.83774]
           ],
-          tempo: "17 min", distancia: "7,3 km", atraso: "",
-          descricao: "Passa pela obra simulada no acesso ao parque empresarial."
+          tempo: "17 min", distancia: "3,5 km", atraso: "",
+          descricao: "Passa pela obra simulada na rodovia de acesso ao parque empresarial."
         },
         alternative: {
           pontos: [
-            [-23.350, -46.869], [-23.353, -46.859], [-23.361, -46.850],
-            [-23.375, -46.844], [-23.387, -46.842]
+            [-23.34822, -46.84846], [-23.352, -46.845], [-23.348, -46.838],
+            [-23.34100, -46.83774]
           ],
-          tempo: "23 min", distancia: "9,5 km", atraso: "+6 min",
+          tempo: "23 min", distancia: "5,2 km", atraso: "+6 min",
           descricao: "Desvio por vias locais de Jordanésia."
         },
         "alternative-two": {
           pontos: [
-            [-23.350, -46.869], [-23.343, -46.860], [-23.350, -46.847],
-            [-23.366, -46.839], [-23.387, -46.842]
+            [-23.34822, -46.84846], [-23.355, -46.855], [-23.350, -46.840],
+            [-23.34100, -46.83774]
           ],
-          tempo: "28 min", distancia: "11,8 km", atraso: "+11 min",
+          tempo: "28 min", distancia: "6,8 km", atraso: "+11 min",
           descricao: "Desvio ampliado pelo entorno de Jordanésia."
         }
       }
@@ -211,31 +207,30 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       destino: "Centro de Cajamar",
       regioes: ["polvilho", "centro"],
       ocorrencia: "Interdição simulada",
-      localOcorrencia: "Av. Tenente Marques · região de Polvilho",
-      bloqueio: [-23.405, -46.866],
+      localOcorrencia: "Rua José Marques Ribeiro · Polvilho",
+      bloqueio: [-23.384022, -46.862279],
       rotas: {
         primary: {
           pontos: [
-            [-23.421, -46.855], [-23.414, -46.860], [-23.405, -46.866],
-            [-23.391, -46.873], [-23.357, -46.879]
+            [-23.40640, -46.86399], [-23.390, -46.868], [-23.36166, -46.87303]
           ],
-          tempo: "20 min", distancia: "9,1 km", atraso: "",
+          tempo: "20 min", distancia: "7,2 km", atraso: "",
           descricao: "Segue pela Av. Tenente Marques e passa pela interdição simulada."
         },
         alternative: {
           pontos: [
-            [-23.421, -46.855], [-23.419, -46.866], [-23.407, -46.878],
-            [-23.385, -46.884], [-23.357, -46.879]
+            [-23.40640, -46.86399], [-23.410, -46.875], [-23.385, -46.880],
+            [-23.36166, -46.87303]
           ],
-          tempo: "26 min", distancia: "11,7 km", atraso: "+6 min",
-          descricao: "Desvio por vias locais de Polvilho · evita a interdição."
+          tempo: "26 min", distancia: "9,5 km", atraso: "+6 min",
+          descricao: "Desvio por vias de Polvilho · evita a interdição."
         },
         "alternative-two": {
           pontos: [
-            [-23.421, -46.855], [-23.430, -46.850], [-23.431, -46.870],
-            [-23.411, -46.890], [-23.383, -46.888], [-23.357, -46.879]
+            [-23.40640, -46.86399], [-23.420, -46.850], [-23.400, -46.885],
+            [-23.36166, -46.87303]
           ],
-          tempo: "32 min", distancia: "14,5 km", atraso: "+12 min",
+          tempo: "32 min", distancia: "12,0 km", atraso: "+12 min",
           descricao: "Desvio ampliado pelo entorno de Cajamar."
         }
       }
@@ -245,31 +240,30 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       destino: "Jordanésia, Cajamar",
       regioes: ["ponunduva", "jordanesia"],
       ocorrencia: "Bloqueio viário simulado",
-      localOcorrencia: "Estrada de Ponunduva · acesso a Jordanésia",
-      bloqueio: [-23.351, -46.900],
+      localOcorrencia: "Estrada João Félix Domingues · Cajamar",
+      bloqueio: [-23.317243, -46.894906],
       rotas: {
         primary: {
           pontos: [
-            [-23.337, -46.929], [-23.342, -46.916], [-23.351, -46.900],
-            [-23.350, -46.885], [-23.350, -46.869]
+            [-23.33240, -46.92864], [-23.335, -46.890], [-23.34822, -46.84846]
           ],
-          tempo: "25 min", distancia: "11,2 km", atraso: "",
-          descricao: "Passa pelo bloqueio simulado na Estrada de Ponunduva."
+          tempo: "25 min", distancia: "14,7 km", atraso: "",
+          descricao: "Passa pelo bloqueio simulado no corredor Ponunduva–Jordanésia."
         },
         alternative: {
           pontos: [
-            [-23.337, -46.929], [-23.330, -46.914], [-23.336, -46.896],
-            [-23.342, -46.880], [-23.350, -46.869]
+            [-23.33240, -46.92864], [-23.325, -46.905], [-23.340, -46.870],
+            [-23.34822, -46.84846]
           ],
-          tempo: "32 min", distancia: "13,8 km", atraso: "+7 min",
-          descricao: "Desvio por vias locais de Ponunduva."
+          tempo: "32 min", distancia: "16,5 km", atraso: "+7 min",
+          descricao: "Desvio por vias de Ponunduva."
         },
         "alternative-two": {
           pontos: [
-            [-23.337, -46.929], [-23.348, -46.937], [-23.360, -46.918],
-            [-23.365, -46.895], [-23.359, -46.878], [-23.350, -46.869]
+            [-23.33240, -46.92864], [-23.345, -46.935], [-23.360, -46.900],
+            [-23.355, -46.865], [-23.34822, -46.84846]
           ],
-          tempo: "38 min", distancia: "16,4 km", atraso: "+13 min",
+          tempo: "38 min", distancia: "18,5 km", atraso: "+13 min",
           descricao: "Desvio ampliado pelo entorno rural de Cajamar."
         }
       }
@@ -280,6 +274,13 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
   // Se o arquivo não carregar, a página usa as linhas retas de `cenarios`.
   let tracados = {};
 
+  // Nome da via do bloqueio (vindo do traçado gerado); cai no texto do cenário.
+  function localDoBloqueio(id) {
+    const via = tracados[id] && tracados[id].local;
+    if (!via) return cenarios[id].localOcorrencia;
+    return via + " · " + cenarios[id].localOcorrencia.split(" · ").pop();
+  }
+
   function pontosDaRota(id, tipo) {
     const tracado = tracados[id] && tracados[id].rotas[tipo];
     return tracado ? tracado.pontos : cenarios[id].rotas[tipo].pontos;
@@ -289,7 +290,7 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
   // camadas e `bringToFront()` falha antes do primeiro `fitBounds`.
   const mapa = L.map("mapa", {
     zoomControl: false,
-    scrollWheelZoom: false,
+    scrollWheelZoom: true,
     center: [-23.356, -46.875],
     zoom: 14
   });
@@ -303,7 +304,7 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
   }).addTo(mapa);
 
-  L.control.zoom({ position: "bottomright" }).addTo(mapa);
+  L.control.zoom({ position: "topright" }).addTo(mapa);
 
   const estilos = {
     primary: { color: "#4778e8", weight: 5, opacity: 1, lineCap: "round", lineJoin: "round" },
@@ -477,7 +478,7 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
     entradaDestino.value = cenario.destino;
     tituloRota.textContent = cenario.origem + " → " + cenario.destino;
     tituloOcorrencia.textContent = cenario.ocorrencia;
-    localOcorrencia.textContent = cenario.localOcorrencia;
+    localOcorrencia.textContent = localDoBloqueio(id);
     feedbackFormulario.textContent = "Cenário demonstrativo carregado.";
     document.getElementById("mapa").setAttribute(
       "aria-label",
@@ -497,7 +498,7 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
 
     marcadorBloqueio.setLatLng(tracados[id] ? tracados[id].bloqueio : cenario.bloqueio);
     marcadorBloqueio.setPopupContent(
-      "<strong>" + cenario.ocorrencia + "</strong><br>" + cenario.localOcorrencia
+      "<strong>" + cenario.ocorrencia + "</strong><br>" + localDoBloqueio(id)
     );
     const pontosPrincipal = pontosDaRota(id, "primary");
     marcadorOrigem.setLatLng(pontosPrincipal[0])
@@ -596,5 +597,15 @@ import { carregarLocais, lerLocalId, salvarLocalId } from "./adaptador/locais.js
 
   botaoDirecionamento.addEventListener("click", function () {
     definirDirecionamentoAtivo(!direcionamentoAtivo);
+  });
+
+  // O mapa ocupa a célula central do grid; ao redimensionar a janela o Leaflet
+  // precisa recalcular o tamanho do container antes de enquadrar as rotas.
+  let redimensionarMapaId = 0;
+  window.addEventListener("resize", function () {
+    window.clearTimeout(redimensionarMapaId);
+    redimensionarMapaId = window.setTimeout(function () {
+      mapa.invalidateSize();
+    }, 120);
   });
 })();

@@ -15,9 +15,17 @@ export function criarSeletorVias(
   eventos,
   { signal } = {}
 ) {
-  const trechosPorNome = new Map(logradouros.map((l) => [l.nome, l.trechos]));
-  const listaCompleta = logradouros.map(({ nome, trechos }) => ({ nome, trechos }));
+  let trechosPorNome = new Map(logradouros.map((l) => [l.nome, l.trechos]));
+  let listaCompleta = logradouros.map(({ nome, trechos }) => ({ nome, trechos }));
   let filtroAtual = "";
+
+  function atualizarLogradouros(lista) {
+    const nomeAtual = selectLogradouro.value;
+    trechosPorNome = new Map(lista.map((l) => [l.nome, l.trechos]));
+    listaCompleta = lista.map(({ nome, trechos }) => ({ nome, trechos }));
+    preencherLogradouros(nomeAtual);
+    preencherTrechos(selectLogradouro.value);
+  }
 
   function preencherLogradouros(nomeSelecionado = "") {
     const termo = normalizar(filtroAtual);
@@ -89,6 +97,7 @@ export function criarSeletorVias(
   preencherTrechos("");
 
   return {
+    atualizarLogradouros,
     // Mantém a lista em sincronia quando o trecho é escolhido pelo mapa.
     sincronizar(trechoId) {
       const t = trechoId ? obterTrecho(trechoId) : null;
